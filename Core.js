@@ -30,6 +30,14 @@
 		// Menu:     { url: 'https://greasyfork.org/scripts/38578-wanikani-open-framework-menu-module/code/Wanikani%20Open%20Framework%20-%20Menu%20module.js?version=1091787'},
 		// Progress: { url: 'https://greasyfork.org/scripts/38577-wanikani-open-framework-progress-module/code/Wanikani%20Open%20Framework%20-%20Progress%20module.js?version=1091792'},
 		// Settings: { url: 'https://greasyfork.org/scripts/38576-wanikani-open-framework-settings-module/code/Wanikani%20Open%20Framework%20-%20Settings%20module.js?version=1091793'},
+
+		// Apiv2:    { url: ''},
+		// ItemData: { url: ''},
+		Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js'},
+		// Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js'},
+		Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1094841'},
+		// Progress: { url: ''},
+		Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js'},
 	};
 
 	//########################################################################

@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.1
+// @version     0.9
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -41,83 +41,95 @@
 		// Abort if already installed.
 		if (document.querySelector('.scripts-header')) return false;
 
+		console.log("LocationPathname: " + location.pathname);
+
+		
 		// Install html.
-		switch (location.pathname) {
-			case '/lesson/session':
-			case '/review/session':
-			case '/extra_study/session':
-				let summary_button = document.querySelector('#summary-button .fa-home').closest('a');
+		// switch (location.pathname) {
+		// 	// case '/lesson/session':
+		// 	// case '/review/session':
+		// 	// case '/extra_study/session':
+		// 	case '/app/reviews':
+		if(location.pathname.startsWith("/app/reviews")) {
+			console.log("1");
+			let exit_button = document.querySelector('.header').firstChild;
+			// console.log("header: " + header);
+			// let exit_button = header.closest('a');
 
-				// Install css and html.
-				if (!document.querySelector('style[name="scripts_submenu"]')) {
-					document.head.insertAdjacentHTML('beforeend',
-						`<style name="scripts_submenu">
-						#scripts-menu {text-shadow:none;}
-						#scripts-menu.scripts-menu-icon {display:inline-block;}
-						#scripts-menu .scripts-icon {display:inline-block;}
-						#scripts-menu:not(.open) > .dropdown-menu {display:none;}
-						#scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
-						#scripts-menu ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
-						#scripts-menu ul.dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0; display:list-item;}
-						#scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px; display:list-item;}
-						#scripts-menu ul.dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}
-						#scripts-menu ul.dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}
-						#scripts-menu .scripts-submenu {position:relative;}
-						#scripts-menu .scripts-submenu > a:after {content:"\uf0da"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
-						#scripts-menu .scripts-submenu .dropdown-menu {left:100%; top:-6px;}
-						</style>`
-					);
-				}
+			console.log("exit_button: " + exit_button);
 
-				summary_button.insertAdjacentHTML('afterend',
-					`<div id="scripts-menu" class="scripts-menu-icon">
-						<a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu"></i></a>
-						<ul class="dropdown-menu">
-							<li class="scripts-header">Script Menu</li>
-						</ul>
-					</div>`
+			// Install css and html.
+			if (!document.querySelector('style[name="scripts_submenu"]')) {
+				document.head.insertAdjacentHTML('beforeend',
+					`<style name="scripts_submenu">
+					#scripts-menu {text-shadow:none;}
+					#scripts-menu.scripts-menu-icon {display:inline-block;}
+					#scripts-menu .scripts-icon {display:inline-block;}
+					#scripts-menu:not(.open) > .dropdown-menu {display:none;}
+					#scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
+					#scripts-menu ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
+					#scripts-menu ul.dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0; display:list-item;}
+					#scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px; display:list-item;}
+					#scripts-menu ul.dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}
+					#scripts-menu ul.dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}
+					#scripts-menu .scripts-submenu {position:relative;}
+					#scripts-menu .scripts-submenu > a:after {content:"\uf0da"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
+					#scripts-menu .scripts-submenu .dropdown-menu {left:100%; top:-6px;}
+					</style>`
 				);
-				top_menu = document.querySelector('#scripts-menu');
-				let scripts_icon = document.querySelector('#scripts-menu > a.scripts-icon');
+			}
 
-				function scripts_icon_click(e) {
-					top_menu.classList.toggle('open');
-					if (top_menu.classList.contains('open')) document.body.addEventListener('click', body_click);
-					e.stopPropagation();
-				}
+			exit_button.insertAdjacentHTML('afterend',
+				`<div id="scripts-menu" class="scripts-menu-icon">
+					<a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu"></i></a>
+					<ul class="dropdown-menu">
+						<li class="scripts-header">Script Menu</li>
+					</ul>
+				</div>`
+			);
+			top_menu = document.querySelector('#scripts-menu');
+			let scripts_icon = document.querySelector('#scripts-menu > a.scripts-icon');
 
-				scripts_icon.addEventListener('click', scripts_icon_click);
-				break;
+			function scripts_icon_click(e) {
+				top_menu.classList.toggle('open');
+				if (top_menu.classList.contains('open')) document.body.addEventListener('click', body_click);
+				e.stopPropagation();
+			}
 
-			default:
-				// Install css and html.
-				top_menu = document.querySelector('button[class$="account"]');
-				if (!top_menu) return;
-				if (!document.querySelector('style[name="scripts_submenu"]')) {
-					document.head.insertAdjacentHTML('beforeEnd',
-						`<style name="scripts_submenu">
-						.sitemap__section.scripts-noposition {position:initial;}
-						.scripts-submenu>.dropdown-menu {display:none;}
-						.scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;margin-top:0;left:-8px;transform:scale(1) translateX(-100%);min-width:200px}
-						.scripts-submenu .dropdown-menu:before {left:100%;top:12px;z-index:-1;}
-						.scripts-submenu .dropdown-menu .sitemap__pages {padding:5px 15px 0px 15px;}
-						.scripts-submenu .dropdown-menu .sitemap__page:last-child {margin-bottom:0;}
-						.scripts-submenu>a:before {content:"\uf0d9 "; font-family:"FontAwesome";}
-						@media (max-width: 979px) {
-						  .scripts-submenu>a:before {content:"";}
-						  .scripts-submenu>.dropdown-menu {display:contents;position:initial;top:initial;margin-top:initial;left:initial;transform:none;min-width:initial}
-						}
-						</style>`
-					);
-				}
-				document.querySelector('.user-summary').insertAdjacentHTML('afterend',
-					`<li id="scripts-menu" class="sitemap__section sitemap__section--subsection scripts-noposition">
-					  <h3 class="sitemap__section-header--subsection">Scripts</h3>
-					  <ul class="sitemap__pages scripts-header"></ul>
-					</li>`
-				);
-				break;
+			scripts_icon.addEventListener('click', scripts_icon_click);
+			// break;
 		}
+		// default:
+		else {
+			// Install css and html.
+			top_menu = document.querySelector('button[class$="account"]');
+			if (!top_menu) return;
+			if (!document.querySelector('style[name="scripts_submenu"]')) {
+				document.head.insertAdjacentHTML('beforeEnd',
+					`<style name="scripts_submenu">
+					.sitemap__section.scripts-noposition {position:initial;}
+					.scripts-submenu>.dropdown-menu {display:none;}
+					.scripts-submenu.open>.dropdown-menu {display:block;position:absolute;top:0px;margin-top:0;left:-8px;transform:scale(1) translateX(-100%);min-width:200px}
+					.scripts-submenu .dropdown-menu:before {left:100%;top:12px;z-index:-1;}
+					.scripts-submenu .dropdown-menu .sitemap__pages {padding:5px 15px 0px 15px;}
+					.scripts-submenu .dropdown-menu .sitemap__page:last-child {margin-bottom:0;}
+					.scripts-submenu>a:before {content:"\uf0d9 "; font-family:"FontAwesome";}
+					@media (max-width: 979px) {
+						.scripts-submenu>a:before {content:"";}
+						.scripts-submenu>.dropdown-menu {display:contents;position:initial;top:initial;margin-top:initial;left:initial;transform:none;min-width:initial}
+					}
+					</style>`
+				);
+			}
+			document.querySelector('.user-summary').insertAdjacentHTML('afterend',
+				`<li id="scripts-menu" class="sitemap__section sitemap__section--subsection scripts-noposition">
+					<h3 class="sitemap__section-header--subsection">Scripts</h3>
+					<ul class="sitemap__pages scripts-header"></ul>
+				</li>`
+			);
+			// break;
+		}
+	// }
 
 		// Click to open/close sub-menu.
 		scripts_menu = document.querySelector('#scripts-menu');
