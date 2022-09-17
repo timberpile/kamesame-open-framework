@@ -617,7 +617,7 @@
 	//------------------------------
 	// Load jquery UI and the appropriate CSS based on location.
 	//------------------------------
-	var css_url = ksof.support_files['jqui_wkmain.css'];
+	var css_url = ksof.support_files['jqui_ksmain.css'];
 
 	ksof.include('Jquery');
 	ksof.ready('document, Jquery')

@@ -172,7 +172,7 @@
 	// Load external support files (jquery UI and stylesheet)
 	//------------------------------
 	function load_externals() {
-		var css_url = ksof.support_files['jqui_wkmain.css'];
+		var css_url = ksof.support_files['jqui_ksmain.css'];
 
 		ksof.include('Jquery');
 		return ksof.ready('document, Jquery')
