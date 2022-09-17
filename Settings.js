@@ -251,6 +251,7 @@
 	// Open the settings dialog.
 	//------------------------------
 	function open(context) {
+		// todo investigate why the dialog doesn't render properly
 		if (!ready) return;
 		if ($('#ksofs_'+context.cfg.script_id).length > 0) return;
 		install_anchor();

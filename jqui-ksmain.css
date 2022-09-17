@@ -823,15 +823,6 @@
 	overflow: hidden;
 	right: 0;
 }
-#scripts-menu a.scripts-icon {
-    content: "⚙️";
-    cursor: pointer;
-    font-size: 1.2em;
-    margin-right: auto;
-    opacity: .65;
-    position: relative;
-    top: 3px;
-}
 /* more specificity required here to override default borders */
 #ksof_ds .ui-spinner a.ui-spinner-button {
 	border-top-style: none;

@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.9
+// @version     0.14
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -22,6 +22,8 @@
 	function escape_text(text) {return text.replace(/[<&>]/g, function(ch) {var map={'<':'&lt','&':'&amp;','>':'&gt;'}; return map[ch];});}
 
 	let top_menu, scripts_menu;
+
+	const correctSiteMatcher = /^\/app\/(reviews)\/study/;
 
 	//------------------------------
 	// Handler that closes menus when clicking outside of menu.
@@ -45,18 +47,8 @@
 
 		
 		// Install html.
-		// switch (location.pathname) {
-		// 	// case '/lesson/session':
-		// 	// case '/review/session':
-		// 	// case '/extra_study/session':
-		// 	case '/app/reviews':
-		if(location.pathname.startsWith("/app/reviews")) {
-			console.log("1");
+		if(location.pathname.match(correctSiteMatcher) !== null) {
 			let exit_button = document.querySelector('.header').firstChild;
-			// console.log("header: " + header);
-			// let exit_button = header.closest('a');
-
-			console.log("exit_button: " + exit_button);
 
 			// Install css and html.
 			if (!document.querySelector('style[name="scripts_submenu"]')) {
@@ -64,7 +56,7 @@
 					`<style name="scripts_submenu">
 					#scripts-menu {text-shadow:none;}
 					#scripts-menu.scripts-menu-icon {display:inline-block;}
-					#scripts-menu .scripts-icon {display:inline-block;}
+					#scripts-menu .scripts-icon {display:inline-block; cursor: pointer; font-size: 1.2em; margin-right: auto; opacity: .65; position: relative; top: 3px;}
 					#scripts-menu:not(.open) > .dropdown-menu {display:none;}
 					#scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
 					#scripts-menu ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
@@ -81,7 +73,7 @@
 
 			exit_button.insertAdjacentHTML('afterend',
 				`<div id="scripts-menu" class="scripts-menu-icon">
-					<a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu"></i></a>
+					<a class="scripts-icon" href="#"><i class="fa fa-gear" title="Script Menu">⚙️</i></a>
 					<ul class="dropdown-menu">
 						<li class="scripts-header">Script Menu</li>
 					</ul>
@@ -97,10 +89,7 @@
 			}
 
 			scripts_icon.addEventListener('click', scripts_icon_click);
-			// break;
-		}
-		// default:
-		else {
+		} else {
 			// Install css and html.
 			top_menu = document.querySelector('button[class$="account"]');
 			if (!top_menu) return;
@@ -127,9 +116,7 @@
 					<ul class="sitemap__pages scripts-header"></ul>
 				</li>`
 			);
-			// break;
 		}
-	// }
 
 		// Click to open/close sub-menu.
 		scripts_menu = document.querySelector('#scripts-menu');
@@ -141,7 +128,7 @@
 			for (let submenu of link.parentElement.querySelectorAll('.scripts-submenu.open')) {
 				if (submenu !== link) submenu.classList.remove('open');
 			};
-			if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) === null) {
+			if (location.pathname.match(correctSiteMatcher) === null) {
 				var menu = document.querySelector('#sitemap__account,[id="#sitemap__account"]');
 				var submenu = link.querySelector('.dropdown-menu');
 				submenu.style.fontSize = '12px';
@@ -191,7 +178,7 @@
 		let scripts_header = document.querySelector('.scripts-header');
 		if (!scripts_header) return;
 
-		if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+		if (location.pathname.match(correctSiteMatcher) !== null) {
 			scripts_header.insertAdjacentHTML('afterend',
 				`<li class="scripts-submenu" name="${safe_name}">
 					<a href="#">${safe_text}</a>
@@ -234,7 +221,7 @@
 			var submenu = install_scripts_submenu(config.submenu);
 
 			// Append the script, and sort the menu.
-			if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+			if (location.pathname.match(correctSiteMatcher) !== null) {
 				menu = submenu.querySelector('.dropdown-menu');
 			} else {
 				menu = submenu.querySelector('.dropdown-menu>ul');
@@ -248,7 +235,7 @@
 			classes = ['sitemap__page', 'script-link'];
 			if (config.class) classes.push(config.class_html);
 			link.setAttribute('class', classes.join(' '));
-			if (location.pathname.match(/^\/(review|lesson|extra_study)\/session/) !== null) {
+			if (location.pathname.match(correctSiteMatcher) !== null) {
 				scripts_header.after(link);
 			} else {
 				scripts_header.append(link);
