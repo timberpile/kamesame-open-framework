@@ -71,7 +71,7 @@
 	published_interface.support_files = {
 		'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
 		'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-		'jqui_wkmain.css': 'https://raw.githubusercontent.com/rfindley/wanikani-open-framework/1550af8383ec28ad406cf401aee2de4c52446f6c/jqui-wkmain.css',
+		'jqui_wkmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/jqui-wkmain.css',
 	};
 
 	//########################################################################
