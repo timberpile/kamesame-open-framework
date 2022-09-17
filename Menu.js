@@ -13,7 +13,7 @@
 	//------------------------------
 	// Published interface
 	//------------------------------
-	global.wkof.Menu = {
+	global.ksof.Menu = {
 		insert_script_link: insert_script_link
 	};
 	//########################################################################
@@ -260,11 +260,11 @@
 		});
 	}
 
-	wkof.ready('document').then(set_ready_state);
+	ksof.ready('document').then(set_ready_state);
 
 	function set_ready_state(){
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Menu', 'ready');},0);
+		setTimeout(function(){ksof.set_state('ksof.Menu', 'ready');},0);
 	}
 
 })(window);

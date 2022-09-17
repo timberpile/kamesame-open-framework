@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Wanikani Sample Client
 // @namespace   rfindley
-// @description wkof_sampleclient
+// @description ksof_sampleclient
 // @version     1.00
 // @include     https://www.wanikani.com/
 // @include     https://www.wanikani.com/dashboard
@@ -23,11 +23,11 @@ window.sample_client = {};
 	// Modules that our script uses.
 	var modules = 'Apiv2, ItemData, Menu, Settings';
 
-	wkof.include(modules);
-	wkof.ready('ItemData').then(fetch_items);
-	wkof.ready('Menu').then(install_menu);
-	wkof.ready('Settings').then(install_settings);
-	wkof.ready(modules).then(startup);
+	ksof.include(modules);
+	ksof.ready('ItemData').then(fetch_items);
+	ksof.ready('Menu').then(install_menu);
+	ksof.ready('Settings').then(install_settings);
+	ksof.ready(modules).then(startup);
 
 	//-----------------------------------
 	// Local variables
@@ -36,7 +36,7 @@ window.sample_client = {};
 
 	function fetch_items() {
 		var timer_a = new Date().getTime();
-		wkof.ItemData.get_items({
+		ksof.ItemData.get_items({
 			wk_items: {
 				options: { // See ItemData documentation for valid options
 					assignments: true, // Adds assignments endpoint as item.assignments
@@ -103,7 +103,7 @@ window.sample_client = {};
 		function do_nothing(){}
 
 		// The settings box configuration
-		wkof.Menu.insert_script_link({
+		ksof.Menu.insert_script_link({
 			name:      'sample_client_1',
 			submenu:   'Settings',
 			title:     'Sample Client 1',
@@ -111,8 +111,8 @@ window.sample_client = {};
 		});
 
 		// Insert some sample scripts.
-		wkof.Menu.insert_script_link({name:'appstore',title:'App Store',on_click:do_nothing});
-		wkof.Menu.insert_script_link({name:'sample_client_2',submenu:'Settings',title:'Sample Client 2',on_click:do_nothing});
+		ksof.Menu.insert_script_link({name:'appstore',title:'App Store',on_click:do_nothing});
+		ksof.Menu.insert_script_link({name:'sample_client_2',submenu:'Settings',title:'Sample Client 2',on_click:do_nothing});
 	}
 
 	//-----------------------------------
@@ -129,7 +129,7 @@ window.sample_client = {};
 	// dialog that can be opened by clicking 'Menu->Settings->Ultimate Timeline'.
 	//-----------------------------------
 	function install_settings() {
-		settings_dialog = new wkof.Settings({
+		settings_dialog = new ksof.Settings({
 			script_id: 'timeln',
 			title: 'Ultimate Timeline',
 			on_save: process_settings,

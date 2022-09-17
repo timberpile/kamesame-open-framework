@@ -13,7 +13,7 @@
 	//------------------------------
 	// Published interface.
 	//------------------------------
-	global.wkof.ItemData = {
+	global.ksof.ItemData = {
 		presets: {},
 		registry: {
 			sources: {},
@@ -49,9 +49,9 @@
 		var remaining = 0;
 		for (var cfg_name in config) {
 			var cfg = config[cfg_name];
-			var spec = wkof.ItemData.registry.sources[cfg_name];
+			var spec = ksof.ItemData.registry.sources[cfg_name];
 			if (!spec || typeof spec.fetcher !== 'function') {
-				console.log('wkof.ItemData.get_items() - Config "'+cfg_name+'" not registered!');
+				console.log('ksof.ItemData.get_items() - Config "'+cfg_name+'" not registered!');
 				continue;
 			}
 			remaining++;
@@ -70,7 +70,7 @@
 			})
 			.catch(function(e){
 				if (e) throw e;
-				console.log('wkof.ItemData.get_items() - Failed for config "'+cfg_name+'"');
+				console.log('ksof.ItemData.get_items() - Failed for config "'+cfg_name+'"');
 				remaining--;
 				if (!remaining) fetch_promise.resolve(items);
 			});
@@ -89,7 +89,7 @@
 
 		// Endpoints that we can fetch (subjects MUST BE FIRST!!)
 		var available_endpoints = ['subjects','assignments','review_statistics','study_materials'];
-		var spec = wkof.ItemData.registry.sources.wk_items;
+		var spec = ksof.ItemData.registry.sources.wk_items;
 		for (var filter_name in config.filters) {
 			var filter_spec = spec.filters[filter_name];
 			if (!filter_spec || typeof filter_spec.set_options !== 'function') continue;
@@ -103,7 +103,7 @@
 			var ep_name = available_endpoints[idx];
 			if (ep_name === 'subjects' || cfg_options[ep_name] === true)
 				ep_promises.push(
-					wkof.Apiv2.get_endpoint(ep_name, options)
+					ksof.Apiv2.get_endpoint(ep_name, options)
 					.then(process_data.bind(null, ep_name))
 				);
 		}
@@ -136,14 +136,14 @@
 		var prep_promises = [];
 		var options = config.options || {};
 		var filters = [];
-		var is_wk_items = (spec === wkof.ItemData.registry.sources.wk_items);
+		var is_wk_items = (spec === ksof.ItemData.registry.sources.wk_items);
 		for (var filter_name in config.filters) {
 			var filter_cfg = config.filters[filter_name];
 			if (typeof filter_cfg !== 'object' || filter_cfg.value === undefined)
 				filter_cfg = {value:filter_cfg};
 			var filter_value = filter_cfg.value;
 			var filter_spec = spec.filters[filter_name];
-			if (filter_spec === undefined) throw new Error('wkof.ItemData.get_item() - Invalid filter "'+filter_name+'"');
+			if (filter_spec === undefined) throw new Error('ksof.ItemData.get_item() - Invalid filter "'+filter_name+'"');
 			if (typeof filter_spec.filter_value_map === 'function')
 				filter_value = filter_spec.filter_value_map(filter_cfg.value);
 			if (typeof filter_spec.prepare === 'function') {
@@ -168,7 +168,7 @@
 
 		return Promise.all(prep_promises).then(function(){
 			var result = [];
-			var max_level = Math.max(wkof.user.subscription.max_level_granted, wkof.user.override_max_level || 0);
+			var max_level = Math.max(ksof.user.subscription.max_level_granted, ksof.user.override_max_level || 0);
 			for (var item_idx in items) {
 				var keep = true;
 				var item = items[item_idx];
@@ -194,15 +194,15 @@
 	// Return the items indexed by an indexing function.
 	//------------------------------
 	function get_index(items, index_name) {
-		var index_func = wkof.ItemData.registry.indices[index_name];
-		if (typeof index_func !== 'function') throw new Error('wkof.ItemData.index_by() - Invalid index function "'+index_name+'"');
+		var index_func = ksof.ItemData.registry.indices[index_name];
+		if (typeof index_func !== 'function') throw new Error('ksof.ItemData.index_by() - Invalid index function "'+index_name+'"');
 		return index_func(items);
 	}
 
 	//------------------------------
 	// Register wk_items data source.
 	//------------------------------
-	wkof.ItemData.registry.sources['wk_items'] = {
+	ksof.ItemData.registry.sources['wk_items'] = {
 		description: 'Wanikani',
 		fetcher: get_wk_items,
 		options: {
@@ -301,7 +301,7 @@
 			'    index[value].push(item);\n'+
 			'}\n'+
 			'return index;'
-		wkof.ItemData.registry.indices[name] = new Function('items', fn);
+		ksof.ItemData.registry.indices[name] = new Function('items', fn);
 	}
 
 	// Build some index functions.
@@ -316,7 +316,7 @@
 	//------------------------------
 	// Index by reading
 	//------------------------------
-	wkof.ItemData.registry.indices['reading'] = function(items) {
+	ksof.ItemData.registry.indices['reading'] = function(items) {
 		var index = {};
 		for (var idx in items) {
 			var item = items[idx];
@@ -421,7 +421,7 @@
 				levels[lvl] = value;
 				continue;
 			}
-			var err = 'wkof.ItemData::levels_to_arr() - Bad filter criteria "'+filter_value+'"';
+			var err = 'ksof.ItemData::levels_to_arr() - Bad filter criteria "'+filter_value+'"';
 			console.log(err);
 			throw err;
 		}
@@ -429,8 +429,8 @@
 
 		//============
 		function to_num(num) {
-			num = (num[0] < '0' ? wkof.user.level : 0) + Number(num)
-			return Math.min(Math.max(1, num), wkof.user.subscription.max_level_granted);
+			num = (num[0] < '0' ? ksof.user.level : 0) + Number(num)
+			return Math.min(Math.max(1, num), ksof.user.subscription.max_level_granted);
 		}
 	}
 
@@ -442,7 +442,7 @@
 	//------------------------------
 	function call_for_registration() {
 		registration_promise = promise();
-		wkof.set_state('wkof.ItemData.registry', 'ready');
+		ksof.set_state('ksof.ItemData.registry', 'ready');
 		setTimeout(check_registration_counter, 1);
 		registration_timeout = setTimeout(function(){
 			registration_timeout = undefined;
@@ -478,9 +478,9 @@
 	//------------------------------
 	function notify_ready() {
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.ItemData', 'ready');},0);
+		setTimeout(function(){ksof.set_state('ksof.ItemData', 'ready');},0);
 	}
-	wkof.include('Apiv2');
-	wkof.ready('Apiv2').then(call_for_registration).then(notify_ready);
+	ksof.include('Apiv2');
+	ksof.ready('Apiv2').then(call_for_registration).then(notify_ready);
 
 })(this);

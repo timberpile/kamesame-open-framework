@@ -13,20 +13,20 @@
 	//------------------------------
 	// Published interface
 	//------------------------------
-	global.wkof.Jquery = {
+	global.ksof.Jquery = {
 		version: version,
 	};
 	//########################################################################
 
 	var version;
 
-	wkof.ready('document')
+	ksof.ready('document')
 	.then(function(){
 		var promises = [];
 		try {
 			$.fn.jquery;
 		} catch(e) {
-			promises.push(wkof.load_script(wkof.support_files['jquery.js'], true /* cache */));
+			promises.push(ksof.load_script(ksof.support_files['jquery.js'], true /* cache */));
 		}
 		return Promise.all(promises);
 	})
@@ -34,7 +34,7 @@
 		version = $.fn.jquery;
 		// Notify listeners that we are ready.
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Jquery', 'ready');},0);
+		setTimeout(function(){ksof.set_state('ksof.Jquery', 'ready');},0);
 	});
 
 })(window);

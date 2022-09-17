@@ -13,7 +13,7 @@
 	//------------------------------
 	// Published interface.
 	//------------------------------
-	global.wkof.Apiv2 = {
+	global.ksof.Apiv2 = {
 		clear_cache: clear_cache,
 		fetch_endpoint: fetch_endpoint,
 		get_endpoint: get_endpoint,
@@ -71,8 +71,8 @@
 	//------------------------------
 	function clear_cache(include_non_user) {
 		var clear_promises = [];
-		var dir = wkof.file_cache.dir;
-		for (var filename in wkof.file_cache.dir) {
+		var dir = ksof.file_cache.dir;
+		for (var filename in ksof.file_cache.dir) {
 			if (!filename.match(/^Apiv2\./)) continue;
 			if ((filename === 'Apiv2.subjects' && include_non_user !== true) || !dir[filename]) continue;
 			clear_promises.push(filename);
@@ -87,19 +87,19 @@
 		}
 
 		function delete_file(filename){
-			return wkof.file_cache.delete(filename);
+			return ksof.file_cache.delete(filename);
 		}
 	}
 
-	wkof.set_state('wkof.Apiv2.key', 'not_ready');
+	ksof.set_state('ksof.Apiv2.key', 'not_ready');
 
 	//------------------------------
 	// Get the API key (either from localStorage, or from the Account page).
 	//------------------------------
 	function get_apikey() {
 		// If we already have the apikey, just return it.
-		if (is_valid_apikey_format(wkof.Apiv2.key))
-			return Promise.resolve(wkof.Apiv2.key);
+		if (is_valid_apikey_format(ksof.Apiv2.key))
+			return Promise.resolve(ksof.Apiv2.key);
 
 		// If we don't have the apikey, but override was requested, return error.
 		if (using_apikey_override) 
@@ -107,23 +107,23 @@
 
 		// Fetch the apikey from the account page.
 		console.log('Fetching API key...');
-		wkof.set_state('wkof.Apiv2.key', 'fetching');
-		return wkof.load_file('/settings/personal_access_tokens')
+		ksof.set_state('ksof.Apiv2.key', 'fetching');
+		return ksof.load_file('/settings/personal_access_tokens')
 		.then(parse_page);
 
 		function parse_page(html){
 			var page = $(html);
 			var apikey = page.find('.personal-access-token-token > code').eq(0).text();
-			if (!wkof.Apiv2.is_valid_apikey_format(apikey)) {
-				var status = localStorage.getItem('wkof_generate_token');
+			if (!ksof.Apiv2.is_valid_apikey_format(apikey)) {
+				var status = localStorage.getItem('ksof_generate_token');
 				if (status === null) {
 					if (confirm("It looks like you haven't generated a Personal Access Token yet,\nwhich is required to run Open Framework scripts.\nDo you want to generate one now?")) {
 						return generate_apiv2_key();
 					} else {
-						localStorage.setItem('wkof_generate_token', 'ignore');
+						localStorage.setItem('ksof_generate_token', 'ignore');
 					}
 				} else if (status === "ignore") {
-					wkof.Menu.insert_script_link({
+					ksof.Menu.insert_script_link({
 						name: 'gen_apiv2_key',
 						title: 'Generate APIv2 key',
 					    on_click: generate_apiv2_key
@@ -131,20 +131,20 @@
 				}
 				return Promise.reject('No API key (version 2) found on account page!');
 			} else {
-				delete localStorage.wkof_generate_token;
+				delete localStorage.ksof_generate_token;
 			}
 
 			// Store the api key.
-			wkof.Apiv2.key = apikey;
+			ksof.Apiv2.key = apikey;
 			localStorage.setItem('apiv2_key', apikey);
-			wkof.set_state('wkof.Apiv2.key', 'ready');
+			ksof.set_state('ksof.Apiv2.key', 'ready');
 			return apikey;
 		};
 
 		function generate_apiv2_key()
 		{
-			localStorage.setItem('wkof_generate_token', 'generating');
-			return wkof.load_file('/settings/personal_access_tokens/new')
+			localStorage.setItem('ksof_generate_token', 'generating');
+			return ksof.load_file('/settings/personal_access_tokens/new')
 			.then(parse_token_page).then(function(){
 				location.reload();
 			});
@@ -228,10 +228,10 @@
 
 		//============
 		function setup_and_fetch() {
-			if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
+			if (options.disable_progress_dialog !== true) ksof.Progress.update(progress_data);
 			headers = {
 			//	'Wanikani-Revision': '20170710', // Placeholder?
-				'Authorization': 'Bearer '+wkof.Apiv2.key,
+				'Authorization': 'Bearer '+ksof.Apiv2.key,
 			};
 			headers['If-Modified-Since'] = new Date(last_update).toUTCString(last_update);
 
@@ -271,7 +271,7 @@
 					progress_callback(endpoint, 0, 1, 1);
 				progress_data.value = 1;
 				progress_data.max = 1;
-				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) ksof.Progress.update(progress_data);
 				return fetch_promise.reject({status:this.status, url:url});
 			}
 
@@ -301,7 +301,7 @@
 					progress_callback(endpoint, first_new, so_far, total);
 				progress_data.value = so_far;
 				progress_data.max = total;
-				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) ksof.Progress.update(progress_data);
 
 				// If there are more pages, fetch the next one.
 				if (json.pages.next_url !== null) {
@@ -320,7 +320,7 @@
 					progress_callback(endpoint, 0, 1, 1);
 				progress_data.value = 1;
 				progress_data.max = 1;
-				if (options.disable_progress_dialog !== true) wkof.Progress.update(progress_data);
+				if (options.disable_progress_dialog !== true) ksof.Progress.update(progress_data);
 				fetch_promise.resolve(json);
 			}
 		}
@@ -329,7 +329,7 @@
 		function bad_apikey(){
 			// If we are using an override key, abort and return error.
 			if (using_apikey_override) {
-				fetch_promise.reject('Wanikani doesn\'t recognize the apiv2_key_override key ("'+wkof.Apiv2.key+'")');
+				fetch_promise.reject('Wanikani doesn\'t recognize the apiv2_key_override key ("'+ksof.Apiv2.key+'")');
 				return;
 			}
 
@@ -343,7 +343,7 @@
 			// We received a bad key.  Report on the console, then try fetching the key (and data) again.
 			console.log('Seems we have a bad API key.  Erasing stored info.');
 			localStorage.removeItem('apiv2_key');
-			wkof.Apiv2.key = undefined;
+			ksof.Apiv2.key = undefined;
 			get_apikey()
 			.then(populate_user_cache)
 			.then(setup_and_fetch);
@@ -382,7 +382,7 @@
 		var merged_data;
 
 		// Perform the fetch, and process the data.
-		wkof.file_cache.load('Apiv2.'+ep_name)
+		ksof.file_cache.load('Apiv2.'+ep_name)
 		.then(fetch, fetch);
 		return get_promise;
 
@@ -413,10 +413,10 @@
 			}
 
 			// If it's the 'user' endpoint, we insert the apikey before caching.
-			if (ep_name === 'user') merged_data.data.apikey = wkof.Apiv2.key;
+			if (ep_name === 'user') merged_data.data.apikey = ksof.Apiv2.key;
 
 			// Save data to cache and finish up.
-			wkof.file_cache.save('Apiv2.'+ep_name, merged_data)
+			ksof.file_cache.save('Apiv2.'+ep_name, merged_data)
 			.then(finish);
 		}
 
@@ -472,27 +472,27 @@
 			if (!is_valid_apikey_format(apikey)) apikey = undefined;
 		}
 
-		wkof.Apiv2.key = apikey;
+		ksof.Apiv2.key = apikey;
 
 		// Make sure cache is still valid
-		return wkof.file_cache.load('Apiv2.user')
+		return ksof.file_cache.load('Apiv2.user')
 		.then(process_user_info)
 		.catch(retry);
 
 		//============
 		function process_user_info(user_info) {
 			// If cache matches, we're done.
-			if (user_info.data.apikey === wkof.Apiv2.key) {
+			if (user_info.data.apikey === ksof.Apiv2.key) {
 				// We don't check username when using override key.
 				if (using_apikey_override || skip_username_check || (user_info.data.username === user)) {
-					wkof.Apiv2.user = user_info.data.username;
+					ksof.Apiv2.user = user_info.data.username;
 					return populate_user_cache();
 				}
 			}
 			// Cache doesn't match.
 			if (!using_apikey_override) {
 				// Fetch the key from the accounts page.
-				wkof.Apiv2.key = undefined;
+				ksof.Apiv2.key = undefined;
 				throw 'fetch key';
 			} else {
 				// We're using override.  No need to fetch key, just populate cache.
@@ -514,10 +514,10 @@
 		return fetch_endpoint('user')
 		.then(function(user_info){
 			// Store the apikey in the cache.
-			user_info.data.apikey = wkof.Apiv2.key;
-			wkof.Apiv2.user = user_info.data.username;
-			wkof.user = user_info.data
-			return wkof.file_cache.save('Apiv2.user', user_info);
+			user_info.data.apikey = ksof.Apiv2.key;
+			ksof.Apiv2.user = user_info.data.username;
+			ksof.user = user_info.data
+			return ksof.file_cache.save('Apiv2.user', user_info);
 		});
 	}
 
@@ -527,14 +527,14 @@
 	function notify_ready() {
 		// Notify listeners that we are ready.
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Apiv2', 'ready');},0);
+		setTimeout(function(){ksof.set_state('ksof.Apiv2', 'ready');},0);
 	}
 
 	//------------------------------
 	// Do initialization once document is loaded.
 	//------------------------------
-	wkof.include('Progress');
-	wkof.ready('document,Progress').then(startup);
+	ksof.include('Progress');
+	ksof.ready('document,Progress').then(startup);
 	function startup() {
 		validate_user_cache()
 		.then(notify_ready);

@@ -13,7 +13,7 @@
 	//------------------------------
 	// Published interface
 	//------------------------------
-	global.wkof.Progress = {
+	global.ksof.Progress = {
 		update: update_progress,
 		popup_delay: get_or_set_popup_delay,
 	}
@@ -37,7 +37,7 @@
 			delay = Number(delay);
 			if (Number.isNaN(delay)) throw 'Invalid value for popup_delay';
 			show_popup = (delay >= 0);
-			localStorage.setItem('wkof.Progress.popup_delay', delay);
+			localStorage.setItem('ksof.Progress.popup_delay', delay);
 			popup_delay = delay;
 		}
 		if (silent !== true) console.log('popup_delay ' + (show_popup ? ('= ' + popup_delay) : 'is disabled'));
@@ -92,7 +92,7 @@
 	// Delay the dialog from popping up until progress takes at least N milliseconds.
 	//------------------------------
 	function start_popup_delay() {
-		get_or_set_popup_delay(localStorage.getItem('wkof.Progress.popup_delay'), true /* silent */);
+		get_or_set_popup_delay(localStorage.getItem('ksof.Progress.popup_delay'), true /* silent */);
 		if (!show_popup) return;
 		popup_delay_started = true;
 		popup_timer = setTimeout(function() {
@@ -119,24 +119,24 @@
 
 		if (!dialog_visible) {
 			dialog_visible = true;
-			if (!document.querySelector('#wkof_ds')) {
+			if (!document.querySelector('#ksof_ds')) {
 				let ds = document.createElement('div');
-				ds.setAttribute('id', 'wkof_ds');
+				ds.setAttribute('id', 'ksof_ds');
 				document.body.prepend(ds);
 			}
 
-			dialog = $('<div id="wkof_progbar_dlg" class="wkofs_progress_dlg" style="display:none;"></div>');
+			dialog = $('<div id="ksof_progbar_dlg" class="ksofs_progress_dlg" style="display:none;"></div>');
 
 			dialog.dialog({
 				title: 'Loading Data...',
 				minHeight: 20,
 				maxHeight: window.innerHeight,
 				height: 'auto',
-				dialogClass: 'wkof_progbar_dlg',
+				dialogClass: 'ksof_progbar_dlg',
 				modal: false,
 				resizable: false,
 				autoOpen: false,
-				appendTo: '#wkof_ds',
+				appendTo: '#ksof_ds',
 				close: dialog_close
 			});
 			dialog.dialog('open');
@@ -146,16 +146,16 @@
 		for (name in progress_bars) {
 			var progress_bar = progress_bars[name];
 			if (progress_bar.value < progress_bar.max) all_done = false;
-			var bar = $('#wkof_progbar_dlg .wkof_progbar_wrap[name="'+name+'"]');
+			var bar = $('#ksof_progbar_dlg .ksof_progbar_wrap[name="'+name+'"]');
 			if (bar.length === 0) {
-				bar = $('<div class="wkof_progbar_wrap" name="'+name+'"><label>'+progress_bar.label+'</label><div class="wkof_progbar"></div></div>');
-				var bars = $('#wkof_progbar_dlg .wkof_progbar_wrap');
+				bar = $('<div class="ksof_progbar_wrap" name="'+name+'"><label>'+progress_bar.label+'</label><div class="ksof_progbar"></div></div>');
+				var bars = $('#ksof_progbar_dlg .ksof_progbar_wrap');
 				bars.push(bar[0]);
-				$('#wkof_progbar_dlg').append(bars.sort(bar_label_compare));
+				$('#ksof_progbar_dlg').append(bars.sort(bar_label_compare));
 			}
 			if (progress_bar.is_updated) {
 				progress_bar.is_updated = false;
-				bar.find('.wkof_progbar').progressbar({value: progress_bar.value, max: progress_bar.max});
+				bar.find('.ksof_progbar').progressbar({value: progress_bar.value, max: progress_bar.max});
 			}
 		}
 
@@ -172,14 +172,14 @@
 	// Load external support files (jquery UI and stylesheet)
 	//------------------------------
 	function load_externals() {
-		var css_url = wkof.support_files['jqui_wkmain.css'];
+		var css_url = ksof.support_files['jqui_wkmain.css'];
 
-		wkof.include('Jquery');
-		return wkof.ready('document, Jquery')
+		ksof.include('Jquery');
+		return ksof.ready('document, Jquery')
 			.then(function(){
 				return Promise.all([
-					wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-					wkof.load_css(css_url, true /* cache */)
+					ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
+					ksof.load_css(css_url, true /* cache */)
 				]);
 			})
 			.then(function(){
@@ -214,7 +214,7 @@
 
 	function set_ready_state() {
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Progress', 'ready');}, 0);
+		setTimeout(function(){ksof.set_state('ksof.Progress', 'ready');}, 0);
 	}
 	set_ready_state();
 

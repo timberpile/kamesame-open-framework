@@ -14,7 +14,7 @@
 	'use strict';
 
 	/* eslint no-multi-spaces: off */
-	/* globals wkof */
+	/* globals ksof */
 
 	var version = '0.1';
 	var ignore_missing_indexeddb = false;
@@ -86,11 +86,11 @@
 	//------------------------------
 	function compare_to(client_version) {
 		var client_ver = client_version.split('.').map(d => Number(d));
-		var wkof_ver = version.split('.').map(d => Number(d));
-		var len = Math.max(client_ver.length, wkof_ver.length);
+		var ksof_ver = version.split('.').map(d => Number(d));
+		var len = Math.max(client_ver.length, ksof_ver.length);
 		for (var idx = 0; idx < len; idx++) {
 			var a = client_ver[idx] || 0;
-			var b = wkof_ver[idx] || 0;
+			var b = ksof_ver[idx] || 0;
 			if (a === b) continue;
 			if (a < b) return 'newer';
 			return 'older';
@@ -104,8 +104,8 @@
 	var include_promises = {};
 
 	function include(module_list) {
-		if (wkof.get_state('wkof.wkof') !== 'ready') {
-			return wkof.ready('wkof').then(function(){return wkof.include(module_list);});
+		if (ksof.get_state('ksof.ksof') !== 'ready') {
+			return ksof.ready('ksof').then(function(){return ksof.include(module_list);});
 		}
 		var include_promise = promise();
 		var module_names = split_list(module_list);
@@ -117,7 +117,7 @@
 
 		var done_cnt = 0;
 		var loaded = [], failed = [];
-		var no_cache = split_list(localStorage.getItem('wkof.include.nocache') || '');
+		var no_cache = split_list(localStorage.getItem('ksof.include.nocache') || '');
 		for (var idx = 0; idx < module_names.length; idx++) {
 			var module_name = module_names[idx];
 			var module = supported_modules[module_name];
@@ -161,7 +161,7 @@
 		var ready_promises = [ ];
 		for (var idx in module_names) {
 			var module_name = module_names[idx];
-			ready_promises.push(wait_state('wkof.' + module_name, 'ready'));
+			ready_promises.push(wait_state('ksof.' + module_name, 'ready'));
 		}
 
 		if (ready_promises.length === 0) {
@@ -179,7 +179,7 @@
 	//------------------------------
 	function load_file(url, use_cache) {
 		var fetch_promise = promise();
-		var no_cache = split_list(localStorage.getItem('wkof.load_file.nocache') || '');
+		var no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
 		if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) use_cache = false;
 		if (use_cache === true) {
 			return file_cache_load(url, use_cache).catch(fetch_url);
@@ -316,7 +316,7 @@
 		for (var idx in listeners) try {
 			listeners[idx].apply(null,args);
 		} catch (err) {}
-		return global.wkof;
+		return global.ksof;
 	}
 
 	//------------------------------
@@ -325,7 +325,7 @@
 	function wait_event(event, callback) {
 		if (event_listeners[event] === undefined) event_listeners[event] = [];
 		event_listeners[event].push(callback);
-		return global.wkof;
+		return global.ksof;
 	}
 	//########################################################################
 
@@ -339,7 +339,7 @@
 		var open_promise = promise();
 		file_cache_open_promise = open_promise;
 		var request;
-		request = indexedDB.open('wkof.file_cache');
+		request = indexedDB.open('ksof.file_cache');
 		request.onupgradeneeded = upgrade_db;
 		request.onsuccess = get_dir;
 		request.onerror = error;
@@ -347,7 +347,7 @@
 
 		function error() {
 			console.log('indexedDB could not open!');
-			wkof.file_cache.dir = {};
+			ksof.file_cache.dir = {};
 			if (ignore_missing_indexeddb) {
 				open_promise.resolve(null);
 			} else {
@@ -372,9 +372,9 @@
 
 		function process_dir(event){
 			if (event.target.result === undefined) {
-				wkof.file_cache.dir = {};
+				ksof.file_cache.dir = {};
 			} else {
-				wkof.file_cache.dir = JSON.parse(event.target.result.content);
+				ksof.file_cache.dir = JSON.parse(event.target.result.content);
 			}
 		}
 	}
@@ -383,7 +383,7 @@
 	// Lists the content of the file_cache.
 	//------------------------------
 	function file_cache_list() {
-		console.log(Object.keys(wkof.file_cache.dir).sort().join('\n'));
+		console.log(Object.keys(ksof.file_cache.dir).sort().join('\n'));
 	}
 
 	//------------------------------
@@ -394,7 +394,7 @@
 
 		function clear(db) {
 			var clear_promise = promise();
-			wkof.file_cache.dir = {};
+			ksof.file_cache.dir = {};
 			if (db === null) return clear_promise.resolve();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
@@ -414,7 +414,7 @@
 			if (db === null) return del_promise.resolve();
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
-			var files = Object.keys(wkof.file_cache.dir).filter(function(file){
+			var files = Object.keys(ksof.file_cache.dir).filter(function(file){
 				if (pattern instanceof RegExp) {
 					return file.match(pattern) !== null;
 				} else {
@@ -423,7 +423,7 @@
 			});
 			files.forEach(function(file){
 				store.delete(file);
-				delete wkof.file_cache.dir[file];
+				delete ksof.file_cache.dir[file];
 			});
 			file_cache_dir_save();
 			transaction.oncomplete = del_promise.resolve.bind(null, files);
@@ -446,14 +446,14 @@
 		return file_cache_open().then(load);
 
 		function load(db) {
-			if (wkof.file_cache.dir[name] === undefined) {
+			if (ksof.file_cache.dir[name] === undefined) {
 				load_promise.reject(name);
 				return load_promise;
 			}
 			var transaction = db.transaction('files', 'readonly');
 			var store = transaction.objectStore('files');
 			var request = store.get(name);
-			wkof.file_cache.dir[name].last_loaded = new Date().toISOString();
+			ksof.file_cache.dir[name].last_loaded = new Date().toISOString();
 			file_cache_dir_save();
 			request.onsuccess = finish;
 			request.onerror = error;
@@ -486,7 +486,7 @@
 			var store = transaction.objectStore('files');
 			store.put({name:name,content:content});
 			var now = new Date().toISOString();
-			wkof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
+			ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
 			file_cache_dir_save(true /* immediately */);
 			transaction.oncomplete = save_promise.resolve.bind(null, name);
 		}
@@ -509,7 +509,7 @@
 			fc_sync_timer = undefined;
 			var transaction = db.transaction('files', 'readwrite');
 			var store = transaction.objectStore('files');
-			store.put({name:'[dir]',content:JSON.stringify(wkof.file_cache.dir)});
+			store.put({name:'[dir]',content:JSON.stringify(ksof.file_cache.dir)});
 		}
 	}
 
@@ -519,16 +519,16 @@
 	function file_cache_cleanup() {
 		var threshold = new Date() - 14*86400000; // 14 days
 		var old_files = [];
-		for (var fname in wkof.file_cache.dir) {
-			if (fname.match(/^wkof\.settings\./)) continue; // Don't flush settings files.
-			var fdate = new Date(wkof.file_cache.dir[fname].last_loaded);
+		for (var fname in ksof.file_cache.dir) {
+			if (fname.match(/^ksof\.settings\./)) continue; // Don't flush settings files.
+			var fdate = new Date(ksof.file_cache.dir[fname].last_loaded);
 			if (fdate < threshold) old_files.push(fname);
 		}
 		if (old_files.length === 0) return;
-		console.log('Cleaning out '+old_files.length+' old file(s) from "wkof.file_cache":');
+		console.log('Cleaning out '+old_files.length+' old file(s) from "ksof.file_cache":');
 		for (var fnum in old_files) {
 			console.log('  '+(Number(fnum)+1)+': '+old_files[fnum]);
-			wkof.file_cache.delete(old_files[fnum]);
+			ksof.file_cache.delete(old_files[fnum]);
 		}
 	}
 
@@ -537,8 +537,8 @@
 	//------------------------------
 	function file_nocache(list) {
 		if (list === undefined) {
-			list = split_list(localStorage.getItem('wkof.include.nocache') || '');
-			list = list.concat(split_list(localStorage.getItem('wkof.load_file.nocache') || ''));
+			list = split_list(localStorage.getItem('ksof.include.nocache') || '');
+			list = list.concat(split_list(localStorage.getItem('ksof.load_file.nocache') || ''));
 			console.log(list.join(','));
 		} else if (typeof list === 'string') {
 			var no_cache = split_list(list);
@@ -553,20 +553,20 @@
 			}
 			console.log('Modules: '+modules.join(','));
 			console.log('   URLs: '+urls.join(','));
-			localStorage.setItem('wkof.include.nocache', modules.join(','));
-			localStorage.setItem('wkof.load_file.nocache', urls.join(','));
+			localStorage.setItem('ksof.include.nocache', modules.join(','));
+			localStorage.setItem('ksof.load_file.nocache', urls.join(','));
 		}
 	}
 
 	function doc_ready() {
-		wkof.set_state('wkof.document', 'ready');
+		ksof.set_state('ksof.document', 'ready');
 	}
 
 	//########################################################################
 	// Bootloader Startup
 	//------------------------------
 	function startup() {
-		global.wkof = published_interface;
+		global.ksof = published_interface;
 
 		// Mark document state as 'ready'.
 		if (document.readyState === 'complete') {
@@ -575,9 +575,9 @@
 			window.addEventListener("load", doc_ready, false);  // Notify listeners that we are ready.
 		}
 
-		// Open cache, so wkof.file_cache.dir is available to console immediately.
+		// Open cache, so ksof.file_cache.dir is available to console immediately.
 		file_cache_open();
-		wkof.set_state('wkof.wkof', 'ready');
+		ksof.set_state('ksof.ksof', 'ready');
 	}
 	startup();
 

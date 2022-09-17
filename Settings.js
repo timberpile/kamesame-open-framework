@@ -34,7 +34,7 @@
 		this.background = Settings.background;
 	};
 
-	global.wkof.Settings = Settings;
+	global.ksof.Settings = Settings;
 	Settings.save = save_settings;
 	Settings.load = load_settings;
 	Settings.background = {
@@ -43,7 +43,7 @@
 	}
 	//########################################################################
 
-	wkof.settings = {};
+	ksof.settings = {};
 	var ready = false;
 
 	//========================================================================
@@ -75,8 +75,8 @@
 	//------------------------------
 	function config_to_html(context) {
 		context.config_list = {};
-		var base = wkof.settings[context.cfg.script_id];
-		if (base === undefined) wkof.settings[context.cfg.script_id] = base = {};
+		var base = ksof.settings[context.cfg.script_id];
+		if (base === undefined) ksof.settings[context.cfg.script_id] = base = {};
 
 		var html = '', item, child_passback = {};
 		var id = context.cfg.script_id+'_dialog';
@@ -126,7 +126,7 @@
 						non_page += parse_item(cname, item.content[cname], child_passback);
 					if (child_passback.tabs)
 						html = assemble_pages(id, child_passback.tabs, child_passback.pages);
-					html = '<fieldset id="'+id+'" class="wkof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>';
+					html = '<fieldset id="'+id+'" class="ksof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>';
 					break;
 
 				case 'dropdown':
@@ -238,7 +238,7 @@
 		}
 
 		//============
-		function assemble_pages(id, tabs, pages) {return '<div id="'+id+'" class="wkof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>';}
+		function assemble_pages(id, tabs, pages) {return '<div id="'+id+'" class="ksof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>';}
 		function wrap_row(html,full,hover_tip) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>';}
 		function wrap_left(html) {return '<div class="left">'+html+'</div>';}
 		function wrap_right(html) {return '<div class="right">'+html+'</div>';}
@@ -252,10 +252,10 @@
 	//------------------------------
 	function open(context) {
 		if (!ready) return;
-		if ($('#wkofs_'+context.cfg.script_id).length > 0) return;
+		if ($('#ksofs_'+context.cfg.script_id).length > 0) return;
 		install_anchor();
 		if (context.cfg.background !== false) open_background();
-		var dialog = $('<div id="wkofs_'+context.cfg.script_id+'" class="wkof_settings" style="display:none;"></div>');
+		var dialog = $('<div id="ksofs_'+context.cfg.script_id+'" class="ksof_settings" style="display:none;"></div>');
 		dialog.html(config_to_html(context));
 
 		var width = 500;
@@ -273,17 +273,17 @@
 			maxHeight: document.body.clientHeight,
 			modal: false,
 			autoOpen: false,
-			appendTo: '#wkof_ds',
+			appendTo: '#ksof_ds',
 			resize: resize.bind(context,context),
 			close: close.bind(context,context)
 		});
 		$(dialog.dialog('widget')).css('position','fixed');
-		dialog.parent().addClass('wkof_settings_dialog');
+		dialog.parent().addClass('ksof_settings_dialog');
 
-		$('.wkof_stabs').tabs({activate:tab_activated.bind(null,context)});
-		var settings = wkof.settings[context.cfg.script_id];
-		if (settings && settings.wkofs_active_tabs instanceof Array) {
-			var active_tabs = settings.wkofs_active_tabs;
+		$('.ksof_stabs').tabs({activate:tab_activated.bind(null,context)});
+		var settings = ksof.settings[context.cfg.script_id];
+		if (settings && settings.ksofs_active_tabs instanceof Array) {
+			var active_tabs = settings.ksofs_active_tabs;
 			for (var tab_idx = 0; tab_idx < active_tabs.length; tab_idx++) {
 				var tab = $(active_tabs[tab_idx]);
 				tab.closest('.ui-tabs').tabs({active:tab.index()});
@@ -291,19 +291,19 @@
 		}
 
 		dialog.dialog('open');
-		var dialog_elem = $('#wkofs_'+context.cfg.script_id);
+		var dialog_elem = $('#ksofs_'+context.cfg.script_id);
 		dialog_elem.find('.setting[multiple]').on('mousedown', toggle_multi.bind(null,context));
 		dialog_elem.find('.setting').on('change', setting_changed.bind(null,context));
 		dialog_elem.find('form').on('submit', function(){return false;});
 		dialog_elem.find('button.setting').on('click', setting_button_clicked.bind(null,context));
 
 		if (typeof context.cfg.pre_open === 'function') context.cfg.pre_open(dialog);
-		context.reversions = deep_merge({}, wkof.settings[context.cfg.script_id]);
+		context.reversions = deep_merge({}, ksof.settings[context.cfg.script_id]);
 		refresh(context);
 
 		//============
 		function tab_activated(context, event, ui) {
-			var dialog = $('#wkofs_'+context.cfg.script_id);
+			var dialog = $('#ksofs_'+context.cfg.script_id);
 			var wrapper = $(dialog.dialog('widget'));
 			if (wrapper.outerHeight() + wrapper.position().top > document.body.clientHeight) {
 				dialog.dialog('option', 'maxHeight', document.body.clientHeight);
@@ -311,7 +311,7 @@
 		}
 
 		function resize(context, event, ui){
-			var dialog = $('#wkofs_'+context.cfg.script_id);
+			var dialog = $('#ksofs_'+context.cfg.script_id);
 			var is_narrow = dialog.hasClass('narrow');
 			if (is_narrow && ui.size.width >= 510)
 				dialog.removeClass('narrow');
@@ -344,9 +344,9 @@
 	//------------------------------
 	function save_settings(context) {
 		var script_id = (typeof context === 'string' ? context : context.cfg.script_id);
-		var settings = wkof.settings[script_id];
+		var settings = ksof.settings[script_id];
 		if (!settings) return Promise.resolve();
-		return wkof.file_cache.save('wkof.settings.'+script_id, settings);
+		return ksof.file_cache.save('ksof.settings.'+script_id, settings);
 	}
 
 	//------------------------------
@@ -354,15 +354,15 @@
 	//------------------------------
 	function load_settings(context, defaults) {
 		var script_id = (typeof context === 'string' ? context : context.cfg.script_id);
-		return wkof.file_cache.load('wkof.settings.'+script_id)
+		return ksof.file_cache.load('ksof.settings.'+script_id)
 		.then(finish, finish.bind(null,{}));
 
 		function finish(settings) {
 			if (defaults)
-				wkof.settings[script_id] = deep_merge(defaults, settings);
+				ksof.settings[script_id] = deep_merge(defaults, settings);
 			else
-				wkof.settings[script_id] = settings;
-			return wkof.settings[script_id];
+				ksof.settings[script_id] = settings;
+			return ksof.settings[script_id];
 		}
 	}
 
@@ -371,15 +371,15 @@
 	//------------------------------
 	function save_btn(context, e) {
 		var script_id = context.cfg.script_id;
-		var dialog = $('#wkofs_'+script_id);
-		var settings = wkof.settings[script_id];
+		var dialog = $('#ksofs_'+script_id);
+		var settings = ksof.settings[script_id];
 		if (settings) {
 			var active_tabs = dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.id.value});
-			if (active_tabs.length > 0) settings.wkofs_active_tabs = active_tabs;
+			if (active_tabs.length > 0) settings.ksofs_active_tabs = active_tabs;
 		}
 		if (context.cfg.autosave === undefined || context.cfg.autosave === true) save_settings(context);
-		if (typeof context.cfg.on_save === 'function') context.cfg.on_save(wkof.settings[context.cfg.script_id]);
-		wkof.trigger('wkof.settings.save');
+		if (typeof context.cfg.on_save === 'function') context.cfg.on_save(ksof.settings[context.cfg.script_id]);
+		ksof.trigger('ksof.settings.save');
 		context.keep_settings = true;
 		dialog.dialog('close');
 	}
@@ -388,25 +388,25 @@
 	// Cancel button handler.
 	//------------------------------
 	function cancel_btn(context) {
-		var dialog = $('#wkofs_'+context.cfg.script_id);
+		var dialog = $('#ksofs_'+context.cfg.script_id);
 		dialog.dialog('close');
-		if (typeof context.cfg.on_cancel === 'function') context.cfg.on_cancel(wkof.settings[context.cfg.script_id]);
+		if (typeof context.cfg.on_cancel === 'function') context.cfg.on_cancel(ksof.settings[context.cfg.script_id]);
 	}
 
 	//------------------------------
 	// Close and destroy the dialog.
 	//------------------------------
 	function close(context, keep_settings) {
-		var dialog = $('#wkofs_'+context.cfg.script_id);
+		var dialog = $('#ksofs_'+context.cfg.script_id);
 		if (!context.keep_settings && keep_settings !== true) {
 			// Revert settings
-			wkof.settings[context.cfg.script_id] = deep_merge({},context.reversions);
+			ksof.settings[context.cfg.script_id] = deep_merge({},context.reversions);
 			delete context.reversions;
 		}
 		delete context.keep_settings;
 		dialog.dialog('destroy');
 		if (context.cfg.background !== false) close_background();
-		if (typeof context.cfg.on_close === 'function') context.cfg.on_close(wkof.settings[context.cfg.script_id]);
+		if (typeof context.cfg.on_close === 'function') context.cfg.on_close(ksof.settings[context.cfg.script_id]);
 	}
 
 	//------------------------------
@@ -414,8 +414,8 @@
 	//------------------------------
 	function refresh(context) {
 		var script_id = context.cfg.script_id;
-		var settings = wkof.settings[script_id];
-		var dialog = $('#wkofs_'+script_id);
+		var settings = ksof.settings[script_id];
+		var dialog = $('#ksofs_'+script_id);
 		for (var name in context.config_list) {
 			var elem = dialog.find('#'+script_id+'_'+name);
 			var config = context.config_list[name];
@@ -442,7 +442,7 @@
 					break;
 			}
 		}
-		if (typeof context.cfg.on_refresh === 'function') context.cfg.on_refresh(wkof.settings[context.cfg.script_id]);
+		if (typeof context.cfg.on_refresh === 'function') context.cfg.on_refresh(ksof.settings[context.cfg.script_id]);
 	}
 
 	//------------------------------
@@ -527,7 +527,7 @@
 		}
 
 		var script_id = context.cfg.script_id;
-		var settings = wkof.settings[script_id];
+		var settings = ksof.settings[script_id];
 		if (valid.valid) {
 			if (item.no_save !== true) set_value(context, settings, name, value);
 			if (typeof item.on_change === 'function') item.on_change.call(event.target, name, value, item);
@@ -583,11 +583,11 @@
 	}
 
 	function install_anchor() {
-		var anchor = $('#wkof_ds');
+		var anchor = $('#ksof_ds');
 		if (anchor.length === 0) {
-			anchor = $('<div id="wkof_ds"></div></div>');
+			anchor = $('<div id="ksof_ds"></div></div>');
 			$('body').prepend(anchor);
-			$('#wkof_ds').on('keydown keyup keypress', '.wkof_settings_dialog', function(e) {
+			$('#ksof_ds').on('keydown keyup keypress', '.ksof_settings_dialog', function(e) {
 				// Stop keys from bubbling beyond the background overlay.
 				e.stopPropagation();
 			});
@@ -597,9 +597,9 @@
 
 	function open_background() {
 		var anchor = install_anchor();
-		var bkgd = anchor.find('> #wkofs_bkgd');
+		var bkgd = anchor.find('> #ksofs_bkgd');
 		if (bkgd.length === 0) {
-			bkgd = $('<div id="wkofs_bkgd" refcnt="0"></div>');
+			bkgd = $('<div id="ksofs_bkgd" refcnt="0"></div>');
 			anchor.prepend(bkgd);
 		}
 		var refcnt = Number(bkgd.attr('refcnt'));
@@ -607,7 +607,7 @@
 	}
 
 	function close_background() {
-		var bkgd = $('#wkof_ds > #wkofs_bkgd');
+		var bkgd = $('#ksof_ds > #ksofs_bkgd');
 		if (bkgd.length === 0) return;
 		var refcnt = Number(bkgd.attr('refcnt'));
 		if (refcnt <= 0) return;
@@ -617,14 +617,14 @@
 	//------------------------------
 	// Load jquery UI and the appropriate CSS based on location.
 	//------------------------------
-	var css_url = wkof.support_files['jqui_wkmain.css'];
+	var css_url = ksof.support_files['jqui_wkmain.css'];
 
-	wkof.include('Jquery');
-	wkof.ready('document, Jquery')
+	ksof.include('Jquery');
+	ksof.ready('document, Jquery')
 	.then(function(){
 		return Promise.all([
-			wkof.load_script(wkof.support_files['jquery_ui.js'], true /* cache */),
-			wkof.load_css(css_url, true /* cache */)
+			ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
+			ksof.load_css(css_url, true /* cache */)
 		]);
 	})
 	.then(function(data){
@@ -637,7 +637,7 @@
 
 		// Notify listeners that we are ready.
 		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){wkof.set_state('wkof.Settings', 'ready');},0);
+		setTimeout(function(){ksof.set_state('ksof.Settings', 'ready');},0);
 	});
 
 })(this);

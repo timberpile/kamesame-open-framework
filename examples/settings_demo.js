@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Wanikani Sample Client
 // @namespace   rfindley
-// @description wkof_sampleclient
+// @description ksof_sampleclient
 // @version     1.00
 // @include     https://www.wanikani.com/
 // @include     https://www.wanikani.com/dashboard
@@ -23,8 +23,8 @@ window.sample_client = {};
 	// Modules that our script uses.
 	var modules = 'Menu, Settings';
 
-	wkof.include(modules);
-	wkof.ready(modules).then(startup);
+	ksof.include(modules);
+	ksof.ready(modules).then(startup);
 
 	//-----------------------------------
 	// Script-global variables
@@ -35,7 +35,7 @@ window.sample_client = {};
 	// Called upon startup
 	//-----------------------------------
 	function startup() {
-		wkof.Settings.load('settings_demo')
+		ksof.Settings.load('settings_demo')
 		.then(setup);
 	}
 
@@ -44,10 +44,10 @@ window.sample_client = {};
 	//-----------------------------------
 	function setup() {
 		// Set up menu item to open script.
-		wkof.Menu.insert_script_link({name:'settings_demo',submenu:'Demo',title:'Settings Demo',on_click:dialog_open});
+		ksof.Menu.insert_script_link({name:'settings_demo',submenu:'Demo',title:'Settings Demo',on_click:dialog_open});
 
 		// Set up settings dialog.
-		settings_dialog = new wkof.Settings({
+		settings_dialog = new ksof.Settings({
 			script_id: 'settings_demo',
 			title: 'Settings Demo',
 			pre_open: dialog_preopen,
