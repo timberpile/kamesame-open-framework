@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Jquery module
-// @namespace   rfindley
-// @description Progress module for Wanikani Open Framework
-// @version     1.0.0
-// @copyright   2022+, Robin Findley
+// @name        KameSame Open Framework - Jquery module
+// @namespace   timberpile
+// @description Progress module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 

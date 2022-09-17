@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Menu module
-// @namespace   rfindley
-// @description Menu module for Wanikani Open Framework
-// @version     1.0.14
-// @copyright   2022+, Robin Findley
+// @name        KameSame Open Framework - Menu module
+// @namespace   timberpile
+// @description Menu module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 

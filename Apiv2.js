@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Apiv2 module
-// @namespace   rfindley
-// @description Apiv2 module for Wanikani Open Framework
-// @version     1.0.12
-// @copyright   2018+, Robin Findley
+// @name        KameSame Open Framework - Apiv2 module
+// @namespace   timberpile
+// @description Apiv2 module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 

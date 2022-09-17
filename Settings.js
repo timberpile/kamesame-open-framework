@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Settings module
-// @namespace   rfindley
-// @description Settings module for Wanikani Open Framework
-// @version     1.0.20
-// @copyright   2022+, Robin Findley
+// @name        KameSame Open Framework - Settings module
+// @namespace   timberpile
+// @description Settings module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 

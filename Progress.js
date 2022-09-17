@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Wanikani Open Framework - Progress module
-// @namespace   rfindley
-// @description Progress module for Wanikani Open Framework
-// @version     1.0.11
-// @copyright   2022+, Robin Findley
+// @name        KameSame Open Framework - Progress module
+// @namespace   timberpile
+// @description Progress module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 

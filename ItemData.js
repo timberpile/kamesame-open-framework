@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
-// @name        Wanikani Open Framework - ItemData module
-// @namespace   rfindley
-// @description ItemData module for Wanikani Open Framework
-// @version     1.0.18
-// @copyright   2018+, Robin Findley
+// @name        KameSame Open Framework - ItemData module
+// @namespace   timberpile
+// @description ItemData module for KameSame Open Framework
+// @version     0.1
+// @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
