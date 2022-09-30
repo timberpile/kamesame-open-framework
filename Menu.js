@@ -2,14 +2,12 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.14
+// @version     0.21
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
 (function(global) {
-
-    var ksof
 
     //########################################################################
     //------------------------------
@@ -46,7 +44,6 @@
         if (document.querySelector('.scripts-header')) return false;
 
         console.log('LocationPathname: ' + location.pathname);
-
         
         // Install html.
         if(location.pathname.match(correctSiteMatcher) !== null) {
@@ -66,8 +63,8 @@
                     #scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:11px; font-weight:bold; padding:3px 20px; display:list-item;}
                     #scripts-menu ul.dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}
                     #scripts-menu ul.dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}
-                    #scripts-menu .scripts-submenu {position:relative;}
-                    #scripts-menu .scripts-submenu > a:after {content:"\uf0da"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
+                    #scripts-menu .scripts-submenu {position:relative; font-size: 1rem;}
+                    #scripts-menu .scripts-submenu > a:after {content:">"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
                     #scripts-menu .scripts-submenu .dropdown-menu {left:100%; top:-6px;}
                     </style>`
                 );
@@ -84,13 +81,13 @@
             top_menu = document.querySelector('#scripts-menu');
             let scripts_icon = document.querySelector('#scripts-menu > a.scripts-icon');
 
-            scripts_icon.addEventListener('click', 
-                (e) => {
-                    top_menu.classList.toggle('open');
-                    if (top_menu.classList.contains('open')) document.body.addEventListener('click', body_click);
-                    e.stopPropagation();
-                });
-        } else {
+            scripts_icon.addEventListener('click', (e) => {
+                top_menu.classList.toggle('open');
+                if (top_menu.classList.contains('open')) document.body.addEventListener('click', body_click);
+                e.stopPropagation();
+            });
+        }
+        else {
             // Install css and html.
             top_menu = document.querySelector('button[class$="account"]');
             if (!top_menu) return;
