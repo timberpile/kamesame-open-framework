@@ -9,32 +9,34 @@
 
 (function(global) {
 
-	//########################################################################
-	//------------------------------
-	// Published interface
-	//------------------------------
-	global.ksof.Jquery = {
-		version: version,
-	};
-	//########################################################################
+    var ksof
 
-	var version;
+    //########################################################################
+    //------------------------------
+    // Published interface
+    //------------------------------
+    global.ksof.Jquery = {
+        version: version,
+    };
+    //########################################################################
 
-	ksof.ready('document')
-	.then(function(){
-		var promises = [];
-		try {
-			$.fn.jquery;
-		} catch(e) {
-			promises.push(ksof.load_script(ksof.support_files['jquery.js'], true /* cache */));
-		}
-		return Promise.all(promises);
-	})
-	.then(function(data){
-		version = $.fn.jquery;
-		// Notify listeners that we are ready.
-		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){ksof.set_state('ksof.Jquery', 'ready');},0);
-	});
+    var version;
+
+    ksof.ready('document')
+        .then(function(){
+            var promises = [];
+            try {
+                $.fn.jquery;
+            } catch(e) {
+                promises.push(ksof.load_script(ksof.support_files['jquery.js'], true /* cache */));
+            }
+            return Promise.all(promises);
+        })
+        .then(function(data){
+            version = $.fn.jquery;
+            // Notify listeners that we are ready.
+            // Delay guarantees include() callbacks are called before ready() callbacks.
+            setTimeout(function(){ksof.set_state('ksof.Jquery', 'ready');},0);
+        });
 
 })(window);

@@ -9,213 +9,215 @@
 
 (function(global) {
 
-	//########################################################################
-	//------------------------------
-	// Published interface
-	//------------------------------
-	global.ksof.Progress = {
-		update: update_progress,
-		popup_delay: get_or_set_popup_delay,
-	}
-	//########################################################################
+    var ksof
 
-	const default_popup_delay = 2500; // Delay before popup will open (in milliseconds).
-	var popup_delay = default_popup_delay;
-	var show_popup = true;
-	var popup_delay_started = false, popup_delay_expired = false, popup_timer;
-	var externals_requested = false, externals_loaded = false;
-	var progress_bars = {};
-	var user_closed = false;
-	var dialog_visible = false, dialog;
+    //########################################################################
+    //------------------------------
+    // Published interface
+    //------------------------------
+    global.ksof.Progress = {
+        update: update_progress,
+        popup_delay: get_or_set_popup_delay,
+    }
+    //########################################################################
 
-	//------------------------------
-	// Set the delay before the progress dialog pops up.
-	//------------------------------
-	function get_or_set_popup_delay(delay, silent) {
-		if (typeof delay !== 'undefined' && delay !== null) {
-			if (delay === 'default') delay = default_popup_delay;
-			delay = Number(delay);
-			if (Number.isNaN(delay)) throw 'Invalid value for popup_delay';
-			show_popup = (delay >= 0);
-			localStorage.setItem('ksof.Progress.popup_delay', delay);
-			popup_delay = delay;
-		}
-		if (silent !== true) console.log('popup_delay ' + (show_popup ? ('= ' + popup_delay) : 'is disabled'));
-	}
+    const default_popup_delay = 2500; // Delay before popup will open (in milliseconds).
+    var popup_delay = default_popup_delay;
+    var show_popup = true;
+    var popup_delay_started = false, popup_delay_expired = false, popup_timer;
+    var externals_requested = false, externals_loaded = false;
+    var progress_bars = {};
+    var user_closed = false;
+    var dialog_visible = false, dialog;
 
-	//------------------------------
-	// Update the progress bar.
-	//------------------------------
-	function update_progress(data) {
-		if (data) update_data(data);
+    //------------------------------
+    // Set the delay before the progress dialog pops up.
+    //------------------------------
+    function get_or_set_popup_delay(delay, silent) {
+        if (typeof delay !== 'undefined' && delay !== null) {
+            if (delay === 'default') delay = default_popup_delay;
+            delay = Number(delay);
+            if (Number.isNaN(delay)) throw 'Invalid value for popup_delay';
+            show_popup = (delay >= 0);
+            localStorage.setItem('ksof.Progress.popup_delay', delay);
+            popup_delay = delay;
+        }
+        if (silent !== true) console.log('popup_delay ' + (show_popup ? ('= ' + popup_delay) : 'is disabled'));
+    }
 
-		if (!dialog_visible && !have_pending()) return shutdown();
+    //------------------------------
+    // Update the progress bar.
+    //------------------------------
+    function update_progress(data) {
+        if (data) update_data(data);
 
-		// We have something pending, but don't show dialog until popup_delay has passed.
-		if (!popup_delay_started) return start_popup_delay();
+        if (!dialog_visible && !have_pending()) return shutdown();
 
-		// Popup delay has passed.  Show progress.
-		if (!popup_delay_expired) return;
-		update_dialog();
-	}
+        // We have something pending, but don't show dialog until popup_delay has passed.
+        if (!popup_delay_started) return start_popup_delay();
 
-	//------------------------------
-	// Update our stored progress bar status
-	//------------------------------
-	function update_data(data) {
-		var bar = progress_bars[data.name];
-		if (!bar) progress_bars[data.name] = bar = {label: data.label};
-		bar.is_updated = true;
-		bar.value = data.value;
-		bar.max = data.max;
-		if (bar.max === 0) {
-			bar.value = 1;
-			bar.max = 1;
-		}
-		// Don't retain items that complete before the dialog pops up.
-		if (!popup_delay_expired && (bar.value >= bar.max)) delete progress_bars[data.name];
-	}
+        // Popup delay has passed.  Show progress.
+        if (!popup_delay_expired) return;
+        update_dialog();
+    }
 
-	//------------------------------
-	// Check if some progress is still pending.
-	//------------------------------
-	function have_pending() {
-		var all_done = true;
-		for (name in progress_bars) {
-			var progress_bar = progress_bars[name];
-			if (progress_bar.value < progress_bar.max) all_done = false;
-		}
-		return !all_done;
-	}
+    //------------------------------
+    // Update our stored progress bar status
+    //------------------------------
+    function update_data(data) {
+        var bar = progress_bars[data.name];
+        if (!bar) progress_bars[data.name] = bar = {label: data.label};
+        bar.is_updated = true;
+        bar.value = data.value;
+        bar.max = data.max;
+        if (bar.max === 0) {
+            bar.value = 1;
+            bar.max = 1;
+        }
+        // Don't retain items that complete before the dialog pops up.
+        if (!popup_delay_expired && (bar.value >= bar.max)) delete progress_bars[data.name];
+    }
 
-	//------------------------------
-	// Delay the dialog from popping up until progress takes at least N milliseconds.
-	//------------------------------
-	function start_popup_delay() {
-		get_or_set_popup_delay(localStorage.getItem('ksof.Progress.popup_delay'), true /* silent */);
-		if (!show_popup) return;
-		popup_delay_started = true;
-		popup_timer = setTimeout(function() {
-			popup_delay_expired = true;
-			update_progress();
-		}, popup_delay);
-	}
+    //------------------------------
+    // Check if some progress is still pending.
+    //------------------------------
+    function have_pending() {
+        var all_done = true;
+        for (const name in progress_bars) {
+            var progress_bar = progress_bars[name];
+            if (progress_bar.value < progress_bar.max) all_done = false;
+        }
+        return !all_done;
+    }
 
-	//------------------------------
-	// Update the contents of the progress dialog (if it's currently visible)
-	//------------------------------
-	function update_dialog() {
-		if (!externals_requested) {
-			externals_requested = true;
-			load_externals()
-			.then(function() {
-				externals_loaded = true;
-				update_progress();
-			});
-			return;
-		}
-		if (!externals_loaded) return;
-		if (user_closed) return;
+    //------------------------------
+    // Delay the dialog from popping up until progress takes at least N milliseconds.
+    //------------------------------
+    function start_popup_delay() {
+        get_or_set_popup_delay(localStorage.getItem('ksof.Progress.popup_delay'), true /* silent */);
+        if (!show_popup) return;
+        popup_delay_started = true;
+        popup_timer = setTimeout(function() {
+            popup_delay_expired = true;
+            update_progress();
+        }, popup_delay);
+    }
 
-		if (!dialog_visible) {
-			dialog_visible = true;
-			if (!document.querySelector('#ksof_ds')) {
-				let ds = document.createElement('div');
-				ds.setAttribute('id', 'ksof_ds');
-				document.body.prepend(ds);
-			}
+    //------------------------------
+    // Update the contents of the progress dialog (if it's currently visible)
+    //------------------------------
+    function update_dialog() {
+        if (!externals_requested) {
+            externals_requested = true;
+            load_externals()
+                .then(function() {
+                    externals_loaded = true;
+                    update_progress();
+                });
+            return;
+        }
+        if (!externals_loaded) return;
+        if (user_closed) return;
 
-			dialog = $('<div id="ksof_progbar_dlg" class="ksofs_progress_dlg" style="display:none;"></div>');
+        if (!dialog_visible) {
+            dialog_visible = true;
+            if (!document.querySelector('#ksof_ds')) {
+                let ds = document.createElement('div');
+                ds.setAttribute('id', 'ksof_ds');
+                document.body.prepend(ds);
+            }
 
-			dialog.dialog({
-				title: 'Loading Data...',
-				minHeight: 20,
-				maxHeight: window.innerHeight,
-				height: 'auto',
-				dialogClass: 'ksof_progbar_dlg',
-				modal: false,
-				resizable: false,
-				autoOpen: false,
-				appendTo: '#ksof_ds',
-				close: dialog_close
-			});
-			dialog.dialog('open');
-		}
+            dialog = $('<div id="ksof_progbar_dlg" class="ksofs_progress_dlg" style="display:none;"></div>');
 
-		var all_done = true;
-		for (name in progress_bars) {
-			var progress_bar = progress_bars[name];
-			if (progress_bar.value < progress_bar.max) all_done = false;
-			var bar = $('#ksof_progbar_dlg .ksof_progbar_wrap[name="'+name+'"]');
-			if (bar.length === 0) {
-				bar = $('<div class="ksof_progbar_wrap" name="'+name+'"><label>'+progress_bar.label+'</label><div class="ksof_progbar"></div></div>');
-				var bars = $('#ksof_progbar_dlg .ksof_progbar_wrap');
-				bars.push(bar[0]);
-				$('#ksof_progbar_dlg').append(bars.sort(bar_label_compare));
-			}
-			if (progress_bar.is_updated) {
-				progress_bar.is_updated = false;
-				bar.find('.ksof_progbar').progressbar({value: progress_bar.value, max: progress_bar.max});
-			}
-		}
+            dialog.dialog({
+                title: 'Loading Data...',
+                minHeight: 20,
+                maxHeight: window.innerHeight,
+                height: 'auto',
+                dialogClass: 'ksof_progbar_dlg',
+                modal: false,
+                resizable: false,
+                autoOpen: false,
+                appendTo: '#ksof_ds',
+                close: dialog_close
+            });
+            dialog.dialog('open');
+        }
 
-		if (all_done) shutdown();
-	}
+        var all_done = true;
+        for (const name in progress_bars) {
+            var progress_bar = progress_bars[name];
+            if (progress_bar.value < progress_bar.max) all_done = false;
+            var bar = $('#ksof_progbar_dlg .ksof_progbar_wrap[name="'+name+'"]');
+            if (bar.length === 0) {
+                bar = $('<div class="ksof_progbar_wrap" name="'+name+'"><label>'+progress_bar.label+'</label><div class="ksof_progbar"></div></div>');
+                var bars = $('#ksof_progbar_dlg .ksof_progbar_wrap');
+                bars.push(bar[0]);
+                $('#ksof_progbar_dlg').append(bars.sort(bar_label_compare));
+            }
+            if (progress_bar.is_updated) {
+                progress_bar.is_updated = false;
+                bar.find('.ksof_progbar').progressbar({value: progress_bar.value, max: progress_bar.max});
+            }
+        }
 
-	function dialog_close() {
-		dialog.dialog('destroy');
-		dialog_visible = false;
-		user_closed = true;
-	}
+        if (all_done) shutdown();
+    }
 
-	//------------------------------
-	// Load external support files (jquery UI and stylesheet)
-	//------------------------------
-	function load_externals() {
-		var css_url = ksof.support_files['jqui_ksmain.css'];
+    function dialog_close() {
+        dialog.dialog('destroy');
+        dialog_visible = false;
+        user_closed = true;
+    }
 
-		ksof.include('Jquery');
-		return ksof.ready('document, Jquery')
-			.then(function(){
-				return Promise.all([
-					ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
-					ksof.load_css(css_url, true /* cache */)
-				]);
-			})
-			.then(function(){
-				// Workaround...	https://community.wanikani.com/t/19984/55
-				delete $.fn.autocomplete;
-			});
-	}
+    //------------------------------
+    // Load external support files (jquery UI and stylesheet)
+    //------------------------------
+    function load_externals() {
+        var css_url = ksof.support_files['jqui_ksmain.css'];
 
-	//------------------------------
-	// Comparison function for sorting progress bars.
-	//------------------------------
-	function bar_label_compare(a, b) {
-		var a = $(a).find('label').text();
-		var b = $(b).find('label').text();
-		return a.localeCompare(b);
-	}
+        ksof.include('Jquery');
+        return ksof.ready('document, Jquery')
+            .then(function(){
+                return Promise.all([
+                    ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
+                    ksof.load_css(css_url, true /* cache */)
+                ]);
+            })
+            .then(function(){
+                // Workaround...	https://community.wanikani.com/t/19984/55
+                delete $.fn.autocomplete;
+            });
+    }
 
-	//------------------------------
-	// Shut down the dialog box and cancel the popup delay timer.
-	//------------------------------
-	function shutdown() {
-		// If popup timer was pending, cancel it.
-		if (popup_delay_started && !popup_delay_expired) clearTimeout(popup_timer);
-		popup_delay_started = false;
-		popup_delay_expired = false;
+    //------------------------------
+    // Comparison function for sorting progress bars.
+    //------------------------------
+    function bar_label_compare(a, b) {
+        const a_text = $(a).find('label').text();
+        const b_text = $(b).find('label').text();
+        return a_text.localeCompare(b_text);
+    }
 
-		// If progress dialog is open, close it.
-		if (dialog_visible) dialog.dialog('close');
-		user_closed = false;
-		progress_bars = {};
-	}
+    //------------------------------
+    // Shut down the dialog box and cancel the popup delay timer.
+    //------------------------------
+    function shutdown() {
+        // If popup timer was pending, cancel it.
+        if (popup_delay_started && !popup_delay_expired) clearTimeout(popup_timer);
+        popup_delay_started = false;
+        popup_delay_expired = false;
 
-	function set_ready_state() {
-		// Delay guarantees include() callbacks are called before ready() callbacks.
-		setTimeout(function(){ksof.set_state('ksof.Progress', 'ready');}, 0);
-	}
-	set_ready_state();
+        // If progress dialog is open, close it.
+        if (dialog_visible) dialog.dialog('close');
+        user_closed = false;
+        progress_bars = {};
+    }
+
+    function set_ready_state() {
+        // Delay guarantees include() callbacks are called before ready() callbacks.
+        setTimeout(function(){ksof.set_state('ksof.Progress', 'ready');}, 0);
+    }
+    set_ready_state();
 
 })(window);

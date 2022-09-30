@@ -1,0 +1,27 @@
+{
+  "name": "kamesame-open-framework",
+  "version": "0.1.0",
+  "description": "KameSame Open Framework (\"`ksof`\") is a user-created framework for rapidly developing web browser userscripts for use with the Japanese kanji learning site [kamesame.com](https://www.kamesame.com).",
+  "main": "Core.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timberpile/kamesame-open-framework.git"
+  },
+  "author": "Robin Findley, Timberpile",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/timberpile/kamesame-open-framework/issues"
+  },
+  "homepage": "https://github.com/timberpile/kamesame-open-framework#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "eslint": "^8.24.0"
+  }
+}
