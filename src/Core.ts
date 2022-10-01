@@ -196,7 +196,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
         async load_file(url: string, use_cache: boolean) {
-            const fetch_promise = new Deferred<any>();
+            const fetch_deferred = new Deferred<any>();
             const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
             if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
                 use_cache = false;
@@ -217,17 +217,17 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                     return
                 }
                 if (request.readyState !== 4) return;
-                if (request.status >= 400 || request.status === 0) return fetch_promise.reject(request.status);
+                if (request.status >= 400 || request.status === 0) return fetch_deferred.reject(request.status);
                 if (use_cache) {
                     await ksof.file_cache.save(url, request.response)
-                    fetch_promise.resolve.bind(null, request.response)
+                    fetch_deferred.resolve.bind(null, request.response)
                 } else {
-                    fetch_promise.resolve(request.response);
+                    fetch_deferred.resolve(request.response);
                 }
             }
             request.open('GET', url, true);
             request.send();
-            return fetch_promise.promise;
+            return fetch_deferred.promise;
         }
 
         //------------------------------
@@ -366,12 +366,12 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                 return this.include(module_list)
             }
 
-            const include_promise = new Deferred<object>();
+            const include_deferred = new Deferred<object>();
             const module_names = split_list(module_list);
             const script_cnt = module_names.length;
             if (script_cnt === 0) {
-                include_promise.resolve({loaded:[], failed:[]});
-                return include_promise.promise;
+                include_deferred.resolve({loaded:[], failed:[]});
+                return include_deferred.promise;
             }
 
             let done_cnt = 0;
@@ -395,7 +395,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                 await_load.then(push_loaded, push_failed);
             }
 
-            return include_promise.promise;
+            return include_deferred.promise;
 
             function push_loaded(url:string) {
                 loaded.push(url);
@@ -409,8 +409,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
 
             function check_done() {
                 if (++done_cnt < script_cnt) return;
-                if (failed.length === 0) include_promise.resolve({loaded:loaded, failed:failed});
-                else include_promise.reject({error:'Failure loading module', loaded:loaded, failed:failed});
+                if (failed.length === 0) include_deferred.resolve({loaded:loaded, failed:failed});
+                else include_deferred.reject({error:'Failure loading module', loaded:loaded, failed:failed});
             }
         }
 
@@ -487,16 +487,16 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         async clear() {
             const db = await file_cache_open()
 
-            const clear_promise = new Deferred<void | Event>();
+            const clear_deferred = new Deferred<void | Event>();
             ksof.file_cache.dir = {};
             if (db === null) {
-                return clear_promise.resolve();
+                return clear_deferred.resolve();
             }
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.clear();
-            transaction.oncomplete = clear_promise.resolve;
-            return clear_promise.promise
+            transaction.oncomplete = clear_deferred.resolve;
+            return clear_deferred.promise
         }
 
         //------------------------------
@@ -505,8 +505,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         async delete(pattern: string | RegExp): Promise<unknown> {
             const db = await file_cache_open()
 
-            const del_promise = new Deferred<string[]>();
-            if (db === null) return del_promise.resolve([]);
+            const del_deferred = new Deferred<string[]>();
+            if (db === null) return del_deferred.resolve([]);
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             const files = Object.keys(ksof.file_cache.dir).filter(function(file){
@@ -521,8 +521,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                 delete ksof.file_cache.dir[file];
             });
             this.dir_save();
-            transaction.oncomplete = del_promise.resolve.bind(null, files);
-            return del_promise;
+            transaction.oncomplete = del_deferred.resolve.bind(null, files);
+            return del_deferred;
         }
 
         //------------------------------
@@ -568,7 +568,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             if (ksof.file_cache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
-            const load_promise = new Deferred<any>()
+            const load_deferred = new Deferred<any>()
             const transaction = db.transaction('files', 'readonly');
             const store = transaction.objectStore('files');
             const request = store.get(name);
@@ -576,7 +576,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             this.dir_save();
             request.onsuccess = finish;
             request.onerror = error;
-            return load_promise.promise;
+            return load_deferred.promise;
 
             function finish(event: Event){
                 if(!(event.target instanceof IDBRequest)) {
@@ -584,14 +584,14 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                 }
 
                 if (event.target.result === undefined) {
-                    load_promise.reject(name);
+                    load_deferred.reject(name);
                 } else {
-                    load_promise.resolve(event.target.result.content);
+                    load_deferred.resolve(event.target.result.content);
                 }
             }
 
             function error(){
-                load_promise.reject(name);
+                load_deferred.reject(name);
             }
         }
 
@@ -603,15 +603,15 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
 
             if (db === null) return Promise.resolve(name)
 
-            const save_promise = new Deferred<string>()
+            const save_deferred = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.put({name:name,content:content});
             const now = new Date().toISOString();
             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
             ksof.file_cache.dir_save(true /* immediately */);
-            transaction.oncomplete = save_promise.resolve.bind(null, name);
-            return save_promise.promise
+            transaction.oncomplete = save_deferred.resolve.bind(null, name);
+            return save_deferred.promise
         }
 
         //------------------------------
@@ -673,22 +673,22 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
     //------------------------------
     async function file_cache_open() {
         if (file_cache_open_promise) return file_cache_open_promise;
-        const open_promise = new Deferred<IDBDatabase | null>();
+        const open_deferred = new Deferred<IDBDatabase | null>();
 
-        file_cache_open_promise = open_promise.promise;
+        file_cache_open_promise = open_deferred.promise;
         const request = indexedDB.open('ksof.file_cache')
         request.onupgradeneeded = upgrade_db;
         request.onsuccess = get_dir;
         request.onerror = error;
-        return open_promise.promise;
+        return open_deferred.promise;
 
         function error() {
             console.log('indexedDB could not open!');
             ksof.file_cache.dir = {};
             if (ignore_missing_indexeddb) {
-                open_promise.resolve(null);
+                open_deferred.resolve(null);
             } else {
-                open_promise.reject();
+                open_deferred.reject();
             }
         }
 
@@ -710,8 +710,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             const store = transaction.objectStore('files');
             const request = store.get('[dir]');
             request.onsuccess = process_dir
-            transaction.oncomplete = open_promise.resolve.bind(null, db);
-            open_promise.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
+            transaction.oncomplete = open_deferred.resolve.bind(null, db);
+            open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
         }
 
         function process_dir(event: Event){
