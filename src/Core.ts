@@ -3,20 +3,16 @@
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
 // @version     0.1
-// @match       https://www.kamesame.com/*
+// @match       http*://*kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
-// @require     https://cdn.jsdelivr.net/npm/idb@7/build/umd.js
 // @run-at      document-start
 // @grant       none
 // ==/UserScript==
 
-interface IDB {
-    deleteDB: Function
-}
+import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types';
 
-
-(function(global) {
+(function(global: Window) {
     'use strict';
 
 
@@ -52,66 +48,65 @@ interface IDB {
     // Published interface
     //------------------------------
 
-    type CallbackFunction = (value:string, current_value:string) => void
-
-    interface StateListener {
-        callback: CallbackFunction | null
-        persistent:boolean
-        value:string
-    }
-
-    class KSOF {
+    class KSOF implements KSOFI {
         file_cache: FileCache
         support_files: { [key: string]: string }
         version: Version
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
-        event_listeners: {[key: Event]: EventListener[]}
+        event_listeners: {[key:string]: unknownCallback[]}
         include_promises: {[key:string]: Promise<string>}
 
         constructor() {
             this.file_cache = new FileCache()
-            this.support_files = {}
             this.version = new Version(version)
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
             this.include_promises = {}
+            this.support_files = {
+                'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
+                'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
+                'jqui_ksmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/jqui-ksmain.css',
+            }
         }
 
         //------------------------------
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
-        load_file(url: string, use_cache: boolean) {
-            const fetch_promise = promise<object>();
+        async load_file(url: string, use_cache: boolean) {
+            const fetch_promise = new Deferred<any>();
             const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
-            if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) use_cache = false;
+            if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
+                use_cache = false;
+            }
+
             if (use_cache === true) {
-                return this.file_cache.load(url).catch(fetch_url);
-            } else {
-                return fetch_url();
+                try {
+                    return this.file_cache.load(url)
+                } catch(error) {
+                    // file not in cache
+                }
             }
 
             // Retrieve file from server
-            function fetch_url(){
-                const request = new XMLHttpRequest();
-                request.onreadystatechange = (event) => {
-                    if (!event.target) {
-                        return
-                    }
-                    if (event.target.readyState !== 4) return;
-                    if (event.target.status >= 400 || event.target.status === 0) return fetch_promise.reject(event.target.status);
-                    if (use_cache) {
-                        ksof.file_cache.save(url, event.target.response)
-                            .then(fetch_promise.resolve.bind(null,event.target.response));
-                    } else {
-                        fetch_promise.resolve(event.target.response);
-                    }
+            const request = new XMLHttpRequest();
+            request.onreadystatechange = async (event) => {
+                if (event.target != request) {
+                    return
                 }
-                request.open('GET', url, true);
-                request.send();
-                return fetch_promise;
+                if (request.readyState !== 4) return;
+                if (request.status >= 400 || request.status === 0) return fetch_promise.reject(request.status);
+                if (use_cache) {
+                    await ksof.file_cache.save(url, request.response)
+                    fetch_promise.resolve.bind(null, request.response)
+                } else {
+                    fetch_promise.resolve(request.response);
+                }
             }
+            request.open('GET', url, true);
+            request.send();
+            return fetch_promise.promise;
         }
 
         //------------------------------
@@ -155,10 +150,11 @@ interface IDB {
         // If persistent === true, continue listening for additional state changes
         // If value is '*', callback will be called for all state changes.
         //------------------------------
-        wait_state(state_var:string, value:string, callback: CallbackFunction | null = null, persistent = false): Promise<unknown> | void {
+        wait_state(state_var:string, value:string, callback: CallbackFunction | null = null, persistent = false) {
+            // TODO better return value if callback defined
             let promise;
             if (callback === undefined) {
-                promise = new Promise(function(resolve, reject) {
+                promise = new Promise((resolve) => {
                     callback = resolve;
                 });
             }
@@ -183,14 +179,14 @@ interface IDB {
         //------------------------------
         // Fire an event, which then calls callbacks for any listeners.
         //------------------------------
-        trigger_event(event, ...args_: any) {
+        trigger_event(event: string, ...args_: unknown[]) {
             const listeners = this.event_listeners[event];
-            if (listeners === undefined) return;
-            const args:any[] = [];
+            if (listeners === undefined) return this;
+            const args:unknown[] = [];
             Array.prototype.push.apply(args,args_);
             args.shift();
             for (const idx in listeners) try {
-                listeners[idx].apply(null,args);
+                listeners[idx].apply(null, args);
             } catch (err) {
                 //do nothing
             }
@@ -200,7 +196,7 @@ interface IDB {
         //------------------------------
         // Add a listener for an event.
         //------------------------------
-        wait_event(event, callback) {
+        wait_event(event:string, callback: unknownCallback) {
             if (this.event_listeners[event] === undefined) this.event_listeners[event] = [];
             this.event_listeners[event].push(callback);
             return this
@@ -209,50 +205,52 @@ interface IDB {
         //------------------------------
         // Load and install a specific file type into the DOM.
         //------------------------------
-        load_and_append(url:string, tag_name:string, location:string, use_cache:boolean) {
+        async load_and_append(url:string, tag_name:string, location:string, use_cache:boolean) {
             url = url.replace(/"/g,'\'');
-            if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) return Promise.resolve('');
-            return this.load_file(url, use_cache).then(append_to_tag);
-
-            function append_to_tag(content:string) {
-                const tag = document.createElement(tag_name);
-                tag.innerHTML = content;
-                tag.setAttribute('uid', url);
-                const locationElem = document.querySelector(location)
-                if (locationElem) {
-                    locationElem.appendChild(tag);
-                }
-                return url;
+            if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) {
+                return Promise.resolve('');
             }
+            const content = await this.load_file(url, use_cache)
+
+            const tag = document.createElement(tag_name);
+            tag.innerHTML = content;
+            tag.setAttribute('uid', url);
+            const locationElem = document.querySelector(location)
+            if (locationElem) {
+                locationElem.appendChild(tag);
+            }
+            return url;
         }
 
         //------------------------------
         // Load and install Javascript.
         //------------------------------
-        load_script(url:string, use_cache: boolean) {
+        async load_script(url:string, use_cache: boolean) {
             return this.load_and_append(url, 'script', 'body', use_cache);
         }
 
         //------------------------------
         // Load and install a CSS file.
         //------------------------------
-        load_css(url:string, use_cache:boolean) {
+        async load_css(url:string, use_cache:boolean) {
             return this.load_and_append(url, 'style', 'head', use_cache);
         }
 
         //------------------------------
         // Include a list of modules.
         //------------------------------
-        include(module_list:string) {
+        async include(module_list:string): Promise<object> {
             if (this.get_state('ksof.ksof') !== 'ready') {
-                return this.ready('ksof').then(() => {return this.include(module_list);});
+                await this.ready('ksof')
+                return this.include(module_list)
             }
-            const include_promise = promise<object>();
+
+            const include_promise = new Deferred<object>();
             const module_names = split_list(module_list);
             const script_cnt = module_names.length;
             if (script_cnt === 0) {
                 include_promise.resolve({loaded:[], failed:[]});
-                return include_promise;
+                return include_promise.promise;
             }
 
             let done_cnt = 0;
@@ -276,7 +274,7 @@ interface IDB {
                 await_load.then(push_loaded, push_failed);
             }
 
-            return include_promise;
+            return include_promise.promise;
 
             function push_loaded(url:string) {
                 loaded.push(url);
@@ -315,15 +313,6 @@ interface IDB {
                 return Promise.all(ready_promises);
             }
         }
-    }
-
-    // eslint-disable-next-line no-var
-    var ksof = new KSOF()
-
-    ksof.support_files = {
-        'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
-        'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-        'jqui_ksmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/jqui-ksmain.css',
     }
 
     interface FileCacheEntry {
@@ -374,45 +363,45 @@ interface IDB {
         //------------------------------
         // Clear the file_cache database.
         //------------------------------
-        clear(): Promise<unknown> {
-            return file_cache_open().then(clear);
+        async clear() {
+            const db = await file_cache_open()
 
-            function clear(db:IDBDatabase) {
-                const clear_promise = promise();
-                ksof.file_cache.dir = {};
-                if (db === null) return clear_promise.resolve();
-                const transaction = db.transaction('files', 'readwrite');
-                const store = transaction.objectStore('files');
-                store.clear();
-                transaction.oncomplete = clear_promise.resolve;
+            const clear_promise = new Deferred<void | Event>();
+            ksof.file_cache.dir = {};
+            if (db === null) {
+                return clear_promise.resolve();
             }
+            const transaction = db.transaction('files', 'readwrite');
+            const store = transaction.objectStore('files');
+            store.clear();
+            transaction.oncomplete = clear_promise.resolve;
+            return clear_promise.promise
         }
 
         //------------------------------
         // Delete a file from the file_cache database.
         //------------------------------
-        delete(pattern: string | RegExp): Promise<unknown> {
-            return file_cache_open()
-                .then((db:IDBDatabase) => {
-                    const del_promise = promise();
-                    if (db === null) return del_promise.resolve();
-                    const transaction = db.transaction('files', 'readwrite');
-                    const store = transaction.objectStore('files');
-                    const files = Object.keys(ksof.file_cache.dir).filter(function(file){
-                        if (pattern instanceof RegExp) {
-                            return file.match(pattern) !== null;
-                        } else {
-                            return (file === pattern);
-                        }
-                    });
-                    files.forEach(function(file){
-                        store.delete(file);
-                        delete ksof.file_cache.dir[file];
-                    });
-                    this.dir_save();
-                    transaction.oncomplete = del_promise.resolve.bind(null, files);
-                    return del_promise;
-                });
+        async delete(pattern: string | RegExp): Promise<unknown> {
+            const db = await file_cache_open()
+
+            const del_promise = new Deferred<string[]>();
+            if (db === null) return del_promise.resolve([]);
+            const transaction = db.transaction('files', 'readwrite');
+            const store = transaction.objectStore('files');
+            const files = Object.keys(ksof.file_cache.dir).filter(function(file){
+                if (pattern instanceof RegExp) {
+                    return file.match(pattern) !== null;
+                } else {
+                    return (file === pattern);
+                }
+            });
+            files.forEach(function(file){
+                store.delete(file);
+                delete ksof.file_cache.dir[file];
+            });
+            this.dir_save();
+            transaction.oncomplete = del_promise.resolve.bind(null, files);
+            return del_promise;
         }
 
         //------------------------------
@@ -427,7 +416,10 @@ interface IDB {
 
             this.sync_timer = setTimeout(() => {
                 file_cache_open()
-                    .then((db:IDBDatabase) =>{
+                    .then((db) => {
+                        if(!db) {
+                            return
+                        }
                         this.sync_timer = undefined;
                         const transaction = db.transaction('files', 'readwrite');
                         const store = transaction.objectStore('files');
@@ -446,18 +438,16 @@ interface IDB {
         //------------------------------
         // Load a file from the file_cache database.
         //------------------------------
-        async load(name:string): Promise<object> {
-            const load_promise = new Promise<object>((resolve, reject) => {
-                setTimeout(function() { resolve({a: 'I love You !!'}); }, 3000);
-            })
-            // const load_promise = new Promise<object>()
-            // const load_promise = promise();
+        async load(name:string) {
             const db = await file_cache_open()
-
-            if (ksof.file_cache.dir[name] === undefined) {
-                load_promise.reject(name);
-                return load_promise;
+            if (!db) {
+                return Promise.reject()
             }
+            
+            if (ksof.file_cache.dir[name] === undefined) {
+                return Promise.reject(name)
+            }
+            const load_promise = new Deferred<any>()
             const transaction = db.transaction('files', 'readonly');
             const store = transaction.objectStore('files');
             const request = store.get(name);
@@ -465,9 +455,13 @@ interface IDB {
             this.dir_save();
             request.onsuccess = finish;
             request.onerror = error;
-            return load_promise;
+            return load_promise.promise;
 
-            function finish(event: {target:IDBRequest}){
+            function finish(event: Event){
+                if(!(event.target instanceof IDBRequest)) {
+                    return
+                }
+
                 if (event.target.result === undefined) {
                     load_promise.reject(name);
                 } else {
@@ -475,46 +469,29 @@ interface IDB {
                 }
             }
 
-            function error(event){
+            function error(){
                 load_promise.reject(name);
             }
-
         }
 
         //------------------------------
         // Save a file into the file_cache database.
         //------------------------------
-        async save(name:string, content:object, extra_attribs:object) {
+        async save(name:string, content:object, extra_attribs:object = {}) {
             const db = await file_cache_open()
 
             if (db === null) return Promise.resolve(name)
+
+            const save_promise = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.put({name:name,content:content});
             const now = new Date().toISOString();
             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
             ksof.file_cache.dir_save(true /* immediately */);
-            transaction.oncomplete = Promise.resolve.bind(null, name);
+            transaction.oncomplete = save_promise.resolve.bind(null, name);
+            return save_promise.promise
         }
-
-
-        // //------------------------------
-        // // Save a file into the file_cache database.
-        // //------------------------------
-        // save(name:string, content:object, extra_attribs:object) {
-        //     return file_cache_open()
-        //         .then((db:IDBDatabase) => {
-        //             const save_promise = promise();
-        //             if (db === null) return save_promise.resolve(name);
-        //             const transaction = db.transaction('files', 'readwrite');
-        //             const store = transaction.objectStore('files');
-        //             store.put({name:name,content:content});
-        //             const now = new Date().toISOString();
-        //             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
-        //             ksof.file_cache.dir_save(true /* immediately */);
-        //             transaction.oncomplete = save_promise.resolve.bind(null, name);
-        //         })
-        // }
 
         //------------------------------
         // Process no-cache requests.
@@ -548,12 +525,19 @@ interface IDB {
     // eslint-disable-next-line no-irregular-whitespace
     function split_list(str: string) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0);});}
     
-    function promise<T>(){
-        let a,b = new Promise<T>((d,e) => { a=d; b=e; });
-        const c = new Promise<T>((d,e) => { a=d; b=e; });
-        c.resolve=a;
-        c.reject=b;
-        return c;
+    class Deferred<T> {
+        promise: Promise<T>
+        resolve: (value: T | PromiseLike<T>) => void
+        reject: (value?: any) => void
+
+        constructor() {
+            this.resolve = () => {/*placeholder*/}
+            this.reject = () => {/*placeholder*/}
+            this.promise = new Promise<T>((resolve, reject)=> {
+                this.reject = reject
+                this.resolve = resolve
+            })
+        }
     }
 
     //########################################################################
@@ -561,20 +545,21 @@ interface IDB {
 
     //########################################################################
 
-    let file_cache_open_promise: Promise<IDBDatabase> | undefined;
+    let file_cache_open_promise: Promise<IDBDatabase | null> | undefined;
 
     //------------------------------
     // Open the file_cache database (or return handle if open).
     //------------------------------
     async function file_cache_open() {
         if (file_cache_open_promise) return file_cache_open_promise;
-        const open_promise = promise<IDBDatabase>();
-        file_cache_open_promise = open_promise;
+        const open_promise = new Deferred<IDBDatabase | null>();
+
+        file_cache_open_promise = open_promise.promise;
         const request = indexedDB.open('ksof.file_cache')
         request.onupgradeneeded = upgrade_db;
         request.onsuccess = get_dir;
         request.onerror = error;
-        return open_promise;
+        return open_promise.promise;
 
         function error() {
             console.log('indexedDB could not open!');
@@ -587,29 +572,29 @@ interface IDB {
         }
 
         function upgrade_db(event:IDBVersionChangeEvent){
-            if(!event.target) {
+            if(!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
-            
-            const db:IDBDatabase = event.target.result;
+
+            const db = event.target.result;
             db.createObjectStore('files', {keyPath:'name'});
         }
 
         function get_dir(event:Event){
-            if(!event.target) {
+            if(!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
-            const db:IDBDatabase = event.target.result;
+            const db = event.target.result;
             const transaction = db.transaction('files', 'readonly');
             const store = transaction.objectStore('files');
             const request = store.get('[dir]');
-            request.onsuccess = process_dir;
+            request.onsuccess = process_dir
             transaction.oncomplete = open_promise.resolve.bind(null, db);
-            open_promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
+            open_promise.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
         }
 
         function process_dir(event: Event){
-            if(!event.target) {
+            if(!(event.target instanceof IDBRequest)) {
                 return
             }
             const result = event.target.result
@@ -621,61 +606,6 @@ interface IDB {
             }
         }
     }
-    // async function file_cache_open() {
-    //     if (file_cache_open_promise) return file_cache_open_promise;
-    //     const open_promise = promise<IDBDatabase>();
-    //     file_cache_open_promise = open_promise;
-    //     const request = indexedDB.open('ksof.file_cache')
-    //     request.onupgradeneeded = upgrade_db;
-    //     request.onsuccess = get_dir;
-    //     request.onerror = error;
-    //     return open_promise;
-
-    //     function error() {
-    //         console.log('indexedDB could not open!');
-    //         ksof.file_cache.dir = {};
-    //         if (ignore_missing_indexeddb) {
-    //             open_promise.resolve(null);
-    //         } else {
-    //             open_promise.reject();
-    //         }
-    //     }
-
-    //     function upgrade_db(event:IDBVersionChangeEvent){
-    //         if(!event.target) {
-    //             return
-    //         }
-            
-    //         const db:IDBDatabase = event.target.result;
-    //         db.createObjectStore('files', {keyPath:'name'});
-    //     }
-
-    //     function get_dir(event:Event){
-    //         if(!event.target) {
-    //             return
-    //         }
-    //         const db:IDBDatabase = event.target.result;
-    //         const transaction = db.transaction('files', 'readonly');
-    //         const store = transaction.objectStore('files');
-    //         const request = store.get('[dir]');
-    //         request.onsuccess = process_dir;
-    //         transaction.oncomplete = open_promise.resolve.bind(null, db);
-    //         open_promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
-    //     }
-
-    //     function process_dir(event: Event){
-    //         if(!event.target) {
-    //             return
-    //         }
-    //         const result = event.target.result
-
-    //         if (result === undefined) {
-    //             ksof.file_cache.dir = {};
-    //         } else {
-    //             ksof.file_cache.dir = JSON.parse(result.content);
-    //         }
-    //     }
-    // }
 
     //
     // The current time, offset by the specified days
@@ -725,6 +655,10 @@ interface IDB {
         file_cache_open();
         ksof.set_state('ksof.ksof', 'ready');
     }
-    startup();
 
+    // eslint-disable-next-line no-var
+    var ksof = new KSOF();
+    global.ksof = ksof
+
+    startup();
 })(window);
