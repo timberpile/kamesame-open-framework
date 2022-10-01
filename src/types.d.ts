@@ -8,6 +8,22 @@ export type StateListener = {
 
 export type unknownCallback = (...args: unknown[]) => void
 
+export type ItemInfoStateI = {
+    characters: string
+    meanings: string[]
+    readings: string[]
+    variations: string[]
+    parts_of_speech: string[]
+    wanikani_level: number | null
+    tags: string[]
+    on: string
+    type: string
+}
+
+export type ItemInfoI = {
+    currentState: () => ItemInfoStateI
+}
+
 export type KSOFI = {
     file_cache: FileCache
     support_files: { [key: string]: string }
@@ -16,6 +32,7 @@ export type KSOFI = {
     state_values: {[key:string]: string}
     event_listeners: {[key:string]: unknownCallback[]}
     include_promises: {[key:string]: Promise<string>}
+    itemInfo: ItemInfoI
 
     load_file: (url: string, use_cache: boolean) => Promise<any>
     get_state: (state_var:string) => string

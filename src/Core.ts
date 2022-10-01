@@ -10,7 +10,7 @@
 // @grant       none
 // ==/UserScript==
 
-import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types';
+import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ItemInfoStateI } from './types';
 
 (function(global: Window) {
     'use strict';
@@ -48,6 +48,125 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
     // Published interface
     //------------------------------
 
+    const KANA_REGEX = /[\u3040-\u30ff\uff66-\uff9f]/
+    const KANJI_REGEX = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
+    const JAPANESE_REGEX = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/
+
+    class ItemInfoState implements ItemInfoStateI {
+        characters: string
+        meanings: string[]
+        readings: string[]
+        variations: string[]
+        parts_of_speech: string[]
+        wanikani_level: number | null
+        tags: string[]
+        on: string
+        type: string
+
+        constructor() {
+            this.characters = ''
+            this.meanings = []
+            this.readings = []
+            this.variations = []
+            this.parts_of_speech = []
+            this.wanikani_level = null
+            this.tags = []
+            this.on = ''
+            this.type = ''
+        }
+    }
+
+    class Reading {
+        text: string
+        audio_url: string
+
+        constructor(text: string, audio_url = '') {
+            this.text = text
+            this.audio_url = audio_url
+        }
+    }
+
+    class ItemInfo implements ItemInfoI {
+        constructor() {
+            //
+        }
+
+        #getQuestionItem() {
+            const meaning = document.querySelector('.meaning .big-text text')?.textContent
+            if(meaning === undefined || meaning === null) {
+                return ''
+            }
+            return meaning
+        }
+
+        #getFacts() {
+            const facts: {[key: string]: string} = {}
+            for (const fact of document.querySelectorAll('#item .facts .fact')) {
+                const key = fact.querySelector('.key')?.textContent || ''
+                let val = ''
+
+                if (key == 'Tags') {
+                    const tags: string[] = []
+                    for(const tag of fact.querySelectorAll('.value .item-tag')) {
+                        if (tag.textContent) {
+                            tags.push(tag.textContent)
+                        }
+                    }
+                    val = tags.join(', ')
+                }
+                else {
+                    val = fact.querySelector('.value')?.textContent || ''
+                }
+                facts[key] = val
+            }
+            return facts
+        }
+
+        currentState () {
+            const state = new ItemInfoState()
+
+            if(document.URL.includes('kamesame.com/app/items')) {
+                state.on = 'itemPage'
+            }
+            else if(document.URL.includes('kamesame.com/app/reviews')) {
+                state.on = 'review'
+            }
+
+            if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
+                state.type = 'vocabulary'
+            }
+            else if(document.querySelector('#item h2')?.textContent == 'Kanji summary') {
+                state.type = 'kanji'
+            }
+
+            if(state.on == 'review') {
+                const questionItem = this.#getQuestionItem()
+                if (questionItem.length > 0) {
+                    if(JAPANESE_REGEX.test(questionItem)) {
+                        state.characters = questionItem
+                    } else {
+                        state.meanings = [questionItem]
+                    }
+                }
+            }
+            else if(state.on == 'itemPage') {
+                const facts = this.#getFacts()
+
+                if (state.type == 'vocabulary') {
+                    state.characters = document.querySelector('.name.vocabulary')?.textContent || ''
+                    state.meanings = facts['Meanings'].split(', ')
+                    state.readings = facts['Readings'].replaceAll(' ⏯', '').split('、')
+                    state.variations = facts['Variations'].split('、')
+                    state.parts_of_speech = facts['Parts of Speech'].split(', ')
+                    state.wanikani_level = parseInt(facts['WaniKani Level'])
+                    state.tags = facts['Tags'].split(', ')
+                }
+            }
+
+            return state
+        }
+    }
+
     class KSOF implements KSOFI {
         file_cache: FileCache
         support_files: { [key: string]: string }
@@ -56,6 +175,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: unknownCallback[]}
         include_promises: {[key:string]: Promise<string>}
+        itemInfo: ItemInfo
 
         constructor() {
             this.file_cache = new FileCache()
@@ -64,6 +184,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             this.state_values = {}
             this.event_listeners = {}
             this.include_promises = {}
+            this.itemInfo = new ItemInfo()
             this.support_files = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
