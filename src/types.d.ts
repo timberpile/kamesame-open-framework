@@ -22,6 +22,7 @@ export type ItemInfoStateI = {
 
 export type ItemInfoI = {
     currentState: () => ItemInfoStateI
+    on: () => string
 }
 
 export type KSOFI = {

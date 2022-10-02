@@ -91,6 +91,17 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             //
         }
 
+        // returns the type of the current page
+        on() {
+            if(document.URL.includes('kamesame.com/app/items')) {
+                return 'itemPage'
+            }
+            else if(document.URL.includes('kamesame.com/app/reviews')) {
+                return 'review'
+            }
+            return ''
+        }
+
         #getQuestionItem() {
             const meaning = document.querySelector('.meaning .big-text text')?.textContent
             if(meaning === undefined || meaning === null) {
@@ -125,12 +136,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         currentState () {
             const state = new ItemInfoState()
 
-            if(document.URL.includes('kamesame.com/app/items')) {
-                state.on = 'itemPage'
-            }
-            else if(document.URL.includes('kamesame.com/app/reviews')) {
-                state.on = 'review'
-            }
+            state.on = this.on()
 
             if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
                 state.type = 'vocabulary'
@@ -728,9 +734,9 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         }
     }
 
-    //
+    //------------------------------
     // The current time, offset by the specified days
-    //
+    //------------------------------
     function current_time_offset(days_offset:number) {
         const offset = (24*60*60*1000) * days_offset
         const date = new Date()
@@ -757,19 +763,71 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         }
     }
 
-    function doc_ready() {
+    //########################################################################
+    //------------------------------
+    // Body Changes Observation
+    //------------------------------
+    function body_loaded() {
+        const body = document.querySelector('body');
+        if (!body) {
+            return false
+        }
+        return body.children.length > 0
+    }
+
+    function on_body_mutated(mutations: MutationRecord[]) {
+        const current_page = ksof.itemInfo.currentState().on
+        if (current_page == 'itemPage') {
+            if (mutations.length > 1) { // itemPage does one single mutation and then 10+ additional mutations
+                set_doc_ready()
+            }
+        }
+        else if (current_page == 'review') {
+            if (mutations.length == 1) { // review page only does one single mutation
+                set_doc_ready()
+            }
+
+            if (document.querySelector('#study .outcome')) {
+                ksof.set_state('ksof.outcome', 'visible')
+            }
+            else {
+                ksof.set_state('ksof.outcome', 'hidden')
+            }
+        }
+    }
+
+    function set_doc_ready() {
+        // console.log('Doc ready!')
         ksof.set_state('ksof.document', 'ready');
     }
 
+    const body_observer = new MutationObserver(on_body_mutated)
+
+    // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
+    // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
+    function check_doc_ready() {
+        if (body_loaded()) {
+            set_doc_ready();
+        }
+
+        const body = document.querySelector('body')
+        if (!body) {
+            console.error('body DOM not loaded!')
+            return
+        }
+        body_observer.observe(body, {childList: true, subtree: true})
+    }
+
     //########################################################################
+    //------------------------------
     // Bootloader Startup
     //------------------------------
     function startup() {
-        // Mark document state as 'ready'.
+        // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            doc_ready();
+            check_doc_ready();
         } else {
-            window.addEventListener('load', doc_ready, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', check_doc_ready, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.
