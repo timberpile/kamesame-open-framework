@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
@@ -195,6 +195,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: unknownCallback[]}
+        element_watchers: Set<string>
         include_promises: {[key:string]: Promise<string>}
         itemInfo: ItemInfo
 
@@ -204,6 +205,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
+            this.element_watchers = new Set<string>()
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
             this.support_files = {
@@ -454,6 +456,22 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             } else {
                 return Promise.all(ready_promises);
             }
+        }
+
+        add_element_watch(element_query:string) {
+            if (!this.element_watchers.has(element_query)) {
+                this.element_watchers.add(element_query)
+                this.check_element_watcher(element_query)
+            }
+        }
+
+        check_element_watcher(element_query:string) {
+            const visible = (document.querySelector(element_query) != null)
+            this.set_state(this.element_query_to_state(element_query), visible ? 'exists' : 'gone')
+        }
+
+        element_query_to_state(element_query:string) {
+            return 'ksof.element_watch.' + element_query
         }
     }
 
@@ -782,32 +800,10 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
     //------------------------------
     // Body Changes Observation
     //------------------------------
-    function body_loaded() {
-        const body = document.querySelector('body');
-        if (!body) {
-            return false
-        }
-        return body.children.length > 0
-    }
 
-    function on_body_mutated(mutations: MutationRecord[]) {
-        const current_page = ksof.itemInfo.currentState().on
-        if (current_page == 'itemPage') {
-            if (mutations.length > 1) { // itemPage does one single mutation and then 10+ additional mutations
-                set_doc_ready()
-            }
-        }
-        else if (current_page == 'review') {
-            if (mutations.length == 1) { // review page only does one single mutation
-                set_doc_ready()
-            }
-
-            if (document.querySelector('#study .outcome')) {
-                ksof.set_state('ksof.outcome', 'visible')
-            }
-            else {
-                ksof.set_state('ksof.outcome', 'hidden')
-            }
+    function on_body_mutated() {
+        for(const element_query of ksof.element_watchers) {
+            ksof.check_element_watcher(element_query)
         }
     }
 
@@ -820,17 +816,27 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    function check_doc_ready() {
-        if (body_loaded()) {
-            set_doc_ready();
-        }
-
+    function start_element_watching() {
         const body = document.querySelector('body')
         if (!body) {
             console.error('body DOM not loaded!')
             return
         }
         body_observer.observe(body, {childList: true, subtree: true})
+
+        let element_query = ''
+        const current_page = ksof.itemInfo.on()
+        if (current_page == 'itemPage') {
+            element_query = '#app.kamesame #item .facts .fact' // if facts are loaded -> everything else loaded
+        }
+        else if (current_page == 'review') {
+            element_query = '#app.kamesame #study .meaning' // if meaning loaded -> everything else loaded
+        }
+
+        if (element_query.length > 0) {
+            ksof.add_element_watch(element_query)
+            ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
+        }
     }
 
     //########################################################################
@@ -840,9 +846,9 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
     function startup() {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            check_doc_ready();
+            start_element_watching();
         } else {
-            window.addEventListener('load', check_doc_ready, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', start_element_watching, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.
