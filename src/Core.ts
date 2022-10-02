@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
@@ -110,6 +110,14 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             return meaning
         }
 
+        #getOutcomeItem() {
+            const outcomeItem = document.querySelector('.outcome p a.item')?.textContent
+            if(outcomeItem === undefined || outcomeItem === null) {
+                return ''
+            }
+            return outcomeItem
+        }
+
         #getFacts() {
             const facts: {[key: string]: string} = {}
             for (const fact of document.querySelectorAll('#item .facts .fact')) {
@@ -146,12 +154,19 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             }
 
             if(state.on == 'review') {
+                const outcomeItem = this.#getOutcomeItem()
                 const questionItem = this.#getQuestionItem()
                 if (questionItem.length > 0) {
                     if(JAPANESE_REGEX.test(questionItem)) {
                         state.characters = questionItem
+                        if(outcomeItem.length > 0) {
+                            state.meanings = [outcomeItem]
+                        }
                     } else {
                         state.meanings = [questionItem]
+                        if(outcomeItem.length > 0) {
+                            state.characters = outcomeItem
+                        }
                     }
                 }
             }
