@@ -8,6 +8,24 @@ export type StateListener = {
 
 export type unknownCallback = (...args: unknown[]) => void
 
+export type ReviewInfoI = {
+    answer_correct: string | null
+    review_type: string | null
+}
+
+export type ItemInfoI = {
+    characters: string | null
+    meanings: string[] | null
+    readings: string[] | null
+    variations: string[] | null
+    parts_of_speech: string[] | null
+    wanikani_level: number | null
+    tags: string[] | null
+    on: string | null
+    type: string | null
+    summary: {[key: string]: string | string[] | number | null}
+}
+
 export type KSOFI = {
     file_cache: FileCache
     support_files: { [key: string]: string }
@@ -16,6 +34,8 @@ export type KSOFI = {
     state_values: {[key:string]: string}
     event_listeners: {[key:string]: unknownCallback[]}
     include_promises: {[key:string]: Promise<string>}
+    dom_observers: Set<string>
+    itemInfo: ItemInfoI
 
     load_file: (url: string, use_cache: boolean) => Promise<any>
     get_state: (state_var:string) => string
@@ -28,6 +48,7 @@ export type KSOFI = {
     load_css: (url:string, use_cache:boolean) => Promise<string>
     include: (module_list:string) => Promise<object>
     ready: (module_list:string) => Promise<unknown> | void
+    add_dom_observer: (element_query:string) => void
 }
 
 export declare global {

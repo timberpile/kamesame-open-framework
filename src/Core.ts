@@ -10,7 +10,7 @@
 // @grant       none
 // ==/UserScript==
 
-import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types';
+import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ReviewInfoI } from './types';
 
 (function(global: Window) {
     'use strict';
@@ -48,6 +48,287 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
     // Published interface
     //------------------------------
 
+    const KANA_CHARS = '\u3040-\u30ff\uff66-\uff9f'
+    const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
+    const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
+
+    class ReviewInfo implements ReviewInfoI {
+        get answer_correct() {
+            const input = document.querySelector('#app.kamesame #study .input-area input')
+            if (!input) {
+                return null
+            }
+
+            // TODO find out classname for fourth type ... (other item marked correct)
+            for (const className of ['exactly_correct', 'alternative_match', 'incorrect', '...']) {
+                if (input.classList.contains(className)) {
+                    return className
+                }
+            }
+            return null
+        }
+
+        get review_type() {
+            const input = document.querySelector('#app.kamesame #study .input-area input')
+            if (!input) {
+                return null
+            }
+            for (const className of ['production', 'recognition']) {
+                if (input.classList.contains(className)) {
+                    return className
+                }
+            }
+            return null
+        }
+    }
+
+    class ItemInfo implements ItemInfoI {
+        #facts_cache?: {[key: string]: string;}
+
+        constructor() {
+            //
+        }
+
+        // returns the type of the current page
+        get on() {
+            if(document.URL.includes('kamesame.com/app/items')) {
+                return 'itemPage'
+            }
+            else if(document.URL.includes('kamesame.com/app/reviews')) {
+                return 'review'
+            }
+            return null
+        }
+
+        get variations() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Variations'].split('、')
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get parts_of_speech() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Parts of Speech'].split(', ')
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get wanikani_level() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return parseInt(this.facts['WaniKani Level'])
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get tags() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Tags'].split(', ')
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get characters() {
+
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+    
+                const regexes = [
+                    // characters with reading explanation
+                    RegExp(`([${JAPANESE_CHARS}]+)\\(read as`),
+                    // characters without reading explanation, failed
+                    RegExp(`looking for ([${JAPANESE_CHARS}]+)[\\s⏯]* instead`),
+                    // characters without reading explanation, success
+                    RegExp(`Indeed, ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                    RegExp(`That's right! ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                    // characters without reading explanation, different answer expected
+                    RegExp(`we were actually looking for ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                ]
+                
+                // try out the different possible regexes until one hits
+                for (const regex of regexes) {
+                    const match = regex.exec(outcome_text);
+                    if (match) {
+                        return match[1]
+                    }
+                }
+                return null
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return document.querySelector('.name.vocabulary')?.textContent || null
+                }
+            }
+
+            return null
+        }
+
+        get meanings() {
+
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+    
+                const regexes = [
+                    /does(?: not)? mean[\s\n]*((?:".*?"[, or]*)+)/g,
+                    /We'd have accepted[\s\n]*((?:".*?"[, or]*)+)/g,
+                ]
+    
+                // try out all possible regexes
+                const meanings:string[] = []
+                for (const regex of regexes) {
+                    const match = regex.exec(outcome_text);
+                    if (match) {
+                        const match1 = match[1]
+                        const match2 = match1.replaceAll(' or ', ',')
+                        const match3 = match2.split(',')
+    
+                        for (const item of match3) {
+                            meanings.push(item.replaceAll('"', '').trim())
+                        }
+                    }
+                }
+                return meanings
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return this.facts['Meanings'].split(', ')
+                }
+            }
+
+            return null
+        }
+
+        get readings() {
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+                const readings:string[] = []
+                
+                const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`);
+                let match = rawReadingsRegex.exec(outcome_text);
+                if (match) {
+                    const readings_raw = match[1]
+                    
+                    const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g');
+                    match = readingsRegex.exec(readings_raw);
+                    while (match != null) {
+                        readings.push(match[0]) // captured readings
+                        match = readingsRegex.exec(readings_raw);
+                    }
+                }
+    
+                if (readings.length == 0) {
+                    const characters = this.characters || ''
+                    if (RegExp(`[${KANA_CHARS}]`).test(characters)) {
+                        readings.push(characters) // if word only consists of kana, then there are no readings in the outcome text, so we just use the word itself
+                    }
+                }
+                return readings
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return this.facts['Readings'].replaceAll(' ⏯', '').split('、')
+                }
+            }
+
+            return null
+        }
+
+        get facts() {
+            if (this.#facts_cache) {
+                return this.#facts_cache
+            }
+
+            const facts: {[key: string]: string} = {}
+            for (const fact of document.querySelectorAll('#item .facts .fact')) {
+                const key = fact.querySelector('.key')?.textContent || ''
+                let val = ''
+
+                if (key == 'Tags') {
+                    const tags: string[] = []
+                    for(const tag of fact.querySelectorAll('.value .item-tag')) {
+                        if (tag.textContent) {
+                            tags.push(tag.textContent)
+                        }
+                    }
+                    val = tags.join(', ')
+                }
+                else {
+                    val = fact.querySelector('.value')?.textContent || ''
+                }
+                facts[key] = val
+            }
+
+            this.#facts_cache = facts
+            return facts
+        }
+
+        get type() {
+            if (this.on == 'review') {
+                //
+            }
+            else if (this.on == 'itemPage') {
+                if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
+                    return 'vocabulary'
+                }
+                else if(document.querySelector('#item h2')?.textContent == 'Kanji summary') {
+                    return 'kanji'
+                }
+            }
+            return null
+        }
+
+        get summary() {
+            return {
+                characters: this.characters,
+                meanings: this.meanings,
+                readings: this.readings,
+                variations: this.variations,
+                parts_of_speech: this.parts_of_speech,
+                wanikani_level: this.wanikani_level,
+                tags: this.tags,
+                on: this.on,
+                type: this.type
+            }
+        }
+    }
+
     class KSOF implements KSOFI {
         file_cache: FileCache
         support_files: { [key: string]: string }
@@ -55,7 +336,10 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: unknownCallback[]}
+        dom_observers: Set<string> // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>}
+        itemInfo: ItemInfo
+        reviewInfo: ReviewInfo
 
         constructor() {
             this.file_cache = new FileCache()
@@ -63,7 +347,10 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
+            this.dom_observers = new Set<string>()
             this.include_promises = {}
+            this.itemInfo = new ItemInfo()
+            this.reviewInfo = new ReviewInfo()
             this.support_files = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
@@ -75,7 +362,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
         async load_file(url: string, use_cache: boolean) {
-            const fetch_promise = new Deferred<any>();
+            const fetch_deferred = new Deferred<any>();
             const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
             if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
                 use_cache = false;
@@ -96,17 +383,17 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
                     return
                 }
                 if (request.readyState !== 4) return;
-                if (request.status >= 400 || request.status === 0) return fetch_promise.reject(request.status);
+                if (request.status >= 400 || request.status === 0) return Promise.reject(request.status);
                 if (use_cache) {
                     await ksof.file_cache.save(url, request.response)
-                    fetch_promise.resolve.bind(null, request.response)
+                    fetch_deferred.resolve.bind(null, request.response)
                 } else {
-                    fetch_promise.resolve(request.response);
+                    fetch_deferred.resolve(request.response);
                 }
             }
             request.open('GET', url, true);
             request.send();
-            return fetch_promise.promise;
+            return fetch_deferred.promise;
         }
 
         //------------------------------
@@ -245,12 +532,12 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
                 return this.include(module_list)
             }
 
-            const include_promise = new Deferred<object>();
+            const include_deferred = new Deferred<object>();
             const module_names = split_list(module_list);
             const script_cnt = module_names.length;
             if (script_cnt === 0) {
-                include_promise.resolve({loaded:[], failed:[]});
-                return include_promise.promise;
+                include_deferred.resolve({loaded:[], failed:[]});
+                return include_deferred.promise;
             }
 
             let done_cnt = 0;
@@ -274,7 +561,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
                 await_load.then(push_loaded, push_failed);
             }
 
-            return include_promise.promise;
+            return include_deferred.promise;
 
             function push_loaded(url:string) {
                 loaded.push(url);
@@ -288,8 +575,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
 
             function check_done() {
                 if (++done_cnt < script_cnt) return;
-                if (failed.length === 0) include_promise.resolve({loaded:loaded, failed:failed});
-                else include_promise.reject({error:'Failure loading module', loaded:loaded, failed:failed});
+                if (failed.length === 0) include_deferred.resolve({loaded:loaded, failed:failed});
+                else include_deferred.reject({error:'Failure loading module', loaded:loaded, failed:failed});
             }
         }
 
@@ -312,6 +599,22 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             } else {
                 return Promise.all(ready_promises);
             }
+        }
+
+        add_dom_observer(element_query:string) {
+            if (!this.dom_observers.has(element_query)) {
+                this.dom_observers.add(element_query)
+                this.check_dom_observer(element_query)
+            }
+        }
+
+        check_dom_observer(element_query:string) {
+            const visible = (document.querySelector(element_query) != null)
+            this.set_state(this.element_query_to_state(element_query), visible ? 'exists' : 'gone')
+        }
+
+        element_query_to_state(element_query:string) {
+            return 'ksof.dom_observer.' + element_query
         }
     }
 
@@ -366,16 +669,16 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         async clear() {
             const db = await file_cache_open()
 
-            const clear_promise = new Deferred<void | Event>();
+            const clear_deferred = new Deferred<void | Event>();
             ksof.file_cache.dir = {};
             if (db === null) {
-                return clear_promise.resolve();
+                return clear_deferred.resolve();
             }
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.clear();
-            transaction.oncomplete = clear_promise.resolve;
-            return clear_promise.promise
+            transaction.oncomplete = clear_deferred.resolve;
+            return clear_deferred.promise
         }
 
         //------------------------------
@@ -384,8 +687,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         async delete(pattern: string | RegExp): Promise<unknown> {
             const db = await file_cache_open()
 
-            const del_promise = new Deferred<string[]>();
-            if (db === null) return del_promise.resolve([]);
+            const del_deferred = new Deferred<string[]>();
+            if (db === null) return del_deferred.resolve([]);
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             const files = Object.keys(ksof.file_cache.dir).filter(function(file){
@@ -400,8 +703,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
                 delete ksof.file_cache.dir[file];
             });
             this.dir_save();
-            transaction.oncomplete = del_promise.resolve.bind(null, files);
-            return del_promise;
+            transaction.oncomplete = del_deferred.resolve.bind(null, files);
+            return del_deferred;
         }
 
         //------------------------------
@@ -447,7 +750,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             if (ksof.file_cache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
-            const load_promise = new Deferred<any>()
+            const load_deferred = new Deferred<any>()
             const transaction = db.transaction('files', 'readonly');
             const store = transaction.objectStore('files');
             const request = store.get(name);
@@ -455,7 +758,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             this.dir_save();
             request.onsuccess = finish;
             request.onerror = error;
-            return load_promise.promise;
+            return load_deferred.promise;
 
             function finish(event: Event){
                 if(!(event.target instanceof IDBRequest)) {
@@ -463,14 +766,14 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
                 }
 
                 if (event.target.result === undefined) {
-                    load_promise.reject(name);
+                    load_deferred.reject(name);
                 } else {
-                    load_promise.resolve(event.target.result.content);
+                    load_deferred.resolve(event.target.result.content);
                 }
             }
 
             function error(){
-                load_promise.reject(name);
+                load_deferred.reject(name);
             }
         }
 
@@ -482,15 +785,15 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
 
             if (db === null) return Promise.resolve(name)
 
-            const save_promise = new Deferred<string>()
+            const save_deferred = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.put({name:name,content:content});
             const now = new Date().toISOString();
             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
             ksof.file_cache.dir_save(true /* immediately */);
-            transaction.oncomplete = save_promise.resolve.bind(null, name);
-            return save_promise.promise
+            transaction.oncomplete = save_deferred.resolve.bind(null, name);
+            return save_deferred.promise
         }
 
         //------------------------------
@@ -552,22 +855,22 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
     //------------------------------
     async function file_cache_open() {
         if (file_cache_open_promise) return file_cache_open_promise;
-        const open_promise = new Deferred<IDBDatabase | null>();
+        const open_deferred = new Deferred<IDBDatabase | null>();
 
-        file_cache_open_promise = open_promise.promise;
+        file_cache_open_promise = open_deferred.promise;
         const request = indexedDB.open('ksof.file_cache')
         request.onupgradeneeded = upgrade_db;
         request.onsuccess = get_dir;
         request.onerror = error;
-        return open_promise.promise;
+        return open_deferred.promise;
 
         function error() {
             console.log('indexedDB could not open!');
             ksof.file_cache.dir = {};
             if (ignore_missing_indexeddb) {
-                open_promise.resolve(null);
+                open_deferred.resolve(null);
             } else {
-                open_promise.reject();
+                open_deferred.reject();
             }
         }
 
@@ -589,8 +892,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
             const store = transaction.objectStore('files');
             const request = store.get('[dir]');
             request.onsuccess = process_dir
-            transaction.oncomplete = open_promise.resolve.bind(null, db);
-            open_promise.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
+            transaction.oncomplete = open_deferred.resolve.bind(null, db);
+            open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
         }
 
         function process_dir(event: Event){
@@ -607,9 +910,9 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         }
     }
 
-    //
+    //------------------------------
     // The current time, offset by the specified days
-    //
+    //------------------------------
     function current_time_offset(days_offset:number) {
         const offset = (24*60*60*1000) * days_offset
         const date = new Date()
@@ -636,19 +939,59 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI } from './types
         }
     }
 
-    function doc_ready() {
+    //########################################################################
+    //------------------------------
+    // Body Changes Observation
+    //------------------------------
+
+    function on_body_mutated() {
+        for(const element_query of ksof.dom_observers) {
+            ksof.check_dom_observer(element_query)
+        }
+    }
+
+    function set_doc_ready() {
+        // console.log('Doc ready!')
         ksof.set_state('ksof.document', 'ready');
     }
 
+    const body_observer = new MutationObserver(on_body_mutated)
+
+    // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
+    // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
+    function start_dom_observing() {
+        const body = document.querySelector('body')
+        if (!body) {
+            console.error('body DOM not loaded!')
+            return
+        }
+        body_observer.observe(body, {childList: true, subtree: true})
+
+        let element_query = ''
+        const current_page = ksof.itemInfo.on
+        if (current_page == 'itemPage') {
+            element_query = '#app.kamesame #item .facts .fact' // if facts are loaded -> everything else loaded
+        }
+        else if (current_page == 'review') {
+            element_query = '#app.kamesame #study .meaning' // if meaning loaded -> everything else loaded
+        }
+
+        if (element_query.length > 0) {
+            ksof.add_dom_observer(element_query)
+            ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
+        }
+    }
+
     //########################################################################
+    //------------------------------
     // Bootloader Startup
     //------------------------------
     function startup() {
-        // Mark document state as 'ready'.
+        // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            doc_ready();
+            start_dom_observing();
         } else {
-            window.addEventListener('load', doc_ready, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', start_dom_observing, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.
