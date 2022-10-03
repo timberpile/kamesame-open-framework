@@ -383,7 +383,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
                     return
                 }
                 if (request.readyState !== 4) return;
-                if (request.status >= 400 || request.status === 0) return fetch_deferred.reject(request.status);
+                if (request.status >= 400 || request.status === 0) return Promise.reject(request.status);
                 if (use_cache) {
                     await ksof.file_cache.save(url, request.response)
                     fetch_deferred.resolve.bind(null, request.response)
