@@ -10,7 +10,7 @@
 // @grant       none
 // ==/UserScript==
 
-import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ItemInfoStateI } from './types';
+import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ReviewInfoI } from './types';
 
 (function(global: Window) {
     'use strict';
@@ -48,77 +48,233 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
     // Published interface
     //------------------------------
 
-    const KANA_REGEX = /[\u3040-\u30ff\uff66-\uff9f]/
-    const KANJI_REGEX = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
-    const JAPANESE_REGEX = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/
+    const KANA_CHARS = '\u3040-\u30ff\uff66-\uff9f'
+    const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
+    const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
-    class ItemInfoState implements ItemInfoStateI {
-        characters: string
-        meanings: string[]
-        readings: string[]
-        variations: string[]
-        parts_of_speech: string[]
-        wanikani_level: number | null
-        tags: string[]
-        on: string
-        type: string
+    class ReviewInfo implements ReviewInfoI {
+        get answer_correct() {
+            const input = document.querySelector('#app.kamesame #study .input-area input')
+            if (!input) {
+                return null
+            }
 
-        constructor() {
-            this.characters = ''
-            this.meanings = []
-            this.readings = []
-            this.variations = []
-            this.parts_of_speech = []
-            this.wanikani_level = null
-            this.tags = []
-            this.on = ''
-            this.type = ''
+            // TODO find out classname for fourth type ... (other item marked correct)
+            for (const className of ['exactly_correct', 'alternative_match', 'incorrect', '...']) {
+                if (input.classList.contains(className)) {
+                    return className
+                }
+            }
+            return null
         }
-    }
 
-    class Reading {
-        text: string
-        audio_url: string
-
-        constructor(text: string, audio_url = '') {
-            this.text = text
-            this.audio_url = audio_url
+        get review_type() {
+            const input = document.querySelector('#app.kamesame #study .input-area input')
+            if (!input) {
+                return null
+            }
+            for (const className of ['production', 'recognition']) {
+                if (input.classList.contains(className)) {
+                    return className
+                }
+            }
+            return null
         }
     }
 
     class ItemInfo implements ItemInfoI {
+        #facts_cache?: {[key: string]: string;}
+
         constructor() {
             //
         }
 
         // returns the type of the current page
-        on() {
+        get on() {
             if(document.URL.includes('kamesame.com/app/items')) {
                 return 'itemPage'
             }
             else if(document.URL.includes('kamesame.com/app/reviews')) {
                 return 'review'
             }
-            return ''
+            return null
         }
 
-        #getQuestionItem() {
-            const meaning = document.querySelector('.meaning .big-text text')?.textContent
-            if(meaning === undefined || meaning === null) {
-                return ''
+        get variations() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Variations'].split('、')
+                case 'kanji':
+                    break;
+                }
             }
-            return meaning
+
+            return null
         }
 
-        #getOutcomeItem() {
-            const outcomeItem = document.querySelector('.outcome p a.item')?.textContent
-            if(outcomeItem === undefined || outcomeItem === null) {
-                return ''
+        get parts_of_speech() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Parts of Speech'].split(', ')
+                case 'kanji':
+                    break;
+                }
             }
-            return outcomeItem
+
+            return null
         }
 
-        #getFacts() {
+        get wanikani_level() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return parseInt(this.facts['WaniKani Level'])
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get tags() {
+            switch (this.on) {
+            case 'itemPage':
+                switch (this.type) {
+                case 'vocabulary':
+                    return this.facts['Tags'].split(', ')
+                case 'kanji':
+                    break;
+                }
+            }
+
+            return null
+        }
+
+        get characters() {
+
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+    
+                const regexes = [
+                    // characters with reading explanation
+                    RegExp(`([${JAPANESE_CHARS}]+)\\(read as`),
+                    // characters without reading explanation, failed
+                    RegExp(`looking for ([${JAPANESE_CHARS}]+)[\\s⏯]* instead`),
+                    // characters without reading explanation, success
+                    RegExp(`Indeed, ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                    RegExp(`That's right! ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                    // characters without reading explanation, different answer expected
+                    RegExp(`we were actually looking for ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
+                ]
+                
+                // try out the different possible regexes until one hits
+                for (const regex of regexes) {
+                    const match = regex.exec(outcome_text);
+                    if (match) {
+                        return match[1]
+                    }
+                }
+                return null
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return document.querySelector('.name.vocabulary')?.textContent || null
+                }
+            }
+
+            return null
+        }
+
+        get meanings() {
+
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+    
+                const regexes = [
+                    /does(?: not)? mean[\s\n]*((?:".*?"[, or]*)+)/g,
+                    /We'd have accepted[\s\n]*((?:".*?"[, or]*)+)/g,
+                ]
+    
+                // try out all possible regexes
+                const meanings:string[] = []
+                for (const regex of regexes) {
+                    const match = regex.exec(outcome_text);
+                    if (match) {
+                        const match1 = match[1]
+                        const match2 = match1.replaceAll(' or ', ',')
+                        const match3 = match2.split(',')
+    
+                        for (const item of match3) {
+                            meanings.push(item.replaceAll('"', '').trim())
+                        }
+                    }
+                }
+                return meanings
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return this.facts['Meanings'].split(', ')
+                }
+            }
+
+            return null
+        }
+
+        get readings() {
+            if (this.on == 'review') {
+                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcome_text) {
+                    return null
+                }
+                const readings:string[] = []
+                
+                const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`);
+                let match = rawReadingsRegex.exec(outcome_text);
+                if (match) {
+                    const readings_raw = match[1]
+                    
+                    const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g');
+                    match = readingsRegex.exec(readings_raw);
+                    while (match != null) {
+                        readings.push(match[0]) // captured readings
+                        match = readingsRegex.exec(readings_raw);
+                    }
+                }
+    
+                if (readings.length == 0) {
+                    const characters = this.characters || ''
+                    if (RegExp(`[${KANA_CHARS}]`).test(characters)) {
+                        readings.push(characters) // if word only consists of kana, then there are no readings in the outcome text, so we just use the word itself
+                    }
+                }
+                return readings
+            }
+            else if (this.on == 'itemPage') {
+                if (this.type == 'vocabulary') {
+                    return this.facts['Readings'].replaceAll(' ⏯', '').split('、')
+                }
+            }
+
+            return null
+        }
+
+        get facts() {
+            if (this.#facts_cache) {
+                return this.#facts_cache
+            }
+
             const facts: {[key: string]: string} = {}
             for (const fact of document.querySelectorAll('#item .facts .fact')) {
                 const key = fact.querySelector('.key')?.textContent || ''
@@ -138,53 +294,38 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
                 }
                 facts[key] = val
             }
+
+            this.#facts_cache = facts
             return facts
         }
 
-        currentState () {
-            const state = new ItemInfoState()
-
-            state.on = this.on()
-
-            if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
-                state.type = 'vocabulary'
+        get type() {
+            if (this.on == 'review') {
+                //
             }
-            else if(document.querySelector('#item h2')?.textContent == 'Kanji summary') {
-                state.type = 'kanji'
-            }
-
-            if(state.on == 'review') {
-                const outcomeItem = this.#getOutcomeItem()
-                const questionItem = this.#getQuestionItem()
-                if (questionItem.length > 0) {
-                    if(JAPANESE_REGEX.test(questionItem)) {
-                        state.characters = questionItem
-                        if(outcomeItem.length > 0) {
-                            state.meanings = [outcomeItem]
-                        }
-                    } else {
-                        state.meanings = [questionItem]
-                        if(outcomeItem.length > 0) {
-                            state.characters = outcomeItem
-                        }
-                    }
+            else if (this.on == 'itemPage') {
+                if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
+                    return 'vocabulary'
+                }
+                else if(document.querySelector('#item h2')?.textContent == 'Kanji summary') {
+                    return 'kanji'
                 }
             }
-            else if(state.on == 'itemPage') {
-                const facts = this.#getFacts()
+            return null
+        }
 
-                if (state.type == 'vocabulary') {
-                    state.characters = document.querySelector('.name.vocabulary')?.textContent || ''
-                    state.meanings = facts['Meanings'].split(', ')
-                    state.readings = facts['Readings'].replaceAll(' ⏯', '').split('、')
-                    state.variations = facts['Variations'].split('、')
-                    state.parts_of_speech = facts['Parts of Speech'].split(', ')
-                    state.wanikani_level = parseInt(facts['WaniKani Level'])
-                    state.tags = facts['Tags'].split(', ')
-                }
+        get summary() {
+            return {
+                characters: this.characters,
+                meanings: this.meanings,
+                readings: this.readings,
+                variations: this.variations,
+                parts_of_speech: this.parts_of_speech,
+                wanikani_level: this.wanikani_level,
+                tags: this.tags,
+                on: this.on,
+                type: this.type
             }
-
-            return state
         }
     }
 
@@ -198,6 +339,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         element_watchers: Set<string>
         include_promises: {[key:string]: Promise<string>}
         itemInfo: ItemInfo
+        reviewInfo: ReviewInfo
 
         constructor() {
             this.file_cache = new FileCache()
@@ -208,6 +350,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
             this.element_watchers = new Set<string>()
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
+            this.reviewInfo = new ReviewInfo()
             this.support_files = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
@@ -825,7 +968,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Ite
         body_observer.observe(body, {childList: true, subtree: true})
 
         let element_query = ''
-        const current_page = ksof.itemInfo.on()
+        const current_page = ksof.itemInfo.on
         if (current_page == 'itemPage') {
             element_query = '#app.kamesame #item .facts .fact' // if facts are loaded -> everything else loaded
         }

@@ -8,21 +8,22 @@ export type StateListener = {
 
 export type unknownCallback = (...args: unknown[]) => void
 
-export type ItemInfoStateI = {
-    characters: string
-    meanings: string[]
-    readings: string[]
-    variations: string[]
-    parts_of_speech: string[]
-    wanikani_level: number | null
-    tags: string[]
-    on: string
-    type: string
+export type ReviewInfoI = {
+    answer_correct: string | null
+    review_type: string | null
 }
 
 export type ItemInfoI = {
-    currentState: () => ItemInfoStateI
-    on: () => string
+    characters: string | null
+    meanings: string[] | null
+    readings: string[] | null
+    variations: string[] | null
+    parts_of_speech: string[] | null
+    wanikani_level: number | null
+    tags: string[] | null
+    on: string | null
+    type: string | null
+    summary: {[key: string]: string | string[] | number | null}
 }
 
 export type KSOFI = {
