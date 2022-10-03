@@ -336,7 +336,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: unknownCallback[]}
-        element_watchers: Set<string>
+        dom_observers: Set<string> // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>}
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
@@ -347,7 +347,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
-            this.element_watchers = new Set<string>()
+            this.dom_observers = new Set<string>()
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
             this.reviewInfo = new ReviewInfo()
@@ -601,20 +601,20 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             }
         }
 
-        add_element_watch(element_query:string) {
-            if (!this.element_watchers.has(element_query)) {
-                this.element_watchers.add(element_query)
-                this.check_element_watcher(element_query)
+        add_dom_observer(element_query:string) {
+            if (!this.dom_observers.has(element_query)) {
+                this.dom_observers.add(element_query)
+                this.check_dom_observer(element_query)
             }
         }
 
-        check_element_watcher(element_query:string) {
+        check_dom_observer(element_query:string) {
             const visible = (document.querySelector(element_query) != null)
             this.set_state(this.element_query_to_state(element_query), visible ? 'exists' : 'gone')
         }
 
         element_query_to_state(element_query:string) {
-            return 'ksof.element_watch.' + element_query
+            return 'ksof.dom_observer.' + element_query
         }
     }
 
@@ -945,8 +945,8 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
     //------------------------------
 
     function on_body_mutated() {
-        for(const element_query of ksof.element_watchers) {
-            ksof.check_element_watcher(element_query)
+        for(const element_query of ksof.dom_observers) {
+            ksof.check_dom_observer(element_query)
         }
     }
 
@@ -959,7 +959,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    function start_element_watching() {
+    function start_dom_observing() {
         const body = document.querySelector('body')
         if (!body) {
             console.error('body DOM not loaded!')
@@ -977,7 +977,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
 
         if (element_query.length > 0) {
-            ksof.add_element_watch(element_query)
+            ksof.add_dom_observer(element_query)
             ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
         }
     }
@@ -989,9 +989,9 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
     function startup() {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            start_element_watching();
+            start_dom_observing();
         } else {
-            window.addEventListener('load', start_element_watching, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', start_dom_observing, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.

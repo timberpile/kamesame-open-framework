@@ -34,7 +34,7 @@ export type KSOFI = {
     state_values: {[key:string]: string}
     event_listeners: {[key:string]: unknownCallback[]}
     include_promises: {[key:string]: Promise<string>}
-    element_watchers: Set<string>
+    dom_observers: Set<string>
     itemInfo: ItemInfoI
 
     load_file: (url: string, use_cache: boolean) => Promise<any>
@@ -48,7 +48,7 @@ export type KSOFI = {
     load_css: (url:string, use_cache:boolean) => Promise<string>
     include: (module_list:string) => Promise<object>
     ready: (module_list:string) => Promise<unknown> | void
-    add_element_watch: (element_query:string) => void
+    add_dom_observer: (element_query:string) => void
 }
 
 export declare global {
