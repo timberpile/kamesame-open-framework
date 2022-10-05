@@ -10,7 +10,10 @@
 // @grant       none
 // ==/UserScript==
 
-import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ReviewInfoI } from './types';
+import {
+    CallbackFunction, StateListener, UnknownCallback, IKSOF, IItemInfo, IReviewInfo, FileCacheEntry,
+    IFileCache, IVersion
+} from './Core.d';
 
 (function(global: Window) {
     'use strict';
@@ -52,7 +55,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
-    class ReviewInfo implements ReviewInfoI {
+    class ReviewInfo implements IReviewInfo {
         get answer_correct() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
             if (!input) {
@@ -82,7 +85,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class ItemInfo implements ItemInfoI {
+    class ItemInfo implements IItemInfo {
         #facts_cache?: {[key: string]: string;}
 
         constructor() {
@@ -329,13 +332,13 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class KSOF implements KSOFI {
+    class KSOF implements IKSOF {
         file_cache: FileCache
         support_files: { [key: string]: string }
         version: Version
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
-        event_listeners: {[key:string]: unknownCallback[]}
+        event_listeners: {[key:string]: UnknownCallback[]}
         dom_observers: Set<string> // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>}
         itemInfo: ItemInfo
@@ -483,7 +486,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         //------------------------------
         // Add a listener for an event.
         //------------------------------
-        wait_event(event:string, callback: unknownCallback) {
+        wait_event(event:string, callback: UnknownCallback) {
             if (this.event_listeners[event] === undefined) this.event_listeners[event] = [];
             this.event_listeners[event].push(callback);
             return this
@@ -618,12 +621,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    interface FileCacheEntry {
-        added: string
-        last_loaded: string
-    }
-
-    class Version {
+    class Version implements IVersion {
         value: string
 
         constructor(version:string) {
@@ -648,7 +646,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class FileCache {
+    class FileCache implements IFileCache {
         dir: { [key: string]: FileCacheEntry }
         sync_timer: number | undefined
 
@@ -684,7 +682,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         //------------------------------
         // Delete a file from the file_cache database.
         //------------------------------
-        async delete(pattern: string | RegExp): Promise<unknown> {
+        async delete(pattern: string | RegExp) {
             const db = await file_cache_open()
 
             const del_deferred = new Deferred<string[]>();
@@ -704,7 +702,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             });
             this.dir_save();
             transaction.oncomplete = del_deferred.resolve.bind(null, files);
-            return del_deferred;
+            return del_deferred.promise;
         }
 
         //------------------------------
