@@ -3,14 +3,17 @@
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
 // @version     0.1
-// @match       http*://*kamesame.com/*
+// @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // @run-at      document-start
 // @grant       none
 // ==/UserScript==
 
-import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, ReviewInfoI } from './types';
+import {
+    CallbackFunction, StateListener, UnknownCallback, IKSOF, IItemInfo, IReviewInfo, FileCacheEntry,
+    IFileCache, IVersion
+} from './Core.d';
 
 (function(global: Window) {
     'use strict';
@@ -21,7 +24,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
 
     const version = '0.1';
     const ignore_missing_indexeddb = false;
-
+ 
     //########################################################################
     //------------------------------
     // Supported Modules
@@ -36,11 +39,11 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
 
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
-        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js'},
+        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1094784'},
         // Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js'},
         Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1099676'},
         // Progress: { url: ''},
-        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js'},
+        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1101689'},
     }
 
     //########################################################################
@@ -52,7 +55,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
-    class ReviewInfo implements ReviewInfoI {
+    class ReviewInfo implements IReviewInfo {
         get answer_correct() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
             if (!input) {
@@ -82,7 +85,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class ItemInfo implements ItemInfoI {
+    class ItemInfo implements IItemInfo {
         #facts_cache?: {[key: string]: string;}
 
         constructor() {
@@ -329,15 +332,15 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class KSOF implements KSOFI {
+    class KSOF implements IKSOF {
         file_cache: FileCache
         support_files: { [key: string]: string }
         version: Version
         state_listeners: {[key:string]: StateListener[]}
         state_values: {[key:string]: string}
-        event_listeners: {[key:string]: unknownCallback[]}
+        event_listeners: {[key:string]: UnknownCallback[]}
         dom_observers: Set<string> // TODO write documentation about DOM observers
-        include_promises: {[key:string]: Promise<string>}
+        include_promises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
 
@@ -367,15 +370,14 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
                 use_cache = false;
             }
-
             if (use_cache === true) {
                 try {
-                    return this.file_cache.load(url)
+                    return await this.file_cache.load(url)
                 } catch(error) {
                     // file not in cache
                 }
             }
-
+            
             // Retrieve file from server
             const request = new XMLHttpRequest();
             request.onreadystatechange = async (event) => {
@@ -437,30 +439,31 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         // If persistent === true, continue listening for additional state changes
         // If value is '*', callback will be called for all state changes.
         //------------------------------
-        wait_state(state_var:string, value:string, callback: CallbackFunction | null = null, persistent = false) {
-            // TODO better return value if callback defined
-            let promise;
-            if (callback === undefined) {
-                promise = new Promise((resolve) => {
-                    callback = resolve;
-                });
+        wait_state(state_var:string, value:string, callback?: CallbackFunction, persistent = false) {
+            // TODO return Promise if callback undefined
+            const promise = new Deferred<string>()
+
+            // if no callback defined, set resolve as callback
+            // if callback defined, set callback and resolve as callback
+            const promise_callback = callback ? ((value:string, current_value:string) => {callback(value, current_value); promise.resolve(current_value) }) : promise.resolve
+
+            if (this.state_listeners[state_var] === undefined) {
+                this.state_listeners[state_var] = []
             }
-            if (this.state_listeners[state_var] === undefined) this.state_listeners[state_var] = [ ];
-            persistent = (persistent === true);
             const current_value = this.state_values[state_var];
-            if (persistent || value !== current_value) this.state_listeners[state_var].push({callback:callback, persistent:persistent, value:value});
+            if (persistent || value !== current_value) {
+                this.state_listeners[state_var].push({callback:promise_callback, persistent:persistent, value:value})
+            }
 
             // If it's already at the desired state, call the callback immediately.
             if (value === current_value) {
                 try {
-                    if(callback) {
-                        callback(value, current_value);
-                    }
+                    promise_callback(value, current_value);
                 } catch (err) {
                     //do nothing
                 }
             }
-            return promise;
+            return promise.promise;
         }
 
         //------------------------------
@@ -483,7 +486,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         //------------------------------
         // Add a listener for an event.
         //------------------------------
-        wait_event(event:string, callback: unknownCallback) {
+        wait_event(event:string, callback: UnknownCallback) {
             if (this.event_listeners[event] === undefined) this.event_listeners[event] = [];
             this.event_listeners[event].push(callback);
             return this
@@ -495,9 +498,15 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         async load_and_append(url:string, tag_name:string, location:string, use_cache:boolean) {
             url = url.replace(/"/g,'\'');
             if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) {
-                return Promise.resolve('');
+                return Promise.resolve(url);
             }
-            const content = await this.load_file(url, use_cache)
+ 
+            let content:string
+            try {
+                content = await this.load_file(url, use_cache)
+            } catch (error) {
+                return Promise.reject(url)
+            }
 
             const tag = document.createElement(tag_name);
             tag.innerHTML = content;
@@ -506,7 +515,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             if (locationElem) {
                 locationElem.appendChild(tag);
             }
-            return url;
+            return Promise.resolve(url);
         }
 
         //------------------------------
@@ -586,7 +595,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         ready(module_list:string) {
             const module_names = split_list(module_list);
 
-            const ready_promises = [ ];
+            const ready_promises: Promise<string>[] = [];
             for (const idx in module_names) {
                 const module_name = module_names[idx];
                 ready_promises.push(this.wait_state('ksof.' + module_name, 'ready'));
@@ -618,12 +627,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    interface FileCacheEntry {
-        added: string
-        last_loaded: string
-    }
-
-    class Version {
+    class Version implements IVersion {
         value: string
 
         constructor(version:string) {
@@ -648,7 +652,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         }
     }
 
-    class FileCache {
+    class FileCache implements IFileCache {
         dir: { [key: string]: FileCacheEntry }
         sync_timer: number | undefined
 
@@ -684,7 +688,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
         //------------------------------
         // Delete a file from the file_cache database.
         //------------------------------
-        async delete(pattern: string | RegExp): Promise<unknown> {
+        async delete(pattern: string | RegExp) {
             const db = await file_cache_open()
 
             const del_deferred = new Deferred<string[]>();
@@ -704,7 +708,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             });
             this.dir_save();
             transaction.oncomplete = del_deferred.resolve.bind(null, files);
-            return del_deferred;
+            return del_deferred.promise;
         }
 
         //------------------------------
@@ -746,7 +750,7 @@ import { CallbackFunction, StateListener, unknownCallback, KSOFI, ItemInfoI, Rev
             if (!db) {
                 return Promise.reject()
             }
-            
+             
             if (ksof.file_cache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
