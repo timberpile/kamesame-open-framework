@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
@@ -357,7 +357,7 @@ import {
             this.support_files = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js',
-                'jqui_ksmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/jqui-ksmain.css',
+                'jqui_ksmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/src/jqui-ksmain.css',
             }
         }
 
