@@ -1,4 +1,4 @@
-import { Setting, SettingsCtor } from './Settings.d'
+import { DialogUiCollection, SettingsCtor, KSOFSettingsObj, SettingCollection } from './Settings.d'
 
 export type CallbackFunction = (value:string, current_value:string) => void
 
@@ -64,13 +64,13 @@ export interface IKSOF {
     dom_observers: Set<string>
     itemInfo: IItemInfo
 
-    Settings?: SettingsCtor
-    settings?: {[key:string]: {[key:string]: ISetting}}
+    Settings?: KSOFSettingsObj
+    settings?: {[key:string]: SettingCollection}
 
     load_file: (url: string, use_cache: boolean) => Promise<any>
     get_state: (state_var:string) => string
     set_state: (state_var:string, value:string) => void
-    wait_state: (state_var:string, value:string, callback: CallbackFunction | null, persistent: boolean) => Promise<unknown> | undefined
+    wait_state: (state_var:string, value:string, callback?: CallbackFunction, persistent: boolean) => Promise<unknown> | undefined
     trigger_event: (event: string, ...args_: unknown[]) => IKSOF
     wait_event: (event:string, callback: UnknownCallback) => IKSOF
     load_and_append: (url:string, tag_name:string, location:string, use_cache:boolean) => Promise<string>
