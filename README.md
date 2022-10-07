@@ -6,6 +6,11 @@ It is an adapted version of the fantastic [Wanikani Open Framework](https://comm
 
 # Developers
 
+## Changes from WKOF to KSOF
+
+- `wkof` => `ksof`
+- `const dialog = new wkof.Settings(config)` => `const dialog = ksof.Settings(config)`
+
 ## Building
 
 1. Run `tsc` in root dir

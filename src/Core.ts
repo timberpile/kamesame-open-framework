@@ -16,11 +16,16 @@
 var module = {}
 export = null
 
+import { Core, IsoDateString } from './ksof';
 
-import {
-    CallbackFunction, StateListener, UnknownCallback, IKSOF, IItemInfo, IReviewInfo, FileCacheEntry,
-    IFileCache, IVersion
-} from './Core.d';
+declare global {
+    interface Window {
+        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        ksof: Core.Module
+        $: JQueryStatic
+    }
+}
 
 (function(global: Window) {
     'use strict';
@@ -62,7 +67,7 @@ import {
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
-    class ReviewInfo implements IReviewInfo {
+    class ReviewInfo implements Core.ReviewInfo {
         get answer_correct() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
             if (!input) {
@@ -92,7 +97,7 @@ import {
         }
     }
 
-    class ItemInfo implements IItemInfo {
+    class ItemInfo implements Core.ItemInfo {
         #facts_cache?: {[key: string]: string;}
 
         constructor() {
@@ -339,13 +344,13 @@ import {
         }
     }
 
-    class KSOF implements IKSOF {
+    class KSOF implements Core.Module {
         file_cache: FileCache
         support_files: { [key: string]: string }
         version: Version
-        state_listeners: {[key:string]: StateListener[]}
+        state_listeners: {[key:string]: Core.StateListener[]}
         state_values: {[key:string]: string}
-        event_listeners: {[key:string]: UnknownCallback[]}
+        event_listeners: {[key:string]: Core.UnknownCallback[]}
         dom_observers: Set<string> // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
@@ -371,7 +376,7 @@ import {
         //------------------------------
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
-        async load_file(url: string, use_cache: boolean) {
+        async load_file(url: string, use_cache?: boolean) {
             const fetch_deferred = new Deferred<any>();
             const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
             if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
@@ -422,7 +427,7 @@ import {
 
             // Do listener callbacks, and remove non-persistent listeners
             const listeners = this.state_listeners[state_var];
-            const persistent_listeners:StateListener[] = [];
+            const persistent_listeners:Core.StateListener[] = [];
             for (const idx in listeners) {
                 const listener = listeners[idx];
                 let keep = true;
@@ -446,13 +451,12 @@ import {
         // If persistent === true, continue listening for additional state changes
         // If value is '*', callback will be called for all state changes.
         //------------------------------
-        wait_state(state_var:string, value:string, callback?: CallbackFunction, persistent = false) {
-            // TODO return Promise if callback undefined
+        wait_state(state_var:string, value:Core.StateValue, callback?: Core.StateCallback, persistent = false) {
             const promise = new Deferred<string>()
 
             // if no callback defined, set resolve as callback
             // if callback defined, set callback and resolve as callback
-            const promise_callback = callback ? ((value:string, current_value:string) => {callback(value, current_value); promise.resolve(current_value) }) : promise.resolve
+            const promise_callback = callback ? ((new_value:Core.StateValue, prev_value:Core.StateValue) => {callback(new_value, prev_value); promise.resolve(new_value) }) : promise.resolve
 
             if (this.state_listeners[state_var] === undefined) {
                 this.state_listeners[state_var] = []
@@ -476,7 +480,7 @@ import {
         //------------------------------
         // Fire an event, which then calls callbacks for any listeners.
         //------------------------------
-        trigger_event(event: string, ...args_: unknown[]) {
+        trigger(event: string, ...args_: unknown[]) {
             const listeners = this.event_listeners[event];
             if (listeners === undefined) return this;
             const args:unknown[] = [];
@@ -487,22 +491,20 @@ import {
             } catch (err) {
                 //do nothing
             }
-            return this
         }
 
         //------------------------------
         // Add a listener for an event.
         //------------------------------
-        wait_event(event:string, callback: UnknownCallback) {
+        on(event:string, callback: Core.UnknownCallback) {
             if (this.event_listeners[event] === undefined) this.event_listeners[event] = [];
             this.event_listeners[event].push(callback);
-            return this
         }
 
         //------------------------------
         // Load and install a specific file type into the DOM.
         //------------------------------
-        async load_and_append(url:string, tag_name:string, location:string, use_cache:boolean) {
+        async #load_and_append(url:string, tag_name:string, location:string, use_cache?:boolean) {
             url = url.replace(/"/g,'\'');
             if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) {
                 return Promise.resolve(url);
@@ -528,27 +530,27 @@ import {
         //------------------------------
         // Load and install Javascript.
         //------------------------------
-        async load_script(url:string, use_cache: boolean) {
-            return this.load_and_append(url, 'script', 'body', use_cache);
+        async load_script(url:string, use_cache?: boolean) {
+            return this.#load_and_append(url, 'script', 'body', use_cache);
         }
 
         //------------------------------
         // Load and install a CSS file.
         //------------------------------
-        async load_css(url:string, use_cache:boolean) {
-            return this.load_and_append(url, 'style', 'head', use_cache);
+        async load_css(url:string, use_cache?:boolean) {
+            return this.#load_and_append(url, 'style', 'head', use_cache);
         }
 
         //------------------------------
         // Include a list of modules.
         //------------------------------
-        async include(module_list:string): Promise<object> {
+        async include(module_list:string): Promise<{loaded:string[];failed:Core.FailedInclude[]}> {
             if (this.get_state('ksof.ksof') !== 'ready') {
                 await this.ready('ksof')
                 return this.include(module_list)
             }
 
-            const include_deferred = new Deferred<object>();
+            const include_deferred = new Deferred<{loaded:string[];failed:Core.FailedInclude[]}>();
             const module_names = split_list(module_list);
             const script_cnt = module_names.length;
             if (script_cnt === 0) {
@@ -558,13 +560,13 @@ import {
 
             let done_cnt = 0;
             const loaded: string[] = []
-            const failed: {name:string, url:string|undefined}[] = [];
+            const failed: Core.FailedInclude[] = [];
             const no_cache = split_list(localStorage.getItem('ksof.include.nocache') || '');
             for (let idx = 0; idx < module_names.length; idx++) {
                 const module_name = module_names[idx];
                 const module = supported_modules[module_name];
                 if (!module) {
-                    failed.push({name:module_name, url:undefined});
+                    failed.push({name:module_name});
                     check_done();
                     continue;
                 }
@@ -585,7 +587,7 @@ import {
             }
 
             function push_failed(url:string) {
-                failed.push({name: '', url: url}); // TODO name
+                failed.push({url: url});
                 check_done();
             }
 
@@ -599,17 +601,17 @@ import {
         //------------------------------
         // Wait for all modules to report that they are ready
         //------------------------------
-        ready(module_list:string) {
+        ready(module_list:string): Promise<'ready'> | Promise<'ready'[]> {
             const module_names = split_list(module_list);
 
-            const ready_promises: Promise<string>[] = [];
+            const ready_promises: Promise<'ready'>[] = [];
             for (const idx in module_names) {
                 const module_name = module_names[idx];
-                ready_promises.push(this.wait_state('ksof.' + module_name, 'ready'));
+                ready_promises.push(this.wait_state('ksof.' + module_name, 'ready') as Promise<'ready'>);
             }
 
             if (ready_promises.length === 0) {
-                return Promise.resolve();
+                return Promise.resolve('ready');
             } else if (ready_promises.length === 1) {
                 return ready_promises[0];
             } else {
@@ -634,7 +636,7 @@ import {
         }
     }
 
-    class Version implements IVersion {
+    class Version implements Core.Version {
         value: string
 
         constructor(version:string) {
@@ -659,8 +661,12 @@ import {
         }
     }
 
-    class FileCache implements IFileCache {
-        dir: { [key: string]: FileCacheEntry }
+    class FileCache implements Core.FileCache {
+        dir: { [key: string]: {
+                added: IsoDateString
+                last_loaded: IsoDateString
+            }
+        }
         sync_timer: number | undefined
 
         constructor() {
@@ -724,7 +730,7 @@ import {
         dir_save(immediately = false) {
             const delay = (immediately ? 0 : 2000)
 
-            if (this.sync_timer !== undefined) {
+            if (this.sync_timer) {
                 clearTimeout(this.sync_timer)
             }
 
@@ -761,11 +767,11 @@ import {
             if (ksof.file_cache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
-            const load_deferred = new Deferred<any>()
+            const load_deferred = new Deferred<string | { [key: string]: any }>()
             const transaction = db.transaction('files', 'readonly');
             const store = transaction.objectStore('files');
             const request = store.get(name);
-            this.dir[name].last_loaded = new Date().toISOString();
+            this.dir[name].last_loaded = new Date().toISOString() as IsoDateString;
             this.dir_save();
             request.onsuccess = finish;
             request.onerror = error;
@@ -791,7 +797,7 @@ import {
         //------------------------------
         // Save a file into the file_cache database.
         //------------------------------
-        async save(name:string, content:object, extra_attribs:object = {}) {
+        async save(name:string, content:string | { [key: string]: any }, extra_attribs:object = {}) {
             const db = await file_cache_open()
 
             if (db === null) return Promise.resolve(name)
@@ -800,7 +806,7 @@ import {
             const transaction = db.transaction('files', 'readwrite');
             const store = transaction.objectStore('files');
             store.put({name:name,content:content});
-            const now = new Date().toISOString();
+            const now = new Date().toISOString() as IsoDateString;
             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
             ksof.file_cache.dir_save(true /* immediately */);
             transaction.oncomplete = save_deferred.resolve.bind(null, name);
