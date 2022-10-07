@@ -315,3 +315,9 @@ export declare namespace Settings {
         settings: { [key: string]: SettingCollection }
     }
 }
+
+export declare namespace JQuery {
+    export interface Module {
+        Jquery: {version: string}
+    }
+}
