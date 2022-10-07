@@ -1,4 +1,4 @@
-import { DialogUiCollection, SettingsCtor, KSOFSettingsObj, SettingCollection } from './Settings.d'
+import { KSOFSettingsObj, SettingCollection } from './Settings.d'
 
 export type CallbackFunction = (value:string, current_value:string) => void
 
