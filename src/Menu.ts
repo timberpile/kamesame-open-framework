@@ -7,12 +7,6 @@
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-// These lines are necessary to make sure that TSC does not put any exports in the
-// compiled js, which causes the script to crash
-// eslint-disable-next-line no-var, @typescript-eslint/no-unused-vars
-var module = {}
-export = null
-
 import { Core, Menu } from './ksof';
 
 (async (global: Window) => {
