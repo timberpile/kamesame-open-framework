@@ -103,7 +103,7 @@ export declare namespace Core {
         load_script: (url:string, use_cache?: boolean) => Promise<string>
         load_css: (url:string, use_cache?:boolean) => Promise<string>
         include: (module_list:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
-        ready: (module_list:string) => Promise<'ready'> | Promise<'ready'[]>
+        ready: (module_list:string) => Promise<'ready' | 'ready'[]>
         add_dom_observer: (element_query:string) => void
     }
 }

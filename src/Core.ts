@@ -44,10 +44,10 @@ declare global {
     const supported_modules: { [key:string]: {url: string}} = {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
-        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1101992'},
-        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1099676'},
+        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102235'},
+        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1102242'},
         // Progress: { url: ''},
-        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1101689'},
+        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102258'},
     }
 
     //########################################################################
@@ -593,15 +593,15 @@ declare global {
         //------------------------------
         // Wait for all modules to report that they are ready
         //------------------------------
-        ready(module_list:string): Promise<'ready'> | Promise<'ready'[]> {
+        ready(module_list:string): Promise<'ready' | 'ready'[]> {
             const module_names = split_list(module_list);
-
+            
             const ready_promises: Promise<'ready'>[] = [];
             for (const idx in module_names) {
                 const module_name = module_names[idx];
                 ready_promises.push(this.wait_state('ksof.' + module_name, 'ready') as Promise<'ready'>);
             }
-
+            
             if (ready_promises.length === 0) {
                 return Promise.resolve('ready');
             } else if (ready_promises.length === 1) {
