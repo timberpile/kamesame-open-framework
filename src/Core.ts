@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.1.1
+// @version     0.1.2
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -10,11 +10,12 @@
 // @grant       none
 // ==/UserScript==
 
+// deprecated in favor of after_build.py
 // These lines are necessary to make sure that TSC does not put any exports in the
 // compiled js, which causes the script to crash
 // eslint-disable-next-line no-var, @typescript-eslint/no-unused-vars
-var module = {}
-export = null
+// var module = {}
+// export = null
 
 import { Core, IsoDateString } from './ksof';
 
@@ -44,10 +45,10 @@ declare global {
     const supported_modules: { [key:string]: {url: string}} = {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
-        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102235'},
+        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410'},
         Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1102242'},
         // Progress: { url: ''},
-        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102258'},
+        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409'},
     }
 
     //########################################################################

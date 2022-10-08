@@ -13,9 +13,10 @@ It is an adapted version of the fantastic [Wanikani Open Framework](https://comm
 
 ## Building
 
-1. Run `tsc` in root dir
-2. Uncomment `export {};` in all generated `.js` files (unwanted behavior from TS compiler that needs to be fixed)
+### One Time
 
-### Jquery Module
+Run `npm run build`
 
-Due to some annoying behavior, we need to **delete** the line **`Object.defineProperty(exports, "__esModule", { value: true });`** manually in the generated `Jquery.js` file
+### Watch Mode
+
+Run `npm run build-watch`
