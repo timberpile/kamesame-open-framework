@@ -7,7 +7,10 @@
     "doc": "docs",
     "example": "examples"
   },
-  "scripts": {},
+  "scripts": {
+    "build-watch": "start /B tsc --watch & start /B python .\\after_build.py -w",
+    "build": "tsc & python .\\after_build.py"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/timberpile/kamesame-open-framework.git"
@@ -25,6 +28,7 @@
     "eslint": "^8.24.0"
   },
   "dependencies": {
+    "typescript": "^4.8.3",
     "@types/jqueryui": "^1.12.16"
   }
 }

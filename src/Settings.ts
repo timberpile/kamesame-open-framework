@@ -2,22 +2,16 @@
 // @name        KameSame Open Framework - Settings module
 // @namespace   timberpile
 // @description Settings module for KameSame Open Framework
-// @version     0.1
+// @version     0.2
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path ="../node_modules/@types/jqueryui/index.d.ts"/> 
-
-import {
-    IKSOFSettings, SettingsConfig, DialogUi, KSOFSettingsObj, SettingCollection, Setting
-} from './Settings.d';
-
+import { Core, Settings } from './ksof';
 
 (async function(global: Window) {
 
-    const ksof = global.ksof
+    const ksof = global.ksof as Core.Module & Settings.Module
 
     const background_funcs = () => { return {
         open: () => {
@@ -43,32 +37,28 @@ import {
     //------------------------------
     // Constructor
     //------------------------------
-    class KSOFSettings implements IKSOFSettings {
-        cfg: SettingsConfig
-        config_list: DialogUi.Collection
+    class KSOFSettings implements Settings.Dialog {
+        cfg: Settings.Config
+        config_list: Settings.UI.Collection
         keep_settings?: boolean
-        reversions?: DialogUi.Collection
-        open_dialog: JQuery<HTMLDivElement>
+        reversions?: Settings.UI.Collection
+        #open_dialog: JQuery<HTMLDivElement>
         background: {
             open: () => void
             close: () => void
         }
 
-        constructor(config: SettingsConfig) {
-            // if (!config.content) config.content = config.settings; // TODO what is config.settings?
-
+        constructor(config: Settings.Config) {
             this.cfg = config
             this.config_list = {}
-
-            this.open_dialog = $()
-
+            this.#open_dialog = $()
             this.background = background_funcs()
         }
 
         //------------------------------
         // Open the settings dialog.
         //------------------------------
-        static save(context: KSOFSettings | string) {
+        static save(context: Settings.Dialog | string) {
             if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
 
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
@@ -77,24 +67,24 @@ import {
             return ksof.file_cache.save('ksof.settings.'+script_id, settings);
         }
 
-        save() {
+        save(): Promise<string> {
             return KSOFSettings.save(this)
         }
 
         //------------------------------
         // Open the settings dialog.
         //------------------------------
-        static async load(context: KSOFSettings | string, defaults?:SettingCollection) {
+        static async load(context: Settings.Dialog | string, defaults?:Settings.SettingCollection) {
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
 
             try {
-                const settings = await ksof.file_cache.load('ksof.settings.'+script_id)
+                const settings = await ksof.file_cache.load('ksof.settings.'+script_id) as Settings.SettingCollection
                 return finish(settings);
             } catch (error) {
                 return finish.call(null, {})
             }
 
-            function finish(settings:SettingCollection) {
+            function finish(settings:Settings.SettingCollection) {
                 if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
 
                 if (defaults)
@@ -105,7 +95,7 @@ import {
             }
         }
 
-        load(defaults?:SettingCollection) {
+        load(defaults?:Settings.SettingCollection): Promise<Settings.SettingCollection> {
             return KSOFSettings.load(this, defaults)
         }
 
@@ -118,23 +108,27 @@ import {
             const script_id = this.cfg.script_id;
             const settings = ksof.settings[script_id];
             if (settings) {
-                const active_tabs = this.open_dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.getNamedItem('id')?.value || ''});
+                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.getNamedItem('id')?.value || ''});
                 if (active_tabs.length > 0) settings.ksofs_active_tabs = active_tabs;
             }
-            if (this.cfg.autosave === undefined || this.cfg.autosave === true) this.save();
-            if (typeof this.cfg.on_save === 'function') this.cfg.on_save(ksof.settings[this.cfg.script_id]);
-            // ksof.trigger('ksof.settings.save'); // TODO what should this do?
+            if (this.cfg.autosave === undefined || this.cfg.autosave === true) {
+                this.save();
+            }
+            if (this.cfg.on_save) {
+                this.cfg.on_save(ksof.settings[this.cfg.script_id]);
+            }
+            ksof.trigger('ksof.settings.save')
             this.keep_settings = true;
-            this.open_dialog.dialog('close');
+            this.#open_dialog.dialog('close');
         }
 
         //------------------------------
         // Cancel button handler.
         //------------------------------
-        cancel_btn() {
+        cancel() {
             if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
 
-            this.open_dialog.dialog('close');
+            this.#open_dialog.dialog('close');
             if (typeof this.cfg.on_cancel === 'function') this.cfg.on_cancel(ksof.settings[this.cfg.script_id]);
         }
 
@@ -144,40 +138,40 @@ import {
         open() {
             if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
             if (!ready) return;
-            if (this.open_dialog.length > 0) return;
+            if (this.#open_dialog.length > 0) return;
             install_anchor();
             if (this.cfg.background !== false) this.background.open();
-            this.open_dialog = $('<div id="ksofs_'+this.cfg.script_id+'" class="ksof_settings" style="display:none;"></div>')
-            this.open_dialog.html(config_to_html(this));
+            this.#open_dialog = $('<div id="ksofs_'+this.cfg.script_id+'" class="ksof_settings" style="display:none;"></div>')
+            this.#open_dialog.html(config_to_html(this));
 
             const resize = (event:unknown, ui:any) => {
-                const is_narrow = this.open_dialog.hasClass('narrow');
+                const is_narrow = this.#open_dialog.hasClass('narrow');
                 ui
                 if (is_narrow && ui.size.width >= 510) {
-                    this.open_dialog.removeClass('narrow');
+                    this.#open_dialog.removeClass('narrow');
                 }
                 else if (!is_narrow && ui.size.width < 490) {
-                    this.open_dialog.addClass('narrow');
+                    this.#open_dialog.addClass('narrow');
                 }
             }
 
             const tab_activated = () => {
-                const wrapper = $(this.open_dialog.dialog('widget'));
+                const wrapper = $(this.#open_dialog.dialog('widget'));
                 if ((wrapper.outerHeight() || 0) + wrapper.position().top > document.body.clientHeight) {
-                    this.open_dialog.dialog('option', 'maxHeight', document.body.clientHeight);
+                    this.#open_dialog.dialog('option', 'maxHeight', document.body.clientHeight);
                 }
             }
 
             let width = 500;
             if (window.innerWidth < 510) {
                 width = 280;
-                this.open_dialog.addClass('narrow');
+                this.#open_dialog.addClass('narrow');
             }
-            this.open_dialog.dialog({
+            this.#open_dialog.dialog({
                 title: this.cfg.title,
                 buttons: [
                     {text:'Save',click:this.save_btn.bind(this)},
-                    {text:'Cancel',click:this.cancel_btn.bind(this)}
+                    {text:'Cancel',click:this.cancel.bind(this)}
                 ],
                 width: width,
                 maxHeight: document.body.clientHeight,
@@ -187,8 +181,8 @@ import {
                 resize: resize.bind(this),
                 close: () => { this.close(false) }
             });
-            $(this.open_dialog.dialog('widget')).css('position','fixed');
-            this.open_dialog.parent().addClass('ksof_settings_dialog');
+            $(this.#open_dialog.dialog('widget')).css('position','fixed');
+            this.#open_dialog.parent().addClass('ksof_settings_dialog');
 
             $('.ksof_stabs').tabs({activate:tab_activated.bind(null)});
             const settings = ksof.settings[this.cfg.script_id];
@@ -209,36 +203,33 @@ import {
                     e.currentTarget.scrollTop = scroll;
                     multi.focus(); // TODO what should this do? it's deprecated
                 },0);
-                return this.setting_changed(e);
+                return this.#setting_changed(e);
             }
 
             const setting_button_clicked = (e:JQuery.TriggeredEvent) => {
                 const name = e.target.attributes.name.value;
                 const _item = this.config_list[name]
                 if (_item.type == 'button') {
-                    const item = _item as DialogUi.Button
-                    item.on_click.call(e, name, item, this.setting_changed.bind(this, e));
+                    const item = _item as Settings.UI.Button
+                    item.on_click.call(e, name, item, this.#setting_changed.bind(this, e));
                 }
             }
 
-            this.open_dialog.dialog('open');
-            this.open_dialog.find('.setting[multiple]').on('mousedown', toggle_multi.bind(this));
-            this.open_dialog.find('.setting').on('change', this.setting_changed.bind(this));
-            this.open_dialog.find('form').on('submit', function(){return false;});
-            this.open_dialog.find('button.setting').on('click', setting_button_clicked.bind(this));
+            this.#open_dialog.dialog('open');
+            this.#open_dialog.find('.setting[multiple]').on('mousedown', toggle_multi.bind(this));
+            this.#open_dialog.find('.setting').on('change', this.#setting_changed.bind(this));
+            this.#open_dialog.find('form').on('submit', function(){return false;});
+            this.#open_dialog.find('button.setting').on('click', setting_button_clicked.bind(this));
 
-            if (typeof this.cfg.pre_open === 'function') this.cfg.pre_open(this.open_dialog);
+            if (typeof this.cfg.pre_open === 'function') this.cfg.pre_open(this.#open_dialog);
             this.reversions = deep_merge({}, ksof.settings[this.cfg.script_id]);
             this.refresh();
-
-            //============
-            
         }
 
         //------------------------------
         // Handler for live settings changes.  Handles built-in validation and user callbacks.
         //------------------------------
-        setting_changed(event:JQuery.TriggeredEvent) {
+        #setting_changed(event:JQuery.TriggeredEvent) {
             if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
 
             const elem = $(event.currentTarget);
@@ -253,7 +244,7 @@ import {
                 value = elem.find(':checked').attr('name');
             }
             else if (_item.type == 'list') {
-                const item = _item as DialogUi.List
+                const item = _item as Settings.UI.List
 
                 if (item.multi === true) {
                     value = {};
@@ -266,7 +257,7 @@ import {
                 }
             }
             else if (_item.type == 'input') {
-                const item = _item as DialogUi.Input
+                const item = _item as Settings.UI.Input
 
                 if (item.subtype==='number') {
                     value = Number(elem.val())
@@ -285,7 +276,7 @@ import {
             // Validation
             let valid = {valid:true, msg:''};
             {
-                const item = _item as DialogUi.UserInput
+                const item = _item as Settings.UI.UserInput
                 if (item.validate) {
                     const _valid = item.validate.call(event.target, value, item);
                     if (typeof _valid === 'boolean')
@@ -296,7 +287,7 @@ import {
             }
 
             if (_item.type == 'number') {
-                const item = _item as DialogUi.NumberInput
+                const item = _item as Settings.UI.NumberInput
 
                 if (item.min && Number(value) < item.min) {
                     valid.valid = false;
@@ -317,7 +308,7 @@ import {
                 }
             }
             else if (_item.type == 'text') {
-                const item = _item as DialogUi.TextInput
+                const item = _item as Settings.UI.TextInput
 
                 if (item.match !== undefined && value.match(item.match) === null) {
                     valid.valid = false;
@@ -342,7 +333,7 @@ import {
             const script_id = this.cfg.script_id;
             const settings = ksof.settings[script_id]
             if (valid.valid) {
-                const item = _item as DialogUi.UserInput
+                const item = _item as Settings.UI.UserInput
 
                 // if (item.no_save !== true) set_value(this, settings, name, value); // TODO what is no_save supposed to do?
                 set_value(this, settings, name, value);
@@ -354,7 +345,6 @@ import {
 
             return false;
         }
-
 
         //------------------------------
         // Close and destroy the dialog.
@@ -368,8 +358,8 @@ import {
                 delete this.reversions;
             }
             delete this.keep_settings;
-            this.open_dialog.dialog('destroy');
-            this.open_dialog = $()
+            this.#open_dialog.dialog('destroy');
+            this.#open_dialog = $()
             if (this.cfg.background !== false) this.background.close();
             if (typeof this.cfg.on_close === 'function') this.cfg.on_close(ksof.settings[this.cfg.script_id]);
         }
@@ -383,7 +373,7 @@ import {
             const script_id = this.cfg.script_id;
             const settings = ksof.settings[script_id]
             for (const name in this.config_list) {
-                const elem = this.open_dialog.find('#'+script_id+'_'+name);
+                const elem = this.#open_dialog.find('#'+script_id+'_'+name);
                 const _config = this.config_list[name];
                 const value = get_value(this, settings, name);
 
@@ -391,7 +381,7 @@ import {
                     elem.find('option[name="'+value+'"]').prop('selected', true);
                 }
                 else if (_config.type == 'list') {
-                    const config = _config as DialogUi.List
+                    const config = _config as Settings.UI.List
                     if (config.multi === true) {
                         elem.find('option').each(function(i,e){
                             const opt_name = e.getAttribute('name') || '#'+e.index;
@@ -412,19 +402,17 @@ import {
         }
     }
 
-    // TODO find better name than SettingsClass. SettingsObj?
- 
-    function createSettingsObj(): KSOFSettingsObj {
-        const settings_obj = (config: SettingsConfig) => {
+    function createSettings(): Settings.Settings {
+        const settings_obj = (config: Settings.Config) => {
             return new KSOFSettings(config)
         }
-        settings_obj.save = (context: KSOFSettings | string) => { return KSOFSettings.save(context)}
-        settings_obj.load = (context: KSOFSettings | string, defaults?:DialogUi.Collection) => { return KSOFSettings.load(context, defaults)}
+        settings_obj.save = (context: Settings.Dialog | string) => { return KSOFSettings.save(context)}
+        settings_obj.load = (context: Settings.Dialog | string, defaults?:Settings.UI.Collection) => { return KSOFSettings.load(context, defaults)}
         settings_obj.background = background_funcs()
         return settings_obj
     }
 
-    ksof.Settings = createSettingsObj()
+    ksof.Settings = createSettings()
 
     ksof.settings = {}
 
@@ -482,7 +470,7 @@ import {
         return '<form>'+html+'</form>';
 
         //============
-        function parse_item(name:string, _item: DialogUi.Base, passback:ChildPassback) {
+        function parse_item(name:string, _item: Settings.UI.Component, passback:ChildPassback) {
             if (typeof _item.type !== 'string') return '';
             const id = context.cfg.script_id+'_'+name;
             let cname, html = '', child_passback:ChildPassback, non_page = '';
@@ -490,7 +478,7 @@ import {
             const _type = _item.type
 
             if (_type == 'tabset') {
-                const item = _item as DialogUi.Tabset
+                const item = _item as Settings.UI.Tabset
                 child_passback = {};
                 for (cname in item.content) {
                     non_page += parse_item(cname, item.content[cname], child_passback);
@@ -500,7 +488,7 @@ import {
                 }
             }
             else if (_type == 'page') {
-                const item = _item as DialogUi.Page
+                const item = _item as Settings.UI.Page
                 if (typeof item.content !== 'object') item.content = {};
                 if (!passback.tabs) {
                     passback.tabs = [];
@@ -519,7 +507,7 @@ import {
                 html = '';
             }
             else if (_type == 'group') {
-                const item = _item as DialogUi.Group
+                const item = _item as Settings.UI.Group
                 if (typeof item.content !== 'object') item.content = {};
                 child_passback = {};
                 for (cname in item.content) 
@@ -529,7 +517,7 @@ import {
                 html = '<fieldset id="'+id+'" class="ksof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>';
             }
             else if (_type == 'dropdown') {
-                const item = _item as DialogUi.Dropdown
+                const item = _item as Settings.UI.Dropdown
                 context.config_list[name] = item;
                 let value = get_value(context, base, name);
                 if (value === undefined) {
@@ -549,7 +537,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'list') {
-                const item = _item as DialogUi.List
+                const item = _item as Settings.UI.List
 
                 context.config_list[name] = item;
                 let value = get_value(context, base, name);
@@ -580,7 +568,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'checkbox') {
-                const item = _item as DialogUi.Checkbox
+                const item = _item as Settings.UI.Checkbox
                 context.config_list[name] = item;
                 html = make_label(item);
                 let value = get_value(context, base, name);
@@ -592,7 +580,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'input') {
-                const item = _item as DialogUi.Input
+                const item = _item as Settings.UI.Input
                 const itype = item.subtype || 'text'
                 context.config_list[name] = item;
                 html += make_label(item);
@@ -606,7 +594,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'number') {
-                const item = _item as DialogUi.NumberInput
+                const item = _item as Settings.UI.NumberInput
                 const itype = item.type;
                 context.config_list[name] = item;
                 html += make_label(item);
@@ -620,7 +608,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'text') {
-                const item = _item as DialogUi.TextInput
+                const item = _item as Settings.UI.TextInput
                 const itype = item.type;
                 context.config_list[name] = item;
                 html += make_label(item);
@@ -633,7 +621,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'color') {
-                const item = _item as DialogUi.ColorSelector
+                const item = _item as Settings.UI.ColorSelector
                 context.config_list[name] = item;
                 html += make_label(item);
                 let value = get_value(context, base, name);
@@ -645,7 +633,7 @@ import {
                 html = wrap_row(html, item.full_width, item.hover_tip);
             }
             else if (_type == 'button') {
-                const item = _item as DialogUi.Button
+                const item = _item as Settings.UI.Button
                 context.config_list[name] = item;
                 html += make_label(item);
                 const text = escape_text(item.text || 'Click');
@@ -656,11 +644,11 @@ import {
                 html += '<hr>';
             }
             else if (_type == 'section') {
-                const item = _item as DialogUi.Section
+                const item = _item as Settings.UI.Section
                 html += '<section>'+(item.label || '')+'</section>';
             }
             else if (_type == 'html') {
-                const item = _item as DialogUi.HTML
+                const item = _item as Settings.UI.Html
                 html += make_label(item);
                 html += item.html;
                 switch (item.wrapper) {
@@ -695,7 +683,7 @@ import {
         function to_title(tip?:string) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot;')+'"';}
     }
 
-    function get_value(context:KSOFSettings, base: SettingCollection, name: string){
+    function get_value(context:KSOFSettings, base: Settings.SettingCollection, name: string){
         const item = context.config_list[name] as {path?:string}
         const evaluate = (item.path !== undefined);
         const path = (item.path || name);
@@ -705,7 +693,7 @@ import {
         } catch(e) {return;}
     }
 
-    function set_value(context:KSOFSettings, base: SettingCollection, name:string, value: Setting) {
+    function set_value(context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) {
         const item = context.config_list[name] as {path?:string}
         const evaluate = (item.path !== undefined);
         const path = (item.path || name);
