@@ -316,6 +316,30 @@ export declare namespace Settings {
     }
 }
 
+export declare namespace Menu {
+
+    export interface Config {
+        name: string
+        submenu?: string
+        title: string
+        class?: string
+        class_html?: string // TODO what is this?
+        on_click: (event: any) => void
+    }
+
+    export interface Menu {
+        top_menu?: HTMLDivElement
+        scripts_menu?: HTMLElement
+    }
+
+    export interface Module {
+        Menu: {
+            insert_script_link: (config: Config) => void
+            ui: Menu
+        }
+    }
+}
+
 export declare namespace JQuery {
     export interface Module {
         Jquery: {version: string}
