@@ -55,8 +55,8 @@ export declare namespace Core {
     export type UnknownCallback = (...args: unknown[]) => void
 
     export interface ReviewInfo {
-        answer_correct: string | null
-        review_type: string | null
+        answer_correct: 'exactly_correct' | 'alternative_match_completion' | 'alternative_match' | 'incorrect' | ''
+        review_type: 'production' | 'recognition' | ''
     }
 
     export interface ItemInfo {
