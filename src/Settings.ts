@@ -59,8 +59,6 @@ import { Core, Settings } from './ksof';
         // Open the settings dialog.
         //------------------------------
         static save(context: Settings.Dialog | string) {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
             const settings = ksof.settings[script_id];
             if (!settings) return Promise.resolve('');
@@ -85,8 +83,6 @@ import { Core, Settings } from './ksof';
             }
 
             function finish(settings:Settings.SettingCollection) {
-                if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
                 if (defaults)
                     ksof.settings[script_id] = deep_merge(defaults, settings);
                 else
@@ -103,8 +99,6 @@ import { Core, Settings } from './ksof';
         // Save button handler.
         //------------------------------
         save_btn() {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             const script_id = this.cfg.script_id;
             const settings = ksof.settings[script_id];
             if (settings) {
@@ -126,8 +120,6 @@ import { Core, Settings } from './ksof';
         // Cancel button handler.
         //------------------------------
         cancel() {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             this.#open_dialog.dialog('close');
             if (typeof this.cfg.on_cancel === 'function') this.cfg.on_cancel(ksof.settings[this.cfg.script_id]);
         }
@@ -136,7 +128,6 @@ import { Core, Settings } from './ksof';
         // Open the settings dialog.
         //------------------------------
         open() {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
             if (!ready) return;
             if (this.#open_dialog.length > 0) return;
             install_anchor();
@@ -230,8 +221,6 @@ import { Core, Settings } from './ksof';
         // Handler for live settings changes.  Handles built-in validation and user callbacks.
         //------------------------------
         #setting_changed(event:JQuery.TriggeredEvent) {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             const elem = $(event.currentTarget);
             const name = elem.attr('name');
             if (!name) return false
@@ -350,8 +339,6 @@ import { Core, Settings } from './ksof';
         // Close and destroy the dialog.
         //------------------------------
         close(keep_settings:boolean) {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             if (!this.keep_settings && keep_settings !== true) {
                 // Revert settings
                 ksof.settings[this.cfg.script_id] = deep_merge({}, this.reversions || {});
@@ -368,8 +355,6 @@ import { Core, Settings } from './ksof';
         // Update the dialog to reflect changed settings.
         //------------------------------
         refresh() {
-            if (!ksof.settings) throw new Error('ksof.settings not defined');if (!ksof.Settings) throw new Error('ksof.Settings not defined') // this line is used to tell the compiler that settings and Settigns definitely are defined in the following lines
-
             const script_id = this.cfg.script_id;
             const settings = ksof.settings[script_id]
             for (const name in this.config_list) {
