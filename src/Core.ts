@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.1.2
+// @version     0.2
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -46,7 +46,7 @@ declare global {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
         Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410'},
-        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1102242'},
+        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1110889'},
         // Progress: { url: ''},
         Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409'},
     }
@@ -66,11 +66,16 @@ declare global {
             if (!input) {
                 return null
             }
-
-            // TODO find out classname for fourth type ... (other item marked correct)
-            for (const className of ['exactly_correct', 'alternative_match', 'incorrect', '...']) {
-                if (input.classList.contains(className)) {
-                    return className
+            const outcomes: Core.AnswerOutcome[] = [
+                'exactly_correct',
+                'reading_correct',
+                'alternative_match_completion',
+                'alternative_match',
+                'incorrect',
+            ]
+            for (const outcome of outcomes) {
+                if (input.classList.contains(outcome)) {
+                    return outcome
                 }
             }
             return null
@@ -81,15 +86,44 @@ declare global {
             if (!input) {
                 return null
             }
-            for (const className of ['production', 'recognition']) {
-                if (input.classList.contains(className)) {
-                    return className
-                }
+            if (input.classList.contains('production')) {
+                return 'production'
+            }
+            if (input.classList.contains('recognition')) {
+                return 'recognition'
             }
             return null
         }
     }
 
+    class PageInfo implements Core.PageInfo {
+        // returns the type of the current page
+        get on() {
+            const matches: {
+                tag: Core.Page;
+                matcher: RegExp;
+            }[] = [
+                {tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/},
+                {tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/},
+                {tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/},
+                {tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/},
+                {tag: 'search', matcher: /kamesame\.com\/app\/search$/},
+                {tag: 'searchResult', matcher: /kamesame\.com\/app\/search\//},
+                {tag: 'account', matcher: /kamesame\.com\/app\/account/},
+                {tag: 'home', matcher: /kamesame\.com\/app$/},
+            ]
+
+            for (const match of matches) {
+                if (document.URL.match(match.matcher)) {
+                    return match.tag
+            }
+            }
+
+            return null
+        }
+    }
+
+    // TODO better structure for Infos
     class ItemInfo implements Core.ItemInfo {
         #facts_cache?: {[key: string]: string;}
 
@@ -97,19 +131,8 @@ declare global {
             //
         }
 
-        // returns the type of the current page
-        get on() {
-            if(document.URL.includes('kamesame.com/app/items')) {
-                return 'itemPage'
-            }
-            else if(document.URL.includes('kamesame.com/app/reviews')) {
-                return 'review'
-            }
-            return null
-        }
-
         get variations() {
-            switch (this.on) {
+            switch (ksof.pageInfo.on) {
             case 'itemPage':
                 switch (this.type) {
                 case 'vocabulary':
@@ -123,7 +146,7 @@ declare global {
         }
 
         get parts_of_speech() {
-            switch (this.on) {
+            switch (ksof.pageInfo.on) {
             case 'itemPage':
                 switch (this.type) {
                 case 'vocabulary':
@@ -137,7 +160,7 @@ declare global {
         }
 
         get wanikani_level() {
-            switch (this.on) {
+            switch (ksof.pageInfo.on) {
             case 'itemPage':
                 switch (this.type) {
                 case 'vocabulary':
@@ -151,7 +174,7 @@ declare global {
         }
 
         get tags() {
-            switch (this.on) {
+            switch (ksof.pageInfo.on) {
             case 'itemPage':
                 switch (this.type) {
                 case 'vocabulary':
@@ -166,7 +189,7 @@ declare global {
 
         get characters() {
 
-            if (this.on == 'review') {
+            if (ksof.pageInfo.on == 'review') {
                 const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
                 if (!outcome_text) {
                     return null
@@ -193,7 +216,7 @@ declare global {
                 }
                 return null
             }
-            else if (this.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'itemPage') {
                 if (this.type == 'vocabulary') {
                     return document.querySelector('.name.vocabulary')?.textContent || null
                 }
@@ -204,7 +227,7 @@ declare global {
 
         get meanings() {
 
-            if (this.on == 'review') {
+            if (ksof.pageInfo.on == 'review') {
                 const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
                 if (!outcome_text) {
                     return null
@@ -231,7 +254,7 @@ declare global {
                 }
                 return meanings
             }
-            else if (this.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'itemPage') {
                 if (this.type == 'vocabulary') {
                     return this.facts['Meanings'].split(', ')
                 }
@@ -241,7 +264,7 @@ declare global {
         }
 
         get readings() {
-            if (this.on == 'review') {
+            if (ksof.pageInfo.on == 'review') {
                 const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
                 if (!outcome_text) {
                     return null
@@ -269,7 +292,7 @@ declare global {
                 }
                 return readings
             }
-            else if (this.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'itemPage') {
                 if (this.type == 'vocabulary') {
                     return this.facts['Readings'].replaceAll(' ⏯', '').split('、')
                 }
@@ -308,10 +331,10 @@ declare global {
         }
 
         get type() {
-            if (this.on == 'review') {
+            if (ksof.pageInfo.on == 'review') {
                 //
             }
-            else if (this.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'itemPage') {
                 if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
                     return 'vocabulary'
                 }
@@ -331,7 +354,7 @@ declare global {
                 parts_of_speech: this.parts_of_speech,
                 wanikani_level: this.wanikani_level,
                 tags: this.tags,
-                on: this.on,
+                on: ksof.pageInfo.on,
                 type: this.type
             }
         }
@@ -348,6 +371,7 @@ declare global {
         include_promises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
+        pageInfo: PageInfo
 
         constructor() {
             this.file_cache = new FileCache()
@@ -359,6 +383,7 @@ declare global {
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
             this.reviewInfo = new ReviewInfo()
+            this.pageInfo = new PageInfo()
             this.support_files = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js',
@@ -538,10 +563,7 @@ declare global {
         // Include a list of modules.
         //------------------------------
         async include(module_list:string): Promise<{loaded:string[];failed:Core.FailedInclude[]}> {
-            if (this.get_state('ksof.ksof') !== 'ready') {
-                await this.ready('ksof')
-                return this.include(module_list)
-            }
+            await this.ready('ksof')
 
             const include_deferred = new Deferred<{loaded:string[];failed:Core.FailedInclude[]}>();
             const module_names = split_list(module_list);
@@ -970,26 +992,57 @@ declare global {
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
     function start_dom_observing() {
-        const body = document.querySelector('body')
-        if (!body) {
-            console.error('body DOM not loaded!')
-            return
-        }
-        body_observer.observe(body, {childList: true, subtree: true})
+        body_observer.observe(document.body, {childList: true, subtree: true})
 
-        let element_query = ''
-        const current_page = ksof.itemInfo.on
+        const current_page = ksof.pageInfo.on
+        
+        let element_query = '' // if search query loaded -> assume everything else is also loaded
         if (current_page == 'itemPage') {
-            element_query = '#app.kamesame #item .facts .fact' // if facts are loaded -> everything else loaded
+            element_query = '#app.kamesame #item .facts .fact'
         }
         else if (current_page == 'review') {
-            element_query = '#app.kamesame #study .meaning' // if meaning loaded -> everything else loaded
+            element_query = '#app.kamesame #study .meaning'
+        }
+        else if (current_page == 'reviewSummary') {
+            element_query = '#app.kamesame #reviews #reviewsSummary .level-bars'
+        }
+        else if (current_page == 'lessons') {
+            element_query = '#app.kamesame #lessons #lessonsFromLists.section'
+        }
+        else if (current_page == 'search') {
+            element_query = '#app.kamesame #search form .search-bar #searchQuery'
+        }
+        else if (current_page == 'searchResult') {
+            element_query = '#app.kamesame #search .fancy-item-list .actions'
+        }
+        else if (current_page == 'home') {
+            element_query = '#app.kamesame #home .section .stats'
+        }
+        else if (current_page == 'account') {
+            element_query = '#app.kamesame #account .fun-stuff'
         }
 
         if (element_query.length > 0) {
             ksof.add_dom_observer(element_query)
             ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
         }
+        else {
+            setTimeout(set_doc_ready, 2000) // unknown page -> assume everything loaded after 2 seconds
+        }
+
+        // TODO
+        // HACK THAT SHOULD BE REMOVED ONCE ISSUE FIXED:
+        // On some of the KameSame pages (like during reviews) body_observer never automatically
+        // processes the mutations it records. I have no idea why. On the dicionary entry pages
+        // this isn't a problem. So we also manually process these events instead once in a while
+        const check_observer = () => {
+            const mutations = body_observer.takeRecords()
+            if (mutations.length > 0) {
+                on_body_mutated()
+            }
+            setTimeout(check_observer, 100)
+        }
+        check_observer()
     }
 
     //########################################################################
