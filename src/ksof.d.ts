@@ -54,9 +54,11 @@ export declare namespace Core {
 
     export type UnknownCallback = (...args: unknown[]) => void
 
+    export type AnswerOutcome = 'exactly_correct' | 'reading_correct' | 'alternative_match_completion' | 'alternative_match' | 'incorrect'
+
     export interface ReviewInfo {
-        answer_correct: 'exactly_correct' | 'alternative_match_completion' | 'alternative_match' | 'incorrect' | ''
-        review_type: 'production' | 'recognition' | ''
+        answer_correct: AnswerOutcome | null
+        review_type: 'production' | 'recognition' | null
     }
 
     export interface ItemInfo {
@@ -67,9 +69,22 @@ export declare namespace Core {
         parts_of_speech: string[] | null
         wanikani_level: number | null
         tags: string[] | null
-        on: string | null
-        type: string | null
+        type: 'vocabulary' | 'kanji' | null
         summary: {[key: string]: string | string[] | number | null}
+    }
+
+    export type Page = 'review'
+    | 'reviewSummary'
+    | 'itemPage'
+    | 'lessons'
+    | 'search'
+    | 'searchResult'
+    | 'account'
+    | 'home'
+    | null
+
+    export interface PageInfo {
+        on: Page
     }
 
     export type StateValue = any
@@ -85,10 +100,8 @@ export declare namespace Core {
         dom_observers: Set<string>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
-    
-        // Settings?: Settings
-        // settings?: {[key:string]: SettingCollection}
-    
+        pageInfo: PageInfo
+
         load_file: (url: string, use_cache?: boolean) => Promise<any>
         get_state: (state_var:string) => StateValue
         set_state: (state_var:string, value:StateValue) => void
@@ -327,15 +340,18 @@ export declare namespace Menu {
         on_click: (event: any) => void
     }
 
-    export interface Menu {
-        top_menu?: HTMLDivElement
-        scripts_menu?: HTMLElement
+    export interface Ui {
+        style: HTMLStyleElement
+        menu: HTMLDivElement
+        scripts_icon: HTMLLinkElement
+        dropdown_menu: HTMLUListElement
+        header: HTMLLIElement
     }
 
     export interface Module {
         Menu: {
             insert_script_link: (config: Config) => void
-            ui: Menu
+            ui: Ui
         }
     }
 }
