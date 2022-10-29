@@ -104,7 +104,9 @@ declare global {
                 matcher: RegExp;
             }[] = [
                 {tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/},
+                {tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/},
                 {tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/},
+                {tag: 'lessonsSummary', matcher: /kamesame\.com\/app\/lessons\/summary/},
                 {tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/},
                 {tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/},
                 {tag: 'search', matcher: /kamesame\.com\/app\/search$/},
@@ -183,6 +185,29 @@ declare global {
             }
 
             return null
+        }
+
+        get id() {
+            let url = ''
+            if (ksof.pageInfo.on == 'review') {
+                const item_link = document.querySelector('#app.kamesame #study .outcome p a.item') as HTMLLinkElement | null
+                if (!item_link) {
+                    return null
+                }
+                url = item_link.href
+            }
+            else if (ksof.pageInfo.on == 'itemPage') {
+                url = document.URL
+            }
+
+            const match = RegExp(/app\/items\/(\d+)/).exec(url)
+            if (!match) {
+                return null
+            }
+            if (match.length < 2) {
+                return null
+            }
+            return Number(match[1])
         }
 
         get characters() {
@@ -998,6 +1023,9 @@ declare global {
         }
         else if (current_page == 'reviewSummary') {
             element_query = '#app.kamesame #reviews #reviewsSummary .level-bars'
+        }
+        else if (current_page == 'lessonsSummary') {
+            element_query = '#app.kamesame #summary .item-list li a.item'
         }
         else if (current_page == 'lessons') {
             element_query = '#app.kamesame #lessons #lessonsFromLists.section'

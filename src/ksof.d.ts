@@ -71,12 +71,14 @@ export declare namespace Core {
         tags: string[] | null
         type: 'vocabulary' | 'kanji' | null
         summary: {[key: string]: string | string[] | number | null}
+        id: number | null
     }
 
     export type Page = 'review'
     | 'reviewSummary'
-    | 'itemPage'
     | 'lessons'
+    | 'lessonsSummary'
+    | 'itemPage'
     | 'search'
     | 'searchResult'
     | 'account'
