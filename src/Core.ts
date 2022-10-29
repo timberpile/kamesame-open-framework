@@ -116,7 +116,7 @@ declare global {
             for (const match of matches) {
                 if (document.URL.match(match.matcher)) {
                     return match.tag
-            }
+                }
             }
 
             return null
@@ -125,8 +125,6 @@ declare global {
 
     // TODO better structure for Infos
     class ItemInfo implements Core.ItemInfo {
-        #facts_cache?: {[key: string]: string;}
-
         constructor() {
             //
         }
@@ -302,10 +300,6 @@ declare global {
         }
 
         get facts() {
-            if (this.#facts_cache) {
-                return this.#facts_cache
-            }
-
             const facts: {[key: string]: string} = {}
             for (const fact of document.querySelectorAll('#item .facts .fact')) {
                 const key = fact.querySelector('.key')?.textContent || ''
@@ -326,7 +320,6 @@ declare global {
                 facts[key] = val
             }
 
-            this.#facts_cache = facts
             return facts
         }
 
