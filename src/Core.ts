@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.2
+// @version     0.2.1
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
