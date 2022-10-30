@@ -60,6 +60,10 @@ declare global {
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
+    function dom_observer_state(name: string) {
+        return 'ksof.dom_observer.' + name
+    }
+
     class ReviewInfo implements Core.ReviewInfo {
         get answer_correct() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
@@ -385,7 +389,7 @@ declare global {
         state_listeners: {[key:string]: Core.StateListener[]}
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: Core.UnknownCallback[]}
-        dom_observers: Set<string> // TODO write documentation about DOM observers
+        dom_observers: Core.DomObserver[] // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
@@ -397,7 +401,7 @@ declare global {
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
-            this.dom_observers = new Set<string>()
+            this.dom_observers = []
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
             this.reviewInfo = new ReviewInfo()
@@ -652,20 +656,24 @@ declare global {
             }
         }
 
-        add_dom_observer(element_query:string) {
-            if (!this.dom_observers.has(element_query)) {
-                this.dom_observers.add(element_query)
-                this.check_dom_observer(element_query)
+        // Throws Error if observer with the given name or query already exists
+        add_dom_observer(observer:Core.DomObserver) {
+            for (const _observer of this.dom_observers) {
+                if (_observer.name == observer.name) {
+                    throw new Error(`Observer with the name ${observer.name} already exists`)
+                }
+                if (_observer.query == observer.query) {
+                    throw new Error(`Observer with the query ${observer.query} already exists under the name ${observer.name}`)
+                }
             }
+
+            this.dom_observers.push(observer)
+            this.check_dom_observer(observer)
         }
 
-        check_dom_observer(element_query:string) {
-            const visible = (document.querySelector(element_query) != null)
-            this.set_state(this.element_query_to_state(element_query), visible ? 'exists' : 'gone')
-        }
-
-        element_query_to_state(element_query:string) {
-            return 'ksof.dom_observer.' + element_query
+        check_dom_observer(observer:Core.DomObserver) {
+            const visible = (document.querySelector(observer.query) != null)
+            this.set_state(dom_observer_state(observer.name), visible ? 'exists' : 'gone')
         }
     }
 
@@ -1000,11 +1008,6 @@ declare global {
         }
     }
 
-    function set_doc_ready() {
-        // console.log('Doc ready!')
-        ksof.set_state('ksof.document', 'ready');
-    }
-
     const body_observer = new MutationObserver(on_body_mutated)
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
@@ -1031,13 +1034,17 @@ declare global {
             element_query = queries.get(current_page)
         }
 
-        if (element_query) {
-            ksof.add_dom_observer(element_query)
-            ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
+        if (element_query && current_page) {
+            const observer = {name: `page.${current_page}`, query: element_query}
+            ksof.add_dom_observer(observer)
+            ksof.wait_state(dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
         }
         else {
-            setTimeout(set_doc_ready, 2000) // unknown page -> assume everything loaded after 2 seconds
+            setTimeout(() => { ksof.set_state('ksof.document', 'ready') }, 2000) // unknown page -> assume everything loaded after 2 seconds
         }
+
+        // Add default Observers
+        ksof.add_dom_observer({name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item'})
 
         // TODO
         // HACK THAT SHOULD BE REMOVED ONCE ISSUE FIXED:
