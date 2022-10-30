@@ -1014,36 +1014,24 @@ declare global {
 
         const current_page = ksof.pageInfo.on
         
-        let element_query = '' // if search query loaded -> assume everything else is also loaded
-        if (current_page == 'itemPage') {
-            element_query = '#app.kamesame #item .facts .fact'
-        }
-        else if (current_page == 'review') {
-            element_query = '#app.kamesame #study .meaning'
-        }
-        else if (current_page == 'reviewSummary') {
-            element_query = '#app.kamesame #reviews #reviewsSummary .level-bars'
-        }
-        else if (current_page == 'lessonsSummary') {
-            element_query = '#app.kamesame #summary .item-list li a.item'
-        }
-        else if (current_page == 'lessons') {
-            element_query = '#app.kamesame #lessons #lessonsFromLists.section'
-        }
-        else if (current_page == 'search') {
-            element_query = '#app.kamesame #search form .search-bar #searchQuery'
-        }
-        else if (current_page == 'searchResult') {
-            element_query = '#app.kamesame #search .fancy-item-list .actions'
-        }
-        else if (current_page == 'home') {
-            element_query = '#app.kamesame #home .section .stats'
-        }
-        else if (current_page == 'account') {
-            element_query = '#app.kamesame #account .fun-stuff'
+        let element_query: string | undefined = undefined // if search query loaded -> assume everything else is also loaded
+        if (current_page) {
+            const queries = new Map([
+                ['itemPage',       '#app.kamesame #item .facts .fact'],
+                ['review',         '#app.kamesame #study .meaning'],
+                ['reviewSummary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
+                ['lessonsSummary', '#app.kamesame #summary .item-list li a.item'],
+                ['lessons',        '#app.kamesame #lessons #lessonsFromLists.section'],
+                ['search',         '#app.kamesame #search form .search-bar #searchQuery'],
+                ['searchResult',   '#app.kamesame #search .fancy-item-list .actions'],
+                ['home',           '#app.kamesame #home .section .stats'],
+                ['account',        '#app.kamesame #account .fun-stuff'],
+            ])
+            
+            element_query = queries.get(current_page)
         }
 
-        if (element_query.length > 0) {
+        if (element_query) {
             ksof.add_dom_observer(element_query)
             ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
         }
