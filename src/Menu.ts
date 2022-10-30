@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.1
+// @version     0.1.1
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -18,15 +18,40 @@ import { Core, Menu } from './ksof';
     class MenuUi implements Menu.Ui {
         menu: HTMLDivElement
         style: HTMLStyleElement
+        submenus: Map<string, HTMLLIElement>
+        configs: Menu.Config[]
 
         constructor() {
-            this.style = this.#install_style()
+            this.style = undefined as unknown as HTMLStyleElement
+            this.menu = undefined as unknown as HTMLDivElement
+            this.submenus = new Map()
+            this.configs = []
 
-            try {
-                this.menu = this.#install_menu()
-            } catch (error) {
-                throw new Error(`Can't install ksof menu: ${error}`)
+            const reinstall_menu = () => {
+                if (this.style) {
+                    this.style.remove()
+                }
+                this.style = this.#install_style()
+    
+                if (this.menu) {
+                    this.menu.remove()
+                }
+                try {
+                    this.menu = this.#install_menu()
+                } catch (error) {
+                    throw new Error(`Can't install ksof menu: ${error}`)
+                }
             }
+
+            ksof.add_dom_observer({name: 'menu', query: '#scripts-menu'})
+            ksof.wait_state(ksof.dom_observer_state('menu'), 'gone', () => {
+                reinstall_menu()
+                const old_configs = this.configs
+                this.configs = []
+                for (const config of old_configs) {
+                    insert_script_link(config)
+                }
+            }, true)
         }
 
         get header () {
@@ -190,7 +215,7 @@ import { Core, Menu } from './ksof';
 
         get_submenu(name: string) {
             const safe_name = escape_attr(name);
-            return document.querySelector('.scripts-submenu[name="'+safe_name+'"]') as HTMLLIElement | null
+            return this.submenus.get(safe_name)
         }
 
         //------------------------------
@@ -206,20 +231,26 @@ import { Core, Menu } from './ksof';
             const safe_name = escape_attr(name);
             const safe_text = escape_text(name);
 
-            this.header.insertAdjacentHTML('afterend',
-                `<li class="scripts-submenu" name="${safe_name}">
-                    <a href="#">${safe_text}</a>
-                    <ul class="dropdown-menu"></ul>
-                </li>`
-            )
+            const link_element = document.createElement('a')
+            link_element.href = '#'
+            link_element.innerText = safe_text
+            const dropdown_menu = document.createElement('ul')
+            dropdown_menu.className = 'dropdown-menu'
+            const submenu = document.createElement('li')
+            submenu.setAttribute('name', safe_name)
+            submenu.appendChild(link_element)
+            submenu.appendChild(dropdown_menu)
+            this.dropdown_menu.appendChild(submenu)
+
+            this.submenus.set(safe_name, submenu)
 
             const menu_contents = this.dropdown_menu.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link');
-            if (!menu_contents) return null
+            if (!menu_contents) return undefined
             for (const node of Array.from(menu_contents).sort(sort_name)) {
                 // TODO why append again without removing first?
                 node.parentNode?.append(node)
             }
-            return this.get_submenu(name)
+            return submenu
         }
     }
     
@@ -286,6 +317,9 @@ import { Core, Menu } from './ksof';
         const link_id = config.name+'_script_link';
         const link_text = escape_text(config.title);
         if (document.querySelector('#'+link_id)) return;
+
+        if (ui.configs.indexOf(config) >= 0) return;
+        ui.configs.push(config)
 
         if(ui.menu.hasAttribute('display')) {
             ui.menu.removeAttribute('display')

@@ -125,6 +125,7 @@ export declare namespace Core {
         include: (module_list:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
         ready: (module_list:string) => Promise<'ready' | 'ready'[]>
         add_dom_observer: (observer:Core.DomObserver) => void
+        dom_observer_state: (name: string) => string
     }
 }
 
@@ -353,6 +354,8 @@ export declare namespace Menu {
         scripts_icon: HTMLLinkElement
         dropdown_menu: HTMLUListElement
         header: HTMLLIElement
+        submenus: Map<string, HTMLLIElement>
+        configs: Menu.Config[]
     }
 
     export interface Module {

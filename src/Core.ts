@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.2.1
+// @version     0.2.2
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -72,7 +72,7 @@ declare global {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
         Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410'},
-        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1110889'},
+        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1111229'},
         // Progress: { url: ''},
         Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409'},
     }
@@ -85,10 +85,6 @@ declare global {
     const KANA_CHARS = '\u3040-\u30ff\uff66-\uff9f'
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
-
-    function dom_observer_state(name: string) {
-        return 'ksof.dom_observer.' + name
-    }
 
     class ReviewInfo implements Core.ReviewInfo {
         get answer_correct() {
@@ -697,9 +693,13 @@ declare global {
             this.check_dom_observer(observer)
         }
 
+        dom_observer_state(name: string) {
+            return 'ksof.dom_observer.' + name
+        }
+
         check_dom_observer(observer:Core.DomObserver) {
             const visible = (document.querySelector(observer.query) != null)
-            this.set_state(dom_observer_state(observer.name), visible ? 'exists' : 'gone')
+            this.set_state(this.dom_observer_state(observer.name), visible ? 'exists' : 'gone')
         }
     }
 
@@ -1039,7 +1039,7 @@ declare global {
         for (const query of page_queries) {
             const observer = {name: `page.${query[0]}`, query: query[1]}
             ksof.add_dom_observer(observer)
-            ksof.wait_state(dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
+            ksof.wait_state(ksof.dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
         }
     }
 
