@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.1.1
+// @version     0.1.2
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -44,7 +44,7 @@ import { Core, Menu } from './ksof';
             }
 
             ksof.add_dom_observer({name: 'menu', query: '#scripts-menu'})
-            ksof.wait_state(ksof.dom_observer_state('menu'), 'gone', () => {
+            ksof.wait_state(ksof.dom_observer_state('menu'), 'absent', () => {
                 reinstall_menu()
                 const old_configs = this.configs
                 this.configs = []

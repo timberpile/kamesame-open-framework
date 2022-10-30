@@ -699,7 +699,7 @@ declare global {
 
         check_dom_observer(observer:Core.DomObserver) {
             const visible = (document.querySelector(observer.query) != null)
-            this.set_state(this.dom_observer_state(observer.name), visible ? 'exists' : 'gone')
+            this.set_state(this.dom_observer_state(observer.name), visible ? 'present' : 'absent')
         }
     }
 
@@ -1039,7 +1039,7 @@ declare global {
         for (const query of page_queries) {
             const observer = {name: `page.${query[0]}`, query: query[1]}
             ksof.add_dom_observer(observer)
-            ksof.wait_state(ksof.dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
+            ksof.wait_state(ksof.dom_observer_state(observer.name), 'present', () => { ksof.set_state('ksof.document', 'ready') })
         }
     }
 
