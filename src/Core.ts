@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.2
+// @version     0.2.1
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
@@ -27,6 +27,32 @@ declare global {
         $: JQueryStatic
     }
 }
+
+// Ensure locationchange always works
+// https://stackoverflow.com/questions/6390341/how-to-detect-if-url-has-changed-after-hash-in-javascript
+(() => {
+    const oldPushState = history.pushState;
+    history.pushState = function pushState() {
+        //eslint-disable-next-line prefer-rest-params
+        const ret = oldPushState.apply(this, arguments as any);
+        window.dispatchEvent(new Event('pushstate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+    
+    const oldReplaceState = history.replaceState;
+    history.replaceState = function replaceState() {
+        //eslint-disable-next-line prefer-rest-params
+        const ret = oldReplaceState.apply(this, arguments as any);
+        window.dispatchEvent(new Event('replacestate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+
+    window.addEventListener('popstate', () => {
+        window.dispatchEvent(new Event('locationchange'));
+    });
+})();
 
 (function(global: Window) {
     'use strict';
@@ -59,6 +85,10 @@ declare global {
     const KANA_CHARS = '\u3040-\u30ff\uff66-\uff9f'
     const KANJI_CHARS = '\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff'
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
+
+    function dom_observer_state(name: string) {
+        return 'ksof.dom_observer.' + name
+    }
 
     class ReviewInfo implements Core.ReviewInfo {
         get answer_correct() {
@@ -104,7 +134,9 @@ declare global {
                 matcher: RegExp;
             }[] = [
                 {tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/},
+                {tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/},
                 {tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/},
+                {tag: 'lessonsSummary', matcher: /kamesame\.com\/app\/lessons\/summary/},
                 {tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/},
                 {tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/},
                 {tag: 'search', matcher: /kamesame\.com\/app\/search$/},
@@ -116,7 +148,7 @@ declare global {
             for (const match of matches) {
                 if (document.URL.match(match.matcher)) {
                     return match.tag
-            }
+                }
             }
 
             return null
@@ -125,8 +157,6 @@ declare global {
 
     // TODO better structure for Infos
     class ItemInfo implements Core.ItemInfo {
-        #facts_cache?: {[key: string]: string;}
-
         constructor() {
             //
         }
@@ -185,6 +215,29 @@ declare global {
             }
 
             return null
+        }
+
+        get id() {
+            let url = ''
+            if (ksof.pageInfo.on == 'review') {
+                const item_link = document.querySelector('#app.kamesame #study .outcome p a.item') as HTMLLinkElement | null
+                if (!item_link) {
+                    return null
+                }
+                url = item_link.href
+            }
+            else if (ksof.pageInfo.on == 'itemPage') {
+                url = document.URL
+            }
+
+            const match = RegExp(/app\/items\/(\d+)/).exec(url)
+            if (!match) {
+                return null
+            }
+            if (match.length < 2) {
+                return null
+            }
+            return Number(match[1])
         }
 
         get characters() {
@@ -302,10 +355,6 @@ declare global {
         }
 
         get facts() {
-            if (this.#facts_cache) {
-                return this.#facts_cache
-            }
-
             const facts: {[key: string]: string} = {}
             for (const fact of document.querySelectorAll('#item .facts .fact')) {
                 const key = fact.querySelector('.key')?.textContent || ''
@@ -326,7 +375,6 @@ declare global {
                 facts[key] = val
             }
 
-            this.#facts_cache = facts
             return facts
         }
 
@@ -367,7 +415,7 @@ declare global {
         state_listeners: {[key:string]: Core.StateListener[]}
         state_values: {[key:string]: string}
         event_listeners: {[key:string]: Core.UnknownCallback[]}
-        dom_observers: Set<string> // TODO write documentation about DOM observers
+        dom_observers: Core.DomObserver[] // TODO write documentation about DOM observers
         include_promises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
@@ -379,7 +427,7 @@ declare global {
             this.state_listeners = {}
             this.state_values = {}
             this.event_listeners = {}
-            this.dom_observers = new Set<string>()
+            this.dom_observers = []
             this.include_promises = {}
             this.itemInfo = new ItemInfo()
             this.reviewInfo = new ReviewInfo()
@@ -634,20 +682,24 @@ declare global {
             }
         }
 
-        add_dom_observer(element_query:string) {
-            if (!this.dom_observers.has(element_query)) {
-                this.dom_observers.add(element_query)
-                this.check_dom_observer(element_query)
+        // Throws Error if observer with the given name or query already exists
+        add_dom_observer(observer:Core.DomObserver) {
+            for (const _observer of this.dom_observers) {
+                if (_observer.name == observer.name) {
+                    throw new Error(`Observer with the name ${observer.name} already exists`)
+                }
+                if (_observer.query == observer.query) {
+                    throw new Error(`Observer with the query ${observer.query} already exists under the name ${observer.name}`)
+                }
             }
+
+            this.dom_observers.push(observer)
+            this.check_dom_observer(observer)
         }
 
-        check_dom_observer(element_query:string) {
-            const visible = (document.querySelector(element_query) != null)
-            this.set_state(this.element_query_to_state(element_query), visible ? 'exists' : 'gone')
-        }
-
-        element_query_to_state(element_query:string) {
-            return 'ksof.dom_observer.' + element_query
+        check_dom_observer(observer:Core.DomObserver) {
+            const visible = (document.querySelector(observer.query) != null)
+            this.set_state(dom_observer_state(observer.name), visible ? 'exists' : 'gone')
         }
     }
 
@@ -971,64 +1023,46 @@ declare global {
         }
     }
 
+    function init_page_dom_observers() {
+        const page_queries = new Map([
+            ['itemPage',       '#app.kamesame #item .facts .fact'],
+            ['review',         '#app.kamesame #study .meaning'],
+            ['reviewSummary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
+            ['lessonsSummary', '#app.kamesame #summary .item-list li a.item'],
+            ['lessons',        '#app.kamesame #lessons #lessonsFromLists.section'],
+            ['search',         '#app.kamesame #search form .search-bar #searchQuery'],
+            ['searchResult',   '#app.kamesame #search .fancy-item-list .actions'],
+            ['home',           '#app.kamesame #home .section .stats'],
+            ['account',        '#app.kamesame #account .fun-stuff'],
+        ])
+
+        for (const query of page_queries) {
+            const observer = {name: `page.${query[0]}`, query: query[1]}
+            ksof.add_dom_observer(observer)
+            ksof.wait_state(dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
+        }
+    }
+
     //########################################################################
     //------------------------------
     // Body Changes Observation
     //------------------------------
 
     function on_body_mutated() {
-        for(const element_query of ksof.dom_observers) {
-            ksof.check_dom_observer(element_query)
+        for(const observer of ksof.dom_observers) {
+            ksof.check_dom_observer(observer)
         }
     }
-
-    function set_doc_ready() {
-        // console.log('Doc ready!')
-        ksof.set_state('ksof.document', 'ready');
-    }
-
-    const body_observer = new MutationObserver(on_body_mutated)
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    function start_dom_observing() {
+    function init_dom_observer() {
+        const body_observer = new MutationObserver(on_body_mutated)
+
         body_observer.observe(document.body, {childList: true, subtree: true})
 
-        const current_page = ksof.pageInfo.on
-        
-        let element_query = '' // if search query loaded -> assume everything else is also loaded
-        if (current_page == 'itemPage') {
-            element_query = '#app.kamesame #item .facts .fact'
-        }
-        else if (current_page == 'review') {
-            element_query = '#app.kamesame #study .meaning'
-        }
-        else if (current_page == 'reviewSummary') {
-            element_query = '#app.kamesame #reviews #reviewsSummary .level-bars'
-        }
-        else if (current_page == 'lessons') {
-            element_query = '#app.kamesame #lessons #lessonsFromLists.section'
-        }
-        else if (current_page == 'search') {
-            element_query = '#app.kamesame #search form .search-bar #searchQuery'
-        }
-        else if (current_page == 'searchResult') {
-            element_query = '#app.kamesame #search .fancy-item-list .actions'
-        }
-        else if (current_page == 'home') {
-            element_query = '#app.kamesame #home .section .stats'
-        }
-        else if (current_page == 'account') {
-            element_query = '#app.kamesame #account .fun-stuff'
-        }
-
-        if (element_query.length > 0) {
-            ksof.add_dom_observer(element_query)
-            ksof.wait_state(ksof.element_query_to_state(element_query), 'exists', set_doc_ready)
-        }
-        else {
-            setTimeout(set_doc_ready, 2000) // unknown page -> assume everything loaded after 2 seconds
-        }
+        // Add default Observers
+        ksof.add_dom_observer({name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item'})
 
         // TODO
         // HACK THAT SHOULD BE REMOVED ONCE ISSUE FIXED:
@@ -1045,6 +1079,20 @@ declare global {
         check_observer()
     }
 
+    function on_document_loaded() {
+        init_dom_observer()
+
+        init_page_dom_observers()
+
+        window.addEventListener('locationchange', () => {
+            ksof.set_state('ksof.document', '') // Reset document state when navigating to different page
+
+            setTimeout(() => { ksof.set_state('ksof.document', 'ready') }, 2000) // fallback if unknown page -> assume everything loaded after 2 seconds
+
+            ksof.trigger('ksof.page_changed')
+        })
+    }
+
     //########################################################################
     //------------------------------
     // Bootloader Startup
@@ -1052,9 +1100,9 @@ declare global {
     function startup() {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            start_dom_observing();
+            on_document_loaded();
         } else {
-            window.addEventListener('load', start_dom_observing, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', on_document_loaded, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.

@@ -71,12 +71,14 @@ export declare namespace Core {
         tags: string[] | null
         type: 'vocabulary' | 'kanji' | null
         summary: {[key: string]: string | string[] | number | null}
+        id: number | null
     }
 
     export type Page = 'review'
     | 'reviewSummary'
-    | 'itemPage'
     | 'lessons'
+    | 'lessonsSummary'
+    | 'itemPage'
     | 'search'
     | 'searchResult'
     | 'account'
@@ -89,6 +91,11 @@ export declare namespace Core {
 
     export type StateValue = any
 
+    export interface DomObserver {
+        name: string
+        query: string
+    }
+
     export interface Module {
         version: Version
         file_cache: FileCache
@@ -97,7 +104,7 @@ export declare namespace Core {
         state_values: {[key:string]: StateValue}
         event_listeners: {[key:string]: UnknownCallback[]}
         include_promises: {[key:string]: Promise<string>}
-        dom_observers: Set<string>
+        dom_observers: DomObserver[]
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
         pageInfo: PageInfo
@@ -117,7 +124,7 @@ export declare namespace Core {
         load_css: (url:string, use_cache?:boolean) => Promise<string>
         include: (module_list:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
         ready: (module_list:string) => Promise<'ready' | 'ready'[]>
-        add_dom_observer: (element_query:string) => void
+        add_dom_observer: (observer:Core.DomObserver) => void
     }
 }
 
