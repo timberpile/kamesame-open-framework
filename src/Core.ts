@@ -28,6 +28,32 @@ declare global {
     }
 }
 
+// Ensure locationchange always works
+// https://stackoverflow.com/questions/6390341/how-to-detect-if-url-has-changed-after-hash-in-javascript
+(() => {
+    const oldPushState = history.pushState;
+    history.pushState = function pushState() {
+        //eslint-disable-next-line prefer-rest-params
+        const ret = oldPushState.apply(this, arguments as any);
+        window.dispatchEvent(new Event('pushstate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+    
+    const oldReplaceState = history.replaceState;
+    history.replaceState = function replaceState() {
+        //eslint-disable-next-line prefer-rest-params
+        const ret = oldReplaceState.apply(this, arguments as any);
+        window.dispatchEvent(new Event('replacestate'));
+        window.dispatchEvent(new Event('locationchange'));
+        return ret;
+    };
+
+    window.addEventListener('popstate', () => {
+        window.dispatchEvent(new Event('locationchange'));
+    });
+})();
+
 (function(global: Window) {
     'use strict';
 
@@ -997,51 +1023,43 @@ declare global {
         }
     }
 
+    function init_page_dom_observers() {
+        const page_queries = new Map([
+            ['itemPage',       '#app.kamesame #item .facts .fact'],
+            ['review',         '#app.kamesame #study .meaning'],
+            ['reviewSummary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
+            ['lessonsSummary', '#app.kamesame #summary .item-list li a.item'],
+            ['lessons',        '#app.kamesame #lessons #lessonsFromLists.section'],
+            ['search',         '#app.kamesame #search form .search-bar #searchQuery'],
+            ['searchResult',   '#app.kamesame #search .fancy-item-list .actions'],
+            ['home',           '#app.kamesame #home .section .stats'],
+            ['account',        '#app.kamesame #account .fun-stuff'],
+        ])
+
+        for (const query of page_queries) {
+            const observer = {name: `page.${query[0]}`, query: query[1]}
+            ksof.add_dom_observer(observer)
+            ksof.wait_state(dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
+        }
+    }
+
     //########################################################################
     //------------------------------
     // Body Changes Observation
     //------------------------------
 
     function on_body_mutated() {
-        for(const element_query of ksof.dom_observers) {
-            ksof.check_dom_observer(element_query)
+        for(const observer of ksof.dom_observers) {
+            ksof.check_dom_observer(observer)
         }
     }
 
-    const body_observer = new MutationObserver(on_body_mutated)
-
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    function start_dom_observing() {
+    function init_dom_observer() {
+        const body_observer = new MutationObserver(on_body_mutated)
+
         body_observer.observe(document.body, {childList: true, subtree: true})
-
-        const current_page = ksof.pageInfo.on
-        
-        let element_query: string | undefined = undefined // if search query loaded -> assume everything else is also loaded
-        if (current_page) {
-            const queries = new Map([
-                ['itemPage',       '#app.kamesame #item .facts .fact'],
-                ['review',         '#app.kamesame #study .meaning'],
-                ['reviewSummary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
-                ['lessonsSummary', '#app.kamesame #summary .item-list li a.item'],
-                ['lessons',        '#app.kamesame #lessons #lessonsFromLists.section'],
-                ['search',         '#app.kamesame #search form .search-bar #searchQuery'],
-                ['searchResult',   '#app.kamesame #search .fancy-item-list .actions'],
-                ['home',           '#app.kamesame #home .section .stats'],
-                ['account',        '#app.kamesame #account .fun-stuff'],
-            ])
-            
-            element_query = queries.get(current_page)
-        }
-
-        if (element_query && current_page) {
-            const observer = {name: `page.${current_page}`, query: element_query}
-            ksof.add_dom_observer(observer)
-            ksof.wait_state(dom_observer_state(observer.name), 'exists', () => { ksof.set_state('ksof.document', 'ready') })
-        }
-        else {
-            setTimeout(() => { ksof.set_state('ksof.document', 'ready') }, 2000) // unknown page -> assume everything loaded after 2 seconds
-        }
 
         // Add default Observers
         ksof.add_dom_observer({name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item'})
@@ -1061,6 +1079,20 @@ declare global {
         check_observer()
     }
 
+    function on_document_loaded() {
+        init_dom_observer()
+
+        init_page_dom_observers()
+
+        window.addEventListener('locationchange', () => {
+            ksof.set_state('ksof.document', '') // Reset document state when navigating to different page
+
+            setTimeout(() => { ksof.set_state('ksof.document', 'ready') }, 2000) // fallback if unknown page -> assume everything loaded after 2 seconds
+
+            ksof.trigger('ksof.page_changed')
+        })
+    }
+
     //########################################################################
     //------------------------------
     // Bootloader Startup
@@ -1068,9 +1100,9 @@ declare global {
     function startup() {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            start_dom_observing();
+            on_document_loaded();
         } else {
-            window.addEventListener('load', start_dom_observing, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', on_document_loaded, false);  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.
