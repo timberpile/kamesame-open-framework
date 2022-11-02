@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        KameSame Open Framework - Jquery module
 // @namespace   timberpile
-// @description Progress module for KameSame Open Framework
+// @description Jquery module for KameSame Open Framework
 // @version     0.2
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
