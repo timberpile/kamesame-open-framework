@@ -6,19 +6,20 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": "latest"
+        "ecmaVersion": 2021
     },
     "plugins": [
         "@typescript-eslint"
     ],
     "rules": {
-        "no-unexpected-multiline": 2,
+        "no-unexpected-multiline": "error",
         "indent": [
             "error",
             4
@@ -26,6 +27,10 @@
         "quotes": [
             "error",
             "single"
+        ],
+        "semi": [
+            "error",
+            "never"
         ]
     }
 }

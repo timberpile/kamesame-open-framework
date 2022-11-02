@@ -4,10 +4,10 @@
 // @description Menu module for KameSame Open Framework
 // @version     0.1.2
 // @copyright   2022+, Robin Findley, Timberpile
-// @license     MIT; http://opensource.org/licenses/MIT
+// @license     MIT http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-import { Core, Menu } from './ksof';
+import { Core, Menu } from './ksof'
 
 (async (global: Window) => {
 
@@ -79,25 +79,25 @@ import { Core, Menu } from './ksof';
             }
             document.head.insertAdjacentHTML('beforeend',
                 `<style name="scripts_submenu">
-                    #scripts-menu {text-shadow:none;}
-                    #scripts-menu.scripts-menu-icon {display:inline-block;}
-                    #scripts-menu .scripts-icon {display:inline-block; cursor: pointer; font-size: 1.2em; margin-right: auto; opacity: .65; position: relative; top: 3px;}
-                    #scripts-menu:not(.open) > .dropdown-menu {display:none;}
-                    #scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none;}
-                    #scripts-menu ul.dropdown-menu {position:absolute; background-color:#eee; margin:0; padding:5px 0; list-style-type:none; border:1px solid #333; display:block;}
-                    #scripts-menu ul.dropdown-menu > li {text-align:left; color:#333; white-space:nowrap; line-height:20px; padding:3px 0; display:list-item;}
-                    #scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase; font-size:.8rem; font-weight:bold; padding:3px 12px; display:list-item;}
+                    #scripts-menu {text-shadow:none}
+                    #scripts-menu.scripts-menu-icon {display:inline-block}
+                    #scripts-menu .scripts-icon {display:inline-block cursor: pointer font-size: 1.2em margin-right: auto opacity: .65 position: relative top: 3px}
+                    #scripts-menu:not(.open) > .dropdown-menu {display:none}
+                    #scripts-menu .scripts-submenu:not(.open) > .dropdown-menu {display:none}
+                    #scripts-menu ul.dropdown-menu {position:absolute background-color:#eee margin:0 padding:5px 0 list-style-type:none border:1px solid #333 display:block}
+                    #scripts-menu ul.dropdown-menu > li {text-align:left color:#333 white-space:nowrap line-height:20px padding:3px 0 display:list-item}
+                    #scripts-menu ul.dropdown-menu > li.scripts-header {text-transform:uppercase font-size:.8rem font-weight:bold padding:3px 12px display:list-item}
                     #scripts-menu ul.dropdown-menu > li:hover:not(.scripts-header) {background-color:rgba(0,0,0,0.15)}
-                    #scripts-menu ul.dropdown-menu a {padding:3px 20px; color:#333; opacity:1;}
-                    #scripts-menu .scripts-submenu {position:relative; font-size: 1rem;}
-                    #scripts-menu .scripts-submenu > a:after {content:">"; font-family:"FontAwesome"; position:absolute; top:0; right:0; padding:3px 4px 3px 0;}
-                    #scripts-menu .scripts-submenu .dropdown-menu {left:100%; top:-6px;}
+                    #scripts-menu ul.dropdown-menu a {padding:3px 20px color:#333 opacity:1}
+                    #scripts-menu .scripts-submenu {position:relative font-size: 1rem}
+                    #scripts-menu .scripts-submenu > a:after {content:">" font-family:"FontAwesome" position:absolute top:0 right:0 padding:3px 4px 3px 0}
+                    #scripts-menu .scripts-submenu .dropdown-menu {left:100% top:-6px}
                     #app.kamesame nav li #scripts-menu {
-                        display: flex;
-                        flex-direction: column;
-                        height: 100%;
-                        width: 100%;
-                        color: var(--gray);
+                        display: flex
+                        flex-direction: column
+                        height: 100%
+                        width: 100%
+                        color: var(--gray)
                     }
                 </style>`
             )
@@ -163,9 +163,9 @@ import { Core, Menu } from './ksof';
             this.menu = menu
 
             this.scripts_icon.addEventListener('click', (e) => {
-                this.menu.classList.toggle('open');
-                if (this.menu.classList.contains('open')) document.body.addEventListener('click', body_click);
-                e.stopPropagation();
+                this.menu.classList.toggle('open')
+                if (this.menu.classList.contains('open')) document.body.addEventListener('click', body_click)
+                e.stopPropagation()
             })
 
             // Click to open/close sub-menu.
@@ -178,43 +178,43 @@ import { Core, Menu } from './ksof';
                 if (!link) return false
                 if (!link.parentElement) return false
                 for (const submenu of link.parentElement.querySelectorAll('.scripts-submenu.open')) {
-                    if (submenu !== link) submenu.classList.remove('open');
+                    if (submenu !== link) submenu.classList.remove('open')
                 }
                 if (ksof.pageInfo.on === null) {
                     const menu = document.querySelector('#sitemap__account,[id="#sitemap__account"]') as HTMLElement
                     const submenu = link.querySelector('.dropdown-menu') as HTMLElement
                     if (menu && submenu) {
-                        submenu.style.fontSize = '12px';
-                        submenu.style.maxHeight = '';
-                        let top = Math.max(0, link.offsetTop);
-                        link.classList.toggle('open');
+                        submenu.style.fontSize = '12px'
+                        submenu.style.maxHeight = ''
+                        let top = Math.max(0, link.offsetTop)
+                        link.classList.toggle('open')
                         if (link.classList.contains('open')) {
-                            submenu.style.top = top+'px';
+                            submenu.style.top = top+'px'
                             if (menu.offsetHeight - top < submenu.offsetHeight)
                             {
-                                top = Math.max(0, menu.offsetHeight - submenu.offsetHeight);
-                                submenu.style.top = top+'px';
+                                top = Math.max(0, menu.offsetHeight - submenu.offsetHeight)
+                                submenu.style.top = top+'px'
                                 submenu.style.maxHeight = String(menu.offsetHeight - top)
                             }
                         }
                     }
                 } else {
-                    link.classList.toggle('open');
+                    link.classList.toggle('open')
                 }
                 // If we opened the menu, listen for off-menu clicks.
                 if (link.classList.contains('open')) {
-                    document.body.addEventListener('click', body_click);
+                    document.body.addEventListener('click', body_click)
                 } else {
-                    document.body.removeEventListener('click', body_click);
+                    document.body.removeEventListener('click', body_click)
                 }
-                e.stopPropagation();
+                e.stopPropagation()
             }
 
             return menu
         }
 
         get_submenu(name: string) {
-            const safe_name = escape_attr(name);
+            const safe_name = escape_attr(name)
             return this.submenus.get(safe_name)
         }
 
@@ -228,8 +228,8 @@ import { Core, Menu } from './ksof';
                 return sub
             }
 
-            const safe_name = escape_attr(name);
-            const safe_text = escape_text(name);
+            const safe_name = escape_attr(name)
+            const safe_text = escape_text(name)
 
             const link_element = document.createElement('a')
             link_element.href = '#'
@@ -244,7 +244,7 @@ import { Core, Menu } from './ksof';
 
             this.submenus.set(safe_name, submenu)
 
-            const menu_contents = this.dropdown_menu.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link');
+            const menu_contents = this.dropdown_menu.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
             if (!menu_contents) return undefined
             for (const node of Array.from(menu_contents).sort(sort_name)) {
                 // TODO why append again without removing first?
@@ -263,7 +263,7 @@ import { Core, Menu } from './ksof';
     
     ui.menu.setAttribute('display', 'none')
 
-    function escape_attr(attr: string) {return attr.replace(/"/g,'\'');}
+    function escape_attr(attr: string) {return attr.replace(/"/g,'\'')}
     function escape_text(text: string) {return text.replace(/[<&>]/g, (ch) => {
         switch (ch) {
         case '<':
@@ -290,11 +290,11 @@ import { Core, Menu } from './ksof';
     // Handler that closes menus when clicking outside of menu.
     //------------------------------
     function body_click() {
-        ui.menu.classList.remove('open');
+        ui.menu.classList.remove('open')
         for (const submenu of document.querySelectorAll('.scripts-submenu.open')) {
-            submenu.classList.remove('open');
+            submenu.classList.remove('open')
         }
-        document.body.removeEventListener('click', body_click);
+        document.body.removeEventListener('click', body_click)
     }
 
     //------------------------------
@@ -306,7 +306,7 @@ import { Core, Menu } from './ksof';
         const b1 = b.querySelector('a')
         if (!b1) return -1
 
-        return a1.innerText.localeCompare(b1.innerText);
+        return a1.innerText.localeCompare(b1.innerText)
     }
 
     //------------------------------
@@ -314,53 +314,53 @@ import { Core, Menu } from './ksof';
     //------------------------------
     function insert_script_link(config: Menu.Config) {
         // Abort if the script already exists
-        const link_id = config.name+'_script_link';
-        const link_text = escape_text(config.title);
-        if (document.querySelector('#'+link_id)) return;
+        const link_id = config.name+'_script_link'
+        const link_text = escape_text(config.title)
+        if (document.querySelector('#'+link_id)) return
 
-        if (ui.configs.indexOf(config) >= 0) return;
+        if (ui.configs.indexOf(config) >= 0) return
         ui.configs.push(config)
 
         if(ui.menu.hasAttribute('display')) {
             ui.menu.removeAttribute('display')
         }
 
-        let classes;
+        let classes
         const scripts_header = ui.header
-        if (!scripts_header) return;
-        const link = document.createElement('li');
-        link.id = link_id;
-        link.setAttribute('name', config.name);
-        link.innerHTML = '<a href="#">'+link_text+'</a>';
+        if (!scripts_header) return
+        const link = document.createElement('li')
+        link.id = link_id
+        link.setAttribute('name', config.name)
+        link.innerHTML = '<a href="#">'+link_text+'</a>'
         if (config.submenu) {
-            const submenu = ui.install_scripts_submenu(config.submenu);
+            const submenu = ui.install_scripts_submenu(config.submenu)
             if (!submenu) {
                 return
             }
 
             // Append the script, and sort the menu.
-            const menu = submenu.querySelector('.dropdown-menu');
+            const menu = submenu.querySelector('.dropdown-menu')
             if (!menu) {
                 return
             }
 
-            classes = ['sitemap__page'];
-            if (config.class) classes.push(config.class_html || '');
-            link.setAttribute('class', classes.join(' '));
-            link.innerHTML = '<a href="#">'+link_text+'</a>';
-            menu.append(link);
+            classes = ['sitemap__page']
+            if (config.class) classes.push(config.class_html || '')
+            link.setAttribute('class', classes.join(' '))
+            link.innerHTML = '<a href="#">'+link_text+'</a>'
+            menu.append(link)
         } else {
-            classes = ['sitemap__page', 'script-link'];
-            if (config.class) classes.push(config.class_html || '');
-            link.setAttribute('class', classes.join(' '));
+            classes = ['sitemap__page', 'script-link']
+            if (config.class) classes.push(config.class_html || '')
+            link.setAttribute('class', classes.join(' '))
             if (ksof.pageInfo.on == 'review') {
-                scripts_header.after(link);
+                scripts_header.after(link)
             } else {
-                scripts_header.append(link);
+                scripts_header.append(link)
             }
         }
 
-        const menu_contents = scripts_header.parentElement?.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link');
+        const menu_contents = scripts_header.parentElement?.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
         if (menu_contents) {
             for (const node of Array.from(menu_contents).sort(sort_name)) {
                 node.parentNode?.append(node)
@@ -369,8 +369,8 @@ import { Core, Menu } from './ksof';
 
         // Add a callback for when the link is clicked.
         document.querySelector('#'+link_id)?.addEventListener('click', function(e){
-            document.body.removeEventListener('click', body_click);
-            document.querySelector('#scripts-menu')?.classList.remove('open');
+            document.body.removeEventListener('click', body_click)
+            document.querySelector('#scripts-menu')?.classList.remove('open')
             for (const submenu of document.querySelectorAll('.scripts-submenu')) {
                 submenu.classList.remove('open')
             }
@@ -379,11 +379,11 @@ import { Core, Menu } from './ksof';
                 const temp2 = temp.parentElement?.querySelector('[data-expandable-navigation-target],[data-navigation-section-toggle]') as HTMLElement
                 temp2.click()
                 const nav_toggle = document.querySelector('.navigation__toggle') as HTMLButtonElement
-                if (nav_toggle.offsetWidth > 0 || nav_toggle.offsetWidth > 0) nav_toggle.click();
+                if (nav_toggle.offsetWidth > 0 || nav_toggle.offsetWidth > 0) nav_toggle.click()
             }
-            config.on_click(e);
-            return false;
-        });
+            config.on_click(e)
+            return false
+        })
     }
 
     // Delay guarantees include() callbacks are called before ready() callbacks.

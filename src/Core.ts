@@ -5,7 +5,7 @@
 // @version     0.2.2
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
-// @license     MIT; http://opensource.org/licenses/MIT
+// @license     MIT http://opensource.org/licenses/MIT
 // @run-at      document-start
 // @grant       none
 // ==/UserScript==
@@ -17,7 +17,7 @@
 // var module = {}
 // export = null
 
-import { Core, IsoDateString } from './ksof';
+import { Core, IsoDateString } from './ksof'
 
 declare global {
     interface Window {
@@ -31,38 +31,34 @@ declare global {
 // Ensure locationchange always works
 // https://stackoverflow.com/questions/6390341/how-to-detect-if-url-has-changed-after-hash-in-javascript
 (() => {
-    const oldPushState = history.pushState;
+    const oldPushState = history.pushState
     history.pushState = function pushState() {
         //eslint-disable-next-line prefer-rest-params
-        const ret = oldPushState.apply(this, arguments as any);
-        window.dispatchEvent(new Event('pushstate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
-    };
+        const ret = oldPushState.apply(this, arguments as any)
+        window.dispatchEvent(new Event('pushstate'))
+        window.dispatchEvent(new Event('locationchange'))
+        return ret
+    }
     
-    const oldReplaceState = history.replaceState;
+    const oldReplaceState = history.replaceState
     history.replaceState = function replaceState() {
         //eslint-disable-next-line prefer-rest-params
-        const ret = oldReplaceState.apply(this, arguments as any);
-        window.dispatchEvent(new Event('replacestate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
-    };
+        const ret = oldReplaceState.apply(this, arguments as any)
+        window.dispatchEvent(new Event('replacestate'))
+        window.dispatchEvent(new Event('locationchange'))
+        return ret
+    }
 
     window.addEventListener('popstate', () => {
-        window.dispatchEvent(new Event('locationchange'));
-    });
+        window.dispatchEvent(new Event('locationchange'))
+    })
 })();
 
 (function(global: Window) {
-    'use strict';
+    'use strict'
 
-
-    /* eslint no-multi-spaces: off */
-    /* globals ksof */
-
-    const version = '0.1';
-    const ignore_missing_indexeddb = false;
+    const version = '0.1'
+    const ignore_missing_indexeddb = false
  
     //########################################################################
     //------------------------------
@@ -126,8 +122,8 @@ declare global {
         // returns the type of the current page
         get on() {
             const matches: {
-                tag: Core.Page;
-                matcher: RegExp;
+                tag: Core.Page
+                matcher: RegExp
             }[] = [
                 {tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/},
                 {tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/},
@@ -164,7 +160,7 @@ declare global {
                 case 'vocabulary':
                     return this.facts['Variations'].split('、')
                 case 'kanji':
-                    break;
+                    break
                 }
             }
 
@@ -178,7 +174,7 @@ declare global {
                 case 'vocabulary':
                     return this.facts['Parts of Speech'].split(', ')
                 case 'kanji':
-                    break;
+                    break
                 }
             }
 
@@ -192,7 +188,7 @@ declare global {
                 case 'vocabulary':
                     return parseInt(this.facts['WaniKani Level'])
                 case 'kanji':
-                    break;
+                    break
                 }
             }
 
@@ -206,7 +202,7 @@ declare global {
                 case 'vocabulary':
                     return this.facts['Tags'].split(', ')
                 case 'kanji':
-                    break;
+                    break
                 }
             }
 
@@ -258,7 +254,7 @@ declare global {
                 
                 // try out the different possible regexes until one hits
                 for (const regex of regexes) {
-                    const match = regex.exec(outcome_text);
+                    const match = regex.exec(outcome_text)
                     if (match) {
                         return match[1]
                     }
@@ -290,7 +286,7 @@ declare global {
                 // try out all possible regexes
                 const meanings:string[] = []
                 for (const regex of regexes) {
-                    const match = regex.exec(outcome_text);
+                    const match = regex.exec(outcome_text)
                     if (match) {
                         const match1 = match[1]
                         const match2 = match1.replaceAll(' or ', ',')
@@ -320,16 +316,16 @@ declare global {
                 }
                 const readings:string[] = []
                 
-                const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`);
-                let match = rawReadingsRegex.exec(outcome_text);
+                const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`)
+                let match = rawReadingsRegex.exec(outcome_text)
                 if (match) {
                     const readings_raw = match[1]
                     
-                    const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g');
-                    match = readingsRegex.exec(readings_raw);
+                    const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g')
+                    match = readingsRegex.exec(readings_raw)
                     while (match != null) {
                         readings.push(match[0]) // captured readings
-                        match = readingsRegex.exec(readings_raw);
+                        match = readingsRegex.exec(readings_raw)
                     }
                 }
     
@@ -439,10 +435,10 @@ declare global {
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
         async load_file(url: string, use_cache?: boolean) {
-            const fetch_deferred = new Deferred<any>();
-            const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '');
+            const fetch_deferred = new Deferred<any>()
+            const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '')
             if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
-                use_cache = false;
+                use_cache = false
             }
             if (use_cache === true) {
                 try {
@@ -453,59 +449,59 @@ declare global {
             }
             
             // Retrieve file from server
-            const request = new XMLHttpRequest();
+            const request = new XMLHttpRequest()
             request.onreadystatechange = async (event) => {
                 if (event.target != request) {
                     return
                 }
-                if (request.readyState !== 4) return;
-                if (request.status >= 400 || request.status === 0) return Promise.reject(request.status);
+                if (request.readyState !== 4) return
+                if (request.status >= 400 || request.status === 0) return Promise.reject(request.status)
                 if (use_cache) {
                     await ksof.file_cache.save(url, request.response)
                     fetch_deferred.resolve.bind(null, request.response)
                 } else {
-                    fetch_deferred.resolve(request.response);
+                    fetch_deferred.resolve(request.response)
                 }
             }
-            request.open('GET', url, true);
-            request.send();
-            return fetch_deferred.promise;
+            request.open('GET', url, true)
+            request.send()
+            return fetch_deferred.promise
         }
 
         //------------------------------
         // Get the value of a state variable, and notify listeners.
         //------------------------------
         get_state(state_var:string) {
-            return this.state_values[state_var];
+            return this.state_values[state_var]
         }
 
         //------------------------------
         // Set the value of a state variable, and notify listeners.
         //------------------------------
         set_state(state_var:string, value:string) {
-            const old_value = this.state_values[state_var];
-            if (old_value === value) return;
-            this.state_values[state_var] = value;
+            const old_value = this.state_values[state_var]
+            if (old_value === value) return
+            this.state_values[state_var] = value
 
             // Do listener callbacks, and remove non-persistent listeners
-            const listeners = this.state_listeners[state_var];
-            const persistent_listeners:Core.StateListener[] = [];
+            const listeners = this.state_listeners[state_var]
+            const persistent_listeners:Core.StateListener[] = []
             for (const idx in listeners) {
-                const listener = listeners[idx];
-                let keep = true;
+                const listener = listeners[idx]
+                let keep = true
                 if (listener.value === value || listener.value === '*') {
-                    keep = listener.persistent;
+                    keep = listener.persistent
                     try {
                         if (listener.callback) {
-                            listener.callback(value, old_value);
+                            listener.callback(value, old_value)
                         }
                     } catch (e) {
                         //do nothing
                     }
                 }
-                if (keep) persistent_listeners.push(listener);
+                if (keep) persistent_listeners.push(listener)
             }
-            this.state_listeners[state_var] = persistent_listeners;
+            this.state_listeners[state_var] = persistent_listeners
         }
 
         //------------------------------
@@ -523,7 +519,7 @@ declare global {
             if (this.state_listeners[state_var] === undefined) {
                 this.state_listeners[state_var] = []
             }
-            const current_value = this.state_values[state_var];
+            const current_value = this.state_values[state_var]
             if (persistent || value !== current_value) {
                 this.state_listeners[state_var].push({callback:promise_callback, persistent:persistent, value:value})
             }
@@ -531,25 +527,25 @@ declare global {
             // If it's already at the desired state, call the callback immediately.
             if (value === current_value) {
                 try {
-                    promise_callback(value, current_value);
+                    promise_callback(value, current_value)
                 } catch (err) {
                     //do nothing
                 }
             }
-            return promise.promise;
+            return promise.promise
         }
 
         //------------------------------
         // Fire an event, which then calls callbacks for any listeners.
         //------------------------------
         trigger(event: string, ...args_: unknown[]) {
-            const listeners = this.event_listeners[event];
-            if (listeners === undefined) return this;
-            const args:unknown[] = [];
-            Array.prototype.push.apply(args,args_);
-            args.shift();
+            const listeners = this.event_listeners[event]
+            if (listeners === undefined) return this
+            const args:unknown[] = []
+            Array.prototype.push.apply(args,args_)
+            args.shift()
             for (const idx in listeners) try {
-                listeners[idx].apply(null, args);
+                listeners[idx].apply(null, args)
             } catch (err) {
                 //do nothing
             }
@@ -559,17 +555,17 @@ declare global {
         // Add a listener for an event.
         //------------------------------
         on(event:string, callback: Core.UnknownCallback) {
-            if (this.event_listeners[event] === undefined) this.event_listeners[event] = [];
-            this.event_listeners[event].push(callback);
+            if (this.event_listeners[event] === undefined) this.event_listeners[event] = []
+            this.event_listeners[event].push(callback)
         }
 
         //------------------------------
         // Load and install a specific file type into the DOM.
         //------------------------------
         async #load_and_append(url:string, tag_name:string, location:string, use_cache?:boolean) {
-            url = url.replace(/"/g,'\'');
+            url = url.replace(/"/g,'\'')
             if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) {
-                return Promise.resolve(url);
+                return Promise.resolve(url)
             }
  
             let content:string
@@ -579,81 +575,81 @@ declare global {
                 return Promise.reject(url)
             }
 
-            const tag = document.createElement(tag_name);
-            tag.innerHTML = content;
-            tag.setAttribute('uid', url);
+            const tag = document.createElement(tag_name)
+            tag.innerHTML = content
+            tag.setAttribute('uid', url)
             const locationElem = document.querySelector(location)
             if (locationElem) {
-                locationElem.appendChild(tag);
+                locationElem.appendChild(tag)
             }
-            return Promise.resolve(url);
+            return Promise.resolve(url)
         }
 
         //------------------------------
         // Load and install Javascript.
         //------------------------------
         async load_script(url:string, use_cache?: boolean) {
-            return this.#load_and_append(url, 'script', 'body', use_cache);
+            return this.#load_and_append(url, 'script', 'body', use_cache)
         }
 
         //------------------------------
         // Load and install a CSS file.
         //------------------------------
         async load_css(url:string, use_cache?:boolean) {
-            return this.#load_and_append(url, 'style', 'head', use_cache);
+            return this.#load_and_append(url, 'style', 'head', use_cache)
         }
 
         //------------------------------
         // Include a list of modules.
         //------------------------------
-        async include(module_list:string): Promise<{loaded:string[];failed:Core.FailedInclude[]}> {
+        async include(module_list:string): Promise<{loaded:string[]; failed:Core.FailedInclude[]}> {
             await this.ready('ksof')
 
-            const include_deferred = new Deferred<{loaded:string[];failed:Core.FailedInclude[]}>();
-            const module_names = split_list(module_list);
-            const script_cnt = module_names.length;
+            const include_deferred = new Deferred<{loaded:string[]; failed:Core.FailedInclude[]}>()
+            const module_names = split_list(module_list)
+            const script_cnt = module_names.length
             if (script_cnt === 0) {
-                include_deferred.resolve({loaded:[], failed:[]});
-                return include_deferred.promise;
+                include_deferred.resolve({loaded:[], failed:[]})
+                return include_deferred.promise
             }
 
-            let done_cnt = 0;
+            let done_cnt = 0
             const loaded: string[] = []
-            const failed: Core.FailedInclude[] = [];
-            const no_cache = split_list(localStorage.getItem('ksof.include.nocache') || '');
+            const failed: Core.FailedInclude[] = []
+            const no_cache = split_list(localStorage.getItem('ksof.include.nocache') || '')
             for (let idx = 0; idx < module_names.length; idx++) {
-                const module_name = module_names[idx];
-                const module = supported_modules[module_name];
+                const module_name = module_names[idx]
+                const module = supported_modules[module_name]
                 if (!module) {
-                    failed.push({name:module_name});
-                    check_done();
-                    continue;
+                    failed.push({name:module_name})
+                    check_done()
+                    continue
                 }
-                let await_load = this.include_promises[module_name];
-                const use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0);
-                if (!use_cache) ksof.file_cache.delete(module.url);
+                let await_load = this.include_promises[module_name]
+                const use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0)
+                if (!use_cache) ksof.file_cache.delete(module.url)
                 if (await_load === undefined) {
-                    this.include_promises[module_name] = await_load = this.load_script(module.url, use_cache);
+                    this.include_promises[module_name] = await_load = this.load_script(module.url, use_cache)
                 }
-                await_load.then(push_loaded, push_failed);
+                await_load.then(push_loaded, push_failed)
             }
 
-            return include_deferred.promise;
+            return include_deferred.promise
 
             function push_loaded(url:string) {
-                loaded.push(url);
-                check_done();
+                loaded.push(url)
+                check_done()
             }
 
             function push_failed(url:string) {
-                failed.push({url: url});
-                check_done();
+                failed.push({url: url})
+                check_done()
             }
 
             function check_done() {
-                if (++done_cnt < script_cnt) return;
-                if (failed.length === 0) include_deferred.resolve({loaded:loaded, failed:failed});
-                else include_deferred.reject({error:'Failure loading module', loaded:loaded, failed:failed});
+                if (++done_cnt < script_cnt) return
+                if (failed.length === 0) include_deferred.resolve({loaded:loaded, failed:failed})
+                else include_deferred.reject({error:'Failure loading module', loaded:loaded, failed:failed})
             }
         }
 
@@ -661,20 +657,20 @@ declare global {
         // Wait for all modules to report that they are ready
         //------------------------------
         ready(module_list:string): Promise<'ready' | 'ready'[]> {
-            const module_names = split_list(module_list);
+            const module_names = split_list(module_list)
             
-            const ready_promises: Promise<'ready'>[] = [];
+            const ready_promises: Promise<'ready'>[] = []
             for (const idx in module_names) {
-                const module_name = module_names[idx];
-                ready_promises.push(this.wait_state('ksof.' + module_name, 'ready') as Promise<'ready'>);
+                const module_name = module_names[idx]
+                ready_promises.push(this.wait_state('ksof.' + module_name, 'ready') as Promise<'ready'>)
             }
             
             if (ready_promises.length === 0) {
-                return Promise.resolve('ready');
+                return Promise.resolve('ready')
             } else if (ready_promises.length === 1) {
-                return ready_promises[0];
+                return ready_promises[0]
             } else {
-                return Promise.all(ready_promises);
+                return Promise.all(ready_promises)
             }
         }
 
@@ -714,17 +710,17 @@ declare global {
         // Compare the framework version against a specific version.
         //------------------------------
         compare_to(client_version:string) {
-            const client_ver = client_version.split('.').map(d => Number(d));
-            const ksof_ver = version.split('.').map(d => Number(d));
-            const len = Math.max(client_ver.length, ksof_ver.length);
+            const client_ver = client_version.split('.').map(d => Number(d))
+            const ksof_ver = version.split('.').map(d => Number(d))
+            const len = Math.max(client_ver.length, ksof_ver.length)
             for (let idx = 0; idx < len; idx++) {
-                const a = client_ver[idx] || 0;
-                const b = ksof_ver[idx] || 0;
-                if (a === b) continue;
-                if (a < b) return 'newer';
-                return 'older';
+                const a = client_ver[idx] || 0
+                const b = ksof_ver[idx] || 0
+                if (a === b) continue
+                if (a < b) return 'newer'
+                return 'older'
             }
-            return 'same';
+            return 'same'
         }
     }
 
@@ -744,7 +740,7 @@ declare global {
         // Lists the content of the file_cache.
         //------------------------------
         ls() {
-            console.log(Object.keys(ksof.file_cache.dir).sort().join('\n'));
+            console.log(Object.keys(ksof.file_cache.dir).sort().join('\n'))
         }
 
         //------------------------------
@@ -753,15 +749,15 @@ declare global {
         async clear() {
             const db = await file_cache_open()
 
-            const clear_deferred = new Deferred<void | Event>();
-            ksof.file_cache.dir = {};
+            const clear_deferred = new Deferred<void | Event>()
+            ksof.file_cache.dir = {}
             if (db === null) {
-                return clear_deferred.resolve();
+                return clear_deferred.resolve()
             }
-            const transaction = db.transaction('files', 'readwrite');
-            const store = transaction.objectStore('files');
-            store.clear();
-            transaction.oncomplete = clear_deferred.resolve;
+            const transaction = db.transaction('files', 'readwrite')
+            const store = transaction.objectStore('files')
+            store.clear()
+            transaction.oncomplete = clear_deferred.resolve
             return clear_deferred.promise
         }
 
@@ -771,24 +767,24 @@ declare global {
         async delete(pattern: string | RegExp) {
             const db = await file_cache_open()
 
-            const del_deferred = new Deferred<string[]>();
-            if (db === null) return del_deferred.resolve([]);
-            const transaction = db.transaction('files', 'readwrite');
-            const store = transaction.objectStore('files');
+            const del_deferred = new Deferred<string[]>()
+            if (db === null) return del_deferred.resolve([])
+            const transaction = db.transaction('files', 'readwrite')
+            const store = transaction.objectStore('files')
             const files = Object.keys(ksof.file_cache.dir).filter(function(file){
                 if (pattern instanceof RegExp) {
-                    return file.match(pattern) !== null;
+                    return file.match(pattern) !== null
                 } else {
-                    return (file === pattern);
+                    return (file === pattern)
                 }
-            });
+            })
             files.forEach(function(file){
-                store.delete(file);
-                delete ksof.file_cache.dir[file];
-            });
-            this.dir_save();
-            transaction.oncomplete = del_deferred.resolve.bind(null, files);
-            return del_deferred.promise;
+                store.delete(file)
+                delete ksof.file_cache.dir[file]
+            })
+            this.dir_save()
+            transaction.oncomplete = del_deferred.resolve.bind(null, files)
+            return del_deferred.promise
         }
 
         //------------------------------
@@ -807,19 +803,19 @@ declare global {
                         if(!db) {
                             return
                         }
-                        this.sync_timer = undefined;
-                        const transaction = db.transaction('files', 'readwrite');
-                        const store = transaction.objectStore('files');
-                        store.put({name:'[dir]',content:JSON.stringify(ksof.file_cache.dir)});
-                    });
-            }, delay);
+                        this.sync_timer = undefined
+                        const transaction = db.transaction('files', 'readwrite')
+                        const store = transaction.objectStore('files')
+                        store.put({name:'[dir]',content:JSON.stringify(ksof.file_cache.dir)})
+                    })
+            }, delay)
         }
 
         //------------------------------
         // Force immediate save of file_cache directory.
         //------------------------------
         flush() {
-            this.dir_save(true /* immediately */);
+            this.dir_save(true /* immediately */)
         }
 
         //------------------------------
@@ -835,14 +831,14 @@ declare global {
                 return Promise.reject(name)
             }
             const load_deferred = new Deferred<string | { [key: string]: any }>()
-            const transaction = db.transaction('files', 'readonly');
-            const store = transaction.objectStore('files');
-            const request = store.get(name);
-            this.dir[name].last_loaded = new Date().toISOString() as IsoDateString;
-            this.dir_save();
-            request.onsuccess = finish;
-            request.onerror = error;
-            return load_deferred.promise;
+            const transaction = db.transaction('files', 'readonly')
+            const store = transaction.objectStore('files')
+            const request = store.get(name)
+            this.dir[name].last_loaded = new Date().toISOString() as IsoDateString
+            this.dir_save()
+            request.onsuccess = finish
+            request.onerror = error
+            return load_deferred.promise
 
             function finish(event: Event){
                 if(!(event.target instanceof IDBRequest)) {
@@ -850,14 +846,14 @@ declare global {
                 }
 
                 if (event.target.result === undefined) {
-                    load_deferred.reject(name);
+                    load_deferred.reject(name)
                 } else {
-                    load_deferred.resolve(event.target.result.content);
+                    load_deferred.resolve(event.target.result.content)
                 }
             }
 
             function error(){
-                load_deferred.reject(name);
+                load_deferred.reject(name)
             }
         }
 
@@ -870,13 +866,13 @@ declare global {
             if (db === null) return Promise.resolve(name)
 
             const save_deferred = new Deferred<string>()
-            const transaction = db.transaction('files', 'readwrite');
-            const store = transaction.objectStore('files');
-            store.put({name:name,content:content});
-            const now = new Date().toISOString() as IsoDateString;
-            ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs);
-            ksof.file_cache.dir_save(true /* immediately */);
-            transaction.oncomplete = save_deferred.resolve.bind(null, name);
+            const transaction = db.transaction('files', 'readwrite')
+            const store = transaction.objectStore('files')
+            store.put({name:name,content:content})
+            const now = new Date().toISOString() as IsoDateString
+            ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs)
+            ksof.file_cache.dir_save(true /* immediately */)
+            transaction.oncomplete = save_deferred.resolve.bind(null, name)
             return save_deferred.promise
         }
 
@@ -885,24 +881,24 @@ declare global {
         //------------------------------
         file_nocache(list:string | string[] | undefined) {
             if (list === undefined) {
-                list = split_list(localStorage.getItem('ksof.include.nocache') || '');
-                list = list.concat(split_list(localStorage.getItem('ksof.load_file.nocache') || ''));
-                console.log(list.join(','));
+                list = split_list(localStorage.getItem('ksof.include.nocache') || '')
+                list = list.concat(split_list(localStorage.getItem('ksof.load_file.nocache') || ''))
+                console.log(list.join(','))
             } else if (typeof list === 'string') {
-                const no_cache = split_list(list);
-                const modules = [], urls = [];
+                const no_cache = split_list(list)
+                const modules = [], urls = []
                 for (let idx = 0; idx < no_cache.length; idx++) {
-                    const item = no_cache[idx];
+                    const item = no_cache[idx]
                     if (supported_modules[item] !== undefined) {
-                        modules.push(item);
+                        modules.push(item)
                     } else {
-                        urls.push(item);
+                        urls.push(item)
                     }
                 }
-                console.log('Modules: '+modules.join(','));
-                console.log('   URLs: '+urls.join(','));
-                localStorage.setItem('ksof.include.nocache', modules.join(','));
-                localStorage.setItem('ksof.load_file.nocache', urls.join(','));
+                console.log('Modules: '+modules.join(','))
+                console.log('   URLs: '+urls.join(','))
+                localStorage.setItem('ksof.include.nocache', modules.join(','))
+                localStorage.setItem('ksof.load_file.nocache', urls.join(','))
             }
         }
     }
@@ -910,7 +906,7 @@ declare global {
     //########################################################################
 
     // eslint-disable-next-line no-irregular-whitespace
-    function split_list(str: string) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0);});}
+    function split_list(str: string) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0)})}
     
     class Deferred<T> {
         promise: Promise<T>
@@ -932,29 +928,29 @@ declare global {
 
     //########################################################################
 
-    let file_cache_open_promise: Promise<IDBDatabase | null> | undefined;
+    let file_cache_open_promise: Promise<IDBDatabase | null> | undefined
 
     //------------------------------
     // Open the file_cache database (or return handle if open).
     //------------------------------
     async function file_cache_open() {
-        if (file_cache_open_promise) return file_cache_open_promise;
-        const open_deferred = new Deferred<IDBDatabase | null>();
+        if (file_cache_open_promise) return file_cache_open_promise
+        const open_deferred = new Deferred<IDBDatabase | null>()
 
-        file_cache_open_promise = open_deferred.promise;
+        file_cache_open_promise = open_deferred.promise
         const request = indexedDB.open('ksof.file_cache')
-        request.onupgradeneeded = upgrade_db;
-        request.onsuccess = get_dir;
-        request.onerror = error;
-        return open_deferred.promise;
+        request.onupgradeneeded = upgrade_db
+        request.onsuccess = get_dir
+        request.onerror = error
+        return open_deferred.promise
 
         function error() {
-            console.log('indexedDB could not open!');
-            ksof.file_cache.dir = {};
+            console.log('indexedDB could not open!')
+            ksof.file_cache.dir = {}
             if (ignore_missing_indexeddb) {
-                open_deferred.resolve(null);
+                open_deferred.resolve(null)
             } else {
-                open_deferred.reject();
+                open_deferred.reject()
             }
         }
 
@@ -963,21 +959,21 @@ declare global {
                 return
             }
 
-            const db = event.target.result;
-            db.createObjectStore('files', {keyPath:'name'});
+            const db = event.target.result
+            db.createObjectStore('files', {keyPath:'name'})
         }
 
         function get_dir(event:Event){
             if(!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
-            const db = event.target.result;
-            const transaction = db.transaction('files', 'readonly');
-            const store = transaction.objectStore('files');
-            const request = store.get('[dir]');
+            const db = event.target.result
+            const transaction = db.transaction('files', 'readonly')
+            const store = transaction.objectStore('files')
+            const request = store.get('[dir]')
             request.onsuccess = process_dir
-            transaction.oncomplete = open_deferred.resolve.bind(null, db);
-            open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000));
+            transaction.oncomplete = open_deferred.resolve.bind(null, db)
+            open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000))
         }
 
         function process_dir(event: Event){
@@ -987,9 +983,9 @@ declare global {
             const result = event.target.result
 
             if (result === undefined) {
-                ksof.file_cache.dir = {};
+                ksof.file_cache.dir = {}
             } else {
-                ksof.file_cache.dir = JSON.parse(result.content);
+                ksof.file_cache.dir = JSON.parse(result.content)
             }
         }
     }
@@ -1009,17 +1005,17 @@ declare global {
     //------------------------------
     function file_cache_cleanup() {
         const threshold = current_time_offset(-14)
-        const old_files = [];
+        const old_files = []
         for (const fname in ksof.file_cache.dir) {
-            if (fname.match(/^ksof\.settings\./)) continue; // Don't flush settings files.
-            const fdate = new Date(ksof.file_cache.dir[fname].last_loaded);
-            if (fdate < threshold) old_files.push(fname);
+            if (fname.match(/^ksof\.settings\./)) continue // Don't flush settings files.
+            const fdate = new Date(ksof.file_cache.dir[fname].last_loaded)
+            if (fdate < threshold) old_files.push(fname)
         }
-        if (old_files.length === 0) return;
-        console.log('Cleaning out '+old_files.length+' old file(s) from "ksof.file_cache":');
+        if (old_files.length === 0) return
+        console.log('Cleaning out '+old_files.length+' old file(s) from "ksof.file_cache":')
         for (const fnum in old_files) {
-            console.log('  '+(Number(fnum)+1)+': '+old_files[fnum]);
-            ksof.file_cache.delete(old_files[fnum]);
+            console.log('  '+(Number(fnum)+1)+': '+old_files[fnum])
+            ksof.file_cache.delete(old_files[fnum])
         }
     }
 
@@ -1100,19 +1096,19 @@ declare global {
     function startup() {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            on_document_loaded();
+            on_document_loaded()
         } else {
-            window.addEventListener('load', on_document_loaded, false);  // Notify listeners that we are ready.
+            window.addEventListener('load', on_document_loaded, false)  // Notify listeners that we are ready.
         }
 
         // Open cache, so ksof.file_cache.dir is available to console immediately.
-        file_cache_open();
-        ksof.set_state('ksof.ksof', 'ready');
+        file_cache_open()
+        ksof.set_state('ksof.ksof', 'ready')
     }
 
     // eslint-disable-next-line no-var
-    var ksof = new KSOF();
+    var ksof = new KSOF()
     global.ksof = ksof
 
-    startup();
-})(window);
+    startup()
+})(window)

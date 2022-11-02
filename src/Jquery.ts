@@ -27,4 +27,4 @@ import { Core, JQuery } from './ksof';
     // Delay guarantees include() callbacks are called before ready() callbacks.
     setTimeout(() => { ksof.set_state('ksof.Jquery', 'ready') }, 0)
 
-})(window);
+})(window)

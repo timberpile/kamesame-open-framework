@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build-watch": "start /B tsc --watch & start /B python .\\after_build.py -w",
-    "build": "tsc & python .\\after_build.py"
+    "build": "tsc & python .\\after_build.py",
+    "lint": "eslint src//**/*.ts"
   },
   "repository": {
     "type": "git",
