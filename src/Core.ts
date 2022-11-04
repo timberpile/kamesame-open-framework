@@ -521,7 +521,7 @@ declare global {
             }
             const current_value = this.state_values[state_var]
             if (persistent || value !== current_value) {
-                this.state_listeners[state_var].push({callback:promise_callback, persistent:persistent, value:value})
+                this.state_listeners[state_var].push({callback:promise_callback, persistent, value})
             }
 
             // If it's already at the desired state, call the callback immediately.
@@ -564,7 +564,7 @@ declare global {
         //------------------------------
         async #load_and_append(url:string, tag_name:string, location:string, use_cache?:boolean) {
             url = url.replace(/"/g,'\'')
-            if (document.querySelector(tag_name+'[uid="'+url+'"]') !== null) {
+            if (document.querySelector(`${tag_name}[uid="${url}"]`) !== null) {
                 return Promise.resolve(url)
             }
  
@@ -642,14 +642,14 @@ declare global {
             }
 
             function push_failed(url:string) {
-                failed.push({url: url})
+                failed.push({url})
                 check_done()
             }
 
             function check_done() {
                 if (++done_cnt < script_cnt) return
-                if (failed.length === 0) include_deferred.resolve({loaded:loaded, failed:failed})
-                else include_deferred.reject({error:'Failure loading module', loaded:loaded, failed:failed})
+                if (failed.length === 0) include_deferred.resolve({loaded, failed})
+                else include_deferred.reject({error:'Failure loading module', loaded, failed})
             }
         }
 
@@ -662,7 +662,7 @@ declare global {
             const ready_promises: Promise<'ready'>[] = []
             for (const idx in module_names) {
                 const module_name = module_names[idx]
-                ready_promises.push(this.wait_state('ksof.' + module_name, 'ready') as Promise<'ready'>)
+                ready_promises.push(this.wait_state(`ksof.${module_name}`, 'ready') as Promise<'ready'>)
             }
             
             if (ready_promises.length === 0) {
@@ -690,7 +690,7 @@ declare global {
         }
 
         dom_observer_state(name: string) {
-            return 'ksof.dom_observer.' + name
+            return `ksof.dom_observer.${name}`
         }
 
         check_dom_observer(observer:Core.DomObserver) {
@@ -869,7 +869,7 @@ declare global {
             const save_deferred = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
-            store.put({name:name,content:content})
+            store.put({name, content})
             const now = new Date().toISOString() as IsoDateString
             ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs)
             ksof.file_cache.dir_save(true /* immediately */)
@@ -896,8 +896,8 @@ declare global {
                         urls.push(item)
                     }
                 }
-                console.log('Modules: '+modules.join(','))
-                console.log('   URLs: '+urls.join(','))
+                console.log(`Modules: ${modules.join(',')}`)
+                console.log(`   URLs: ${urls.join(',')}`)
                 localStorage.setItem('ksof.include.nocache', modules.join(','))
                 localStorage.setItem('ksof.load_file.nocache', urls.join(','))
             }
@@ -1013,9 +1013,9 @@ declare global {
             if (fdate < threshold) old_files.push(fname)
         }
         if (old_files.length === 0) return
-        console.log('Cleaning out '+old_files.length+' old file(s) from "ksof.file_cache":')
+        console.log(`Cleaning out ${old_files.length} old file(s) from "ksof.file_cache":`)
         for (const fnum in old_files) {
-            console.log('  '+(Number(fnum)+1)+': '+old_files[fnum])
+            console.log(`  ${Number(fnum) + 1}: ${old_files[fnum]}}`)
             ksof.file_cache.delete(old_files[fnum])
         }
     }

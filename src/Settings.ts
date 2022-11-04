@@ -62,7 +62,7 @@ import { Core, Settings } from './ksof'
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
             const settings = ksof.settings[script_id]
             if (!settings) return Promise.resolve('')
-            return ksof.file_cache.save('ksof.settings.'+script_id, settings)
+            return ksof.file_cache.save(`ksof.settings.${script_id}`, settings)
         }
 
         save(): Promise<string> {
@@ -76,7 +76,7 @@ import { Core, Settings } from './ksof'
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
 
             try {
-                const settings = await ksof.file_cache.load('ksof.settings.'+script_id) as Settings.SettingCollection
+                const settings = await ksof.file_cache.load(`ksof.settings.${script_id}`) as Settings.SettingCollection
                 return finish(settings)
             } catch (error) {
                 return finish.call(null, {})
@@ -102,7 +102,7 @@ import { Core, Settings } from './ksof'
             const script_id = this.cfg.script_id
             const settings = ksof.settings[script_id]
             if (settings) {
-                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.getNamedItem('id')?.value || ''})
+                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray().map((tab) => {return `#${tab.attributes.getNamedItem('id')?.value || ''}`})
                 if (active_tabs.length > 0) settings.ksofs_active_tabs = active_tabs
             }
             if (this.cfg.autosave === undefined || this.cfg.autosave === true) {
@@ -132,7 +132,7 @@ import { Core, Settings } from './ksof'
             if (this.#open_dialog.length > 0) return
             install_anchor()
             if (this.cfg.background !== false) this.background.open()
-            this.#open_dialog = $('<div id="ksofs_'+this.cfg.script_id+'" class="ksof_settings" style="display:none"></div>')
+            this.#open_dialog = $(`<div id="ksofs_${this.cfg.script_id}" class="ksof_settings" style="display:none"></div>`)
             this.#open_dialog.html(config_to_html(this))
 
             const resize = (event:unknown, ui:any) => {
@@ -164,7 +164,7 @@ import { Core, Settings } from './ksof'
                     {text:'Save',click:this.save_btn.bind(this)},
                     {text:'Cancel',click:this.cancel.bind(this)}
                 ],
-                width: width,
+                width,
                 maxHeight: document.body.clientHeight,
                 modal: false,
                 autoOpen: false,
@@ -238,7 +238,7 @@ import { Core, Settings } from './ksof'
                 if (item.multi === true) {
                     value = {}
                     elem.find('option').each(function(i,e){
-                        const opt_name = e.getAttribute('name') || '#'+e.index
+                        const opt_name = e.getAttribute('name') || `#${e.index}`
                         value[opt_name] = e.selected
                     })
                 } else {
@@ -282,17 +282,17 @@ import { Core, Settings } from './ksof'
                     valid.valid = false
                     if (valid.msg.length === 0) {
                         if (typeof item.max === 'number')
-                            valid.msg = 'Must be between '+item.min+' and '+item.max
+                            valid.msg = `Must be between ${item.min} and ${item.max}`
                         else
-                            valid.msg = 'Must be '+item.min+' or higher'
+                            valid.msg = `Must be ${item.min} or higher`
                     }
                 } else if (item.max && Number(value) > item.max) {
                     valid.valid = false
                     if (valid.msg.length === 0) {
                         if (typeof item.min === 'number')
-                            valid.msg = 'Must be between '+item.min+' and '+item.max
+                            valid.msg = `Must be between ${item.min} and ${item.max}`
                         else
-                            valid.msg = 'Must be '+item.max+' or lower'
+                            valid.msg = `Must be ${item.max} or lower`
                     }
                 }
             }
@@ -312,7 +312,7 @@ import { Core, Settings } from './ksof'
             const parent = elem.closest('.right')
             parent.find('.note').remove()
             if (typeof valid.msg === 'string' && valid.msg.length > 0)
-                parent.append('<div class="note'+(valid.valid?'':' error')+'">'+valid.msg+'</div>')
+                parent.append(`<div class="note${valid.valid?'':' error'}">${valid.msg}</div>`)
             if (!valid.valid) {
                 elem.addClass('invalid')
             } else {
@@ -358,22 +358,22 @@ import { Core, Settings } from './ksof'
             const script_id = this.cfg.script_id
             const settings = ksof.settings[script_id]
             for (const name in this.config_list) {
-                const elem = this.#open_dialog.find('#'+script_id+'_'+name)
+                const elem = this.#open_dialog.find(`#${script_id}_${name}`)
                 const _config = this.config_list[name]
                 const value = get_value(this, settings, name)
 
                 if (_config.type == 'dropdown') {
-                    elem.find('option[name="'+value+'"]').prop('selected', true)
+                    elem.find(`option[name="${value}"]`).prop('selected', true)
                 }
                 else if (_config.type == 'list') {
                     const config = _config as Settings.UI.List
                     if (config.multi === true) {
                         elem.find('option').each(function(i,e){
-                            const opt_name = e.getAttribute('name') || '#'+e.index
+                            const opt_name = e.getAttribute('name') || `#${e.index}`
                             e.selected = value[opt_name]
                         })
                     } else {
-                        elem.find('option[name="'+value+'"]').prop('selected', true)
+                        elem.find(`option[name="${value}"]`).prop('selected', true)
                     }
                 }
                 else if (_config.type == 'checkbox') {
@@ -446,18 +446,18 @@ import { Core, Settings } from './ksof'
 
         let html = ''
         const child_passback:ChildPassback = {}
-        const id = context.cfg.script_id+'_dialog'
+        const id = `${context.cfg.script_id}_dialog`
         for (const name in context.cfg.content) {
             html += parse_item(name, context.cfg.content[name], child_passback)
         }
         if (child_passback.tabs && child_passback.pages)
             html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html
-        return '<form>'+html+'</form>'
+        return `<form>${html}</form>`
 
         //============
         function parse_item(name:string, _item: Settings.UI.Component, passback:ChildPassback) {
             if (typeof _item.type !== 'string') return ''
-            const id = context.cfg.script_id+'_'+name
+            const id = `${context.cfg.script_id}_${name}`
             let cname, html = '', child_passback:ChildPassback, non_page = ''
 
             const _type = _item.type
@@ -481,13 +481,13 @@ import { Core, Settings } from './ksof'
                 if (!passback.pages) {
                     passback.pages = []
                 }
-                passback.tabs.push('<li id="'+id+'_tab"'+to_title(item.hover_tip)+'><a href="#'+id+'">'+item.label+'</a></li>')
+                passback.tabs.push(`<li id="${id}_tab"${to_title(item.hover_tip)}><a href="#${id}">${item.label}</a></li>`)
                 child_passback = {}
                 for (cname in item.content) 
                     non_page += parse_item(cname, item.content[cname], child_passback)
                 if (child_passback.tabs && child_passback.pages)
                     html = assemble_pages(id, child_passback.tabs, child_passback.pages)
-                passback.pages.push('<div id="'+id+'">'+html+non_page+'</div>')
+                passback.pages.push(`<div id="${id}">${html}${non_page}</div>`)
                 passback.is_page = true
                 html = ''
             }
@@ -499,7 +499,7 @@ import { Core, Settings } from './ksof'
                     non_page += parse_item(cname, item.content[cname], child_passback)
                 if (child_passback.tabs && child_passback.pages)
                     html = assemble_pages(id, child_passback.tabs, child_passback.pages)
-                html = '<fieldset id="'+id+'" class="ksof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>'
+                html = `<fieldset id="${id}" class="ksof_group"><legend>${item.label}</legend>${html}${non_page}</fieldset>`
             }
             else if (_type == 'dropdown') {
                 const item = _item as Settings.UI.Dropdown
@@ -516,7 +516,7 @@ import { Core, Settings } from './ksof'
 
                 html = `<select id="${id}" name="${name}" class="setting"${to_title(item.hover_tip)}>`
                 for (cname in item.content)
-                    html += '<option name="'+cname+'">'+escape_text(item.content[cname])+'</option>'
+                    html += `<option name="${cname}">${escape_text(item.content[cname])}</option>`
                 html += '</select>'
                 html = make_label(item) + wrap_right(html)
                 html = wrap_row(html, item.full_width, item.hover_tip)
@@ -542,12 +542,12 @@ import { Core, Settings } from './ksof'
                     set_value(context, base, name, value)
                 }
 
-                let attribs = ' size="'+(item.size || Object.keys(item.content).length || 4)+'"'
+                let attribs = ` size="${item.size || Object.keys(item.content).length || 4}"`
                 if (item.multi === true) attribs += ' multiple'
 
                 html = `<select id="${id}" name="${name}" class="setting list"${attribs}${to_title(item.hover_tip)}>`
                 for (cname in item.content)
-                    html += '<option name="'+cname+'">'+escape_text(item.content[cname])+'</option>'
+                    html += `<option name="${cname}">${escape_text(item.content[cname])}</option>`
                 html += '</select>'
                 html = make_label(item) + wrap_right(html)
                 html = wrap_row(html, item.full_width, item.hover_tip)
@@ -561,7 +561,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || false)
                     set_value(context, base, name, value)
                 }
-                html += wrap_right('<input id="'+id+'" class="setting" type="checkbox" name="'+name+'">')
+                html += wrap_right(`<input id="${id}" class="setting" type="checkbox" name="${name}">`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'input') {
@@ -575,7 +575,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || (is_number ? 0 : ''))
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'number') {
@@ -589,7 +589,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || (is_number ? 0 : ''))
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'text') {
@@ -602,7 +602,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || '')
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'color') {
@@ -614,7 +614,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || '#000000')
                     set_value(context, base, name, value)
                 }
-                html += wrap_right('<input id="'+id+'" class="setting" type="color" name="'+name+'">')
+                html += wrap_right(`<input id="${id}" class="setting" type="color" name="${name}">`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'button') {
@@ -622,7 +622,7 @@ import { Core, Settings } from './ksof'
                 context.config_list[name] = item
                 html += make_label(item)
                 const text = escape_text(item.text || 'Click')
-                html += wrap_right('<button type="button" class="setting" name="'+name+'">'+text+'</button>')
+                html += wrap_right(`<button type="button" class="setting" name="${name}">${text}</button>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'divider') {
@@ -630,7 +630,7 @@ import { Core, Settings } from './ksof'
             }
             else if (_type == 'section') {
                 const item = _item as Settings.UI.Section
-                html += '<section>'+(item.label || '')+'</section>'
+                html += `<section>${item.label || ''}</section>`
             }
             else if (_type == 'html') {
                 const item = _item as Settings.UI.Html
@@ -647,16 +647,16 @@ import { Core, Settings } from './ksof'
 
             function make_label(item: {label?:string}) {
                 if (typeof item.label !== 'string') return ''
-                return wrap_left('<label for="'+id+'">'+item.label+'</label>')
+                return wrap_left(`<label for="${id}">${item.label}</label>`)
             }
         }
         /* eslint-enable no-case-declarations */
 
         //============
-        function assemble_pages(id:string, tabs:string[], pages:string[]) {return '<div id="'+id+'" class="ksof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>'}
-        function wrap_row(html:string,full?:boolean,hover_tip?:string) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>'}
-        function wrap_left(html:string) {return '<div class="left">'+html+'</div>'}
-        function wrap_right(html:string) {return '<div class="right">'+html+'</div>'}
+        function assemble_pages(id:string, tabs:string[], pages:string[]) {return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>`}
+        function wrap_row(html:string,full?:boolean,hover_tip?:string) {return `<div class="row${full?' full':''}"${to_title(hover_tip)}>${html}</div>`}
+        function wrap_left(html:string) {return `<div class="left">${html}</div>`}
+        function wrap_right(html:string) {return `<div class="right">${html}</div>`}
         function escape_text(text:string) {
             return text.replace(/[<>]/g, (ch) => {
                 if (ch == '<') return '&lt'
@@ -665,7 +665,7 @@ import { Core, Settings } from './ksof'
             })
         }
         function escape_attr(text:string) {return text.replace(/"/g, '&quot')}
-        function to_title(tip?:string) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot')+'"'}
+        function to_title(tip?:string) {if (!tip) return ''; return ` title="${tip.replace(/"/g,'&quot')}"`}
     }
 
     function get_value(context:KSOFSettings, base: Settings.SettingCollection, name: string){
@@ -699,7 +699,7 @@ import { Core, Settings } from './ksof'
                     }
                 } else if (c === ']') {
                     if (--depth === 0) {
-                        new_path += JSON.stringify(eval(param)) + ']'
+                        new_path += `${JSON.stringify(eval(param))}]`
                     } else {
                         param += ']'
                     }
@@ -711,7 +711,7 @@ import { Core, Settings } from './ksof'
                         param += c
                 }
             }
-            eval(new_path + '=value')
+            eval(`${new_path}=value`)
         } catch(e) {return}
     }
 

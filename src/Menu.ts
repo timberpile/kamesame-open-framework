@@ -189,11 +189,11 @@ import { Core, Menu } from './ksof'
                         let top = Math.max(0, link.offsetTop)
                         link.classList.toggle('open')
                         if (link.classList.contains('open')) {
-                            submenu.style.top = top+'px'
+                            submenu.style.top = `${top}px`
                             if (menu.offsetHeight - top < submenu.offsetHeight)
                             {
                                 top = Math.max(0, menu.offsetHeight - submenu.offsetHeight)
-                                submenu.style.top = top+'px'
+                                submenu.style.top = `${top}px`
                                 submenu.style.maxHeight = String(menu.offsetHeight - top)
                             }
                         }
@@ -255,7 +255,7 @@ import { Core, Menu } from './ksof'
     }
     
     ksof.Menu = {
-        insert_script_link: insert_script_link,
+        insert_script_link,
         ui: new MenuUi()
     }
     
@@ -314,9 +314,9 @@ import { Core, Menu } from './ksof'
     //------------------------------
     function insert_script_link(config: Menu.Config) {
         // Abort if the script already exists
-        const link_id = config.name+'_script_link'
+        const link_id = `${config.name}_script_link`
         const link_text = escape_text(config.title)
-        if (document.querySelector('#'+link_id)) return
+        if (document.querySelector(`#${link_id}`)) return
 
         if (ui.configs.indexOf(config) >= 0) return
         ui.configs.push(config)
@@ -331,7 +331,7 @@ import { Core, Menu } from './ksof'
         const link = document.createElement('li')
         link.id = link_id
         link.setAttribute('name', config.name)
-        link.innerHTML = '<a href="#">'+link_text+'</a>'
+        link.innerHTML = `<a href="#">${link_text}</a>`
         if (config.submenu) {
             const submenu = ui.install_scripts_submenu(config.submenu)
             if (!submenu) {
@@ -347,7 +347,7 @@ import { Core, Menu } from './ksof'
             classes = ['sitemap__page']
             if (config.class) classes.push(config.class_html || '')
             link.setAttribute('class', classes.join(' '))
-            link.innerHTML = '<a href="#">'+link_text+'</a>'
+            link.innerHTML = `<a href="#">${link_text}</a>`
             menu.append(link)
         } else {
             classes = ['sitemap__page', 'script-link']
@@ -368,7 +368,7 @@ import { Core, Menu } from './ksof'
         }
 
         // Add a callback for when the link is clicked.
-        document.querySelector('#'+link_id)?.addEventListener('click', function(e){
+        document.querySelector(`#${link_id}`)?.addEventListener('click', function(e){
             document.body.removeEventListener('click', body_click)
             document.querySelector('#scripts-menu')?.classList.remove('open')
             for (const submenu of document.querySelectorAll('.scripts-submenu')) {
