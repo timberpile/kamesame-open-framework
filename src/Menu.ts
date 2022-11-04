@@ -98,7 +98,7 @@ import { Core, Menu } from './ksof'
                         width: 100%
                         color: var(--gray)
                     }
-                </style>`
+                </style>`,
             )
             return document.head.querySelector('style[name="scripts_submenu"]') as HTMLStyleElement
         }
@@ -255,7 +255,7 @@ import { Core, Menu } from './ksof'
 
     ksof.Menu = {
         insert_script_link,
-        ui: new MenuUi()
+        ui: new MenuUi(),
     }
 
     const ui = ksof.Menu.ui as MenuUi

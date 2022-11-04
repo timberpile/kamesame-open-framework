@@ -186,7 +186,7 @@ declare global {
             case 'itemPage':
                 switch (this.type) {
                 case 'vocabulary':
-                    return parseInt(this.facts['WaniKani Level'])
+                    return parseInt(this.facts['WaniKani Level'], 10)
                 case 'kanji':
                     break
                 }
@@ -393,7 +393,7 @@ declare global {
                 wanikani_level: this.wanikani_level,
                 tags: this.tags,
                 on: ksof.pageInfo.on,
-                type: this.type
+                type: this.type,
             }
         }
     }

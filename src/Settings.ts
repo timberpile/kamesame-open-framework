@@ -29,7 +29,7 @@ import { Core, Settings } from './ksof'
             const refcnt = Number(bkgd.attr('refcnt'))
             if (refcnt <= 0) return
             bkgd.attr('refcnt', refcnt - 1)
-        }
+        },
     } }
 
     //########################################################################
@@ -161,8 +161,14 @@ import { Core, Settings } from './ksof'
             this.#open_dialog.dialog({
                 title: this.cfg.title,
                 buttons: [
-                    { text: 'Save', click: this.save_btn.bind(this) },
-                    { text: 'Cancel', click: this.cancel.bind(this) }
+                    {
+                        text: 'Save',
+                        click: this.save_btn.bind(this),
+                    },
+                    {
+                        text: 'Cancel',
+                        click: this.cancel.bind(this),
+                    },
                 ],
                 width,
                 maxHeight: document.body.clientHeight,
@@ -170,7 +176,9 @@ import { Core, Settings } from './ksof'
                 autoOpen: false,
                 appendTo: '#ksof_ds',
                 resize: resize.bind(this),
-                close: () => { this.close(false) }
+                close: () => {
+                    this.close(false)
+                },
             })
             $(this.#open_dialog.dialog('widget')).css('position', 'fixed')
             this.#open_dialog.parent().addClass('ksof_settings_dialog')
@@ -735,7 +743,7 @@ import { Core, Settings } from './ksof'
     await ksof.ready('document, Jquery')
     await Promise.all([
         ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
-        ksof.load_css(css_url, true /* cache */)
+        ksof.load_css(css_url, true /* cache */),
     ])
 
     ready = true
