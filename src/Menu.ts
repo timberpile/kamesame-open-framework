@@ -369,7 +369,7 @@ import { Core, Menu } from './ksof'
         }
 
         // Add a callback for when the link is clicked.
-        document.querySelector(`#${link_id}`)?.addEventListener('click', function(e){
+        document.querySelector(`#${link_id}`)?.addEventListener('click', function(e) {
             document.body.removeEventListener('click', body_click)
             document.querySelector('#scripts-menu')?.classList.remove('open')
             for (const submenu of document.querySelectorAll('.scripts-submenu')) {

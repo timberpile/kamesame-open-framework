@@ -51,6 +51,7 @@
         "template-curly-spacing": "error",
         "wrap-iife": "error",
         "func-style": "error",
-        "no-loop-func": "error"
+        "no-loop-func": "error",
+        "space-before-blocks": "error"
     }
 }

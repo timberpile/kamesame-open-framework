@@ -772,14 +772,14 @@ declare global {
             if (db === null) return del_deferred.resolve([])
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
-            const files = Object.keys(ksof.file_cache.dir).filter(function(file){
+            const files = Object.keys(ksof.file_cache.dir).filter(function(file) {
                 if (pattern instanceof RegExp) {
                     return file.match(pattern) !== null
                 } else {
                     return (file === pattern)
                 }
             })
-            files.forEach(function(file){
+            files.forEach(function(file) {
                 store.delete(file)
                 delete ksof.file_cache.dir[file]
             })

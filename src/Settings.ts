@@ -190,7 +190,7 @@ import { Core, Settings } from './ksof'
                 const multi = $(e.currentTarget)
                 const scroll = e.currentTarget.scrollTop
                 e.target.selected = !e.target.selected
-                setTimeout(function(){
+                setTimeout(function() {
                     e.currentTarget.scrollTop = scroll
                     multi.focus() // TODO what should this do? it's deprecated
                 },0)
@@ -209,7 +209,7 @@ import { Core, Settings } from './ksof'
             this.#open_dialog.dialog('open')
             this.#open_dialog.find('.setting[multiple]').on('mousedown', toggle_multi.bind(this))
             this.#open_dialog.find('.setting').on('change', this.#setting_changed.bind(this))
-            this.#open_dialog.find('form').on('submit', function(){return false})
+            this.#open_dialog.find('form').on('submit', function() {return false})
             this.#open_dialog.find('button.setting').on('click', setting_button_clicked.bind(this))
 
             if (typeof this.cfg.pre_open === 'function') this.cfg.pre_open(this.#open_dialog)
@@ -237,7 +237,7 @@ import { Core, Settings } from './ksof'
 
                 if (item.multi === true) {
                     value = {}
-                    elem.find('option').each(function(i,e){
+                    elem.find('option').each(function(i,e) {
                         const opt_name = e.getAttribute('name') || `#${e.index}`
                         value[opt_name] = e.selected
                     })
@@ -368,7 +368,7 @@ import { Core, Settings } from './ksof'
                 else if (_config.type == 'list') {
                     const config = _config as Settings.UI.List
                     if (config.multi === true) {
-                        elem.find('option').each(function(i,e){
+                        elem.find('option').each(function(i,e) {
                             const opt_name = e.getAttribute('name') || `#${e.index}`
                             e.selected = value[opt_name]
                         })
@@ -538,7 +538,7 @@ import { Core, Settings } from './ksof'
                     } else {
                         if (item.multi === true) {
                             value = {}
-                            Object.keys(item.content).forEach(function(key){
+                            Object.keys(item.content).forEach(function(key) {
                                 value[key] = false
                             })
                         } else {
@@ -750,6 +750,6 @@ import { Core, Settings } from './ksof'
 
     // Notify listeners that we are ready.
     // Delay guarantees include() callbacks are called before ready() callbacks.
-    setTimeout(function(){ksof.set_state('ksof.Settings', 'ready')},0)
+    setTimeout(function() {ksof.set_state('ksof.Settings', 'ready')},0)
 
 })(window))
