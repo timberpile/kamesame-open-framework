@@ -168,10 +168,7 @@ import { Core, Menu } from './ksof'
                 e.stopPropagation()
             })
 
-            // Click to open/close sub-menu.
-            this.menu.addEventListener('click', submenu_click)
-
-            function submenu_click(e: Event){
+            const submenu_click = (e: Event) => {
                 const target = e.target as HTMLElement
                 if (!target.matches('.scripts-submenu>a')) return false
                 const link = target.parentElement
@@ -209,6 +206,9 @@ import { Core, Menu } from './ksof'
                 }
                 e.stopPropagation()
             }
+
+            // Click to open/close sub-menu.
+            this.menu.addEventListener('click', submenu_click)
 
             return menu
         }
@@ -263,8 +263,8 @@ import { Core, Menu } from './ksof'
     
     ui.menu.setAttribute('display', 'none')
 
-    function escape_attr(attr: string) {return attr.replace(/"/g,'\'')}
-    function escape_text(text: string) {return text.replace(/[<&>]/g, (ch) => {
+    const escape_attr = (attr: string) => {return attr.replace(/"/g,'\'')}
+    const escape_text = (text: string) => {return text.replace(/[<&>]/g, (ch) => {
         switch (ch) {
         case '<':
             return '&lt'
@@ -277,7 +277,7 @@ import { Core, Menu } from './ksof'
         }
     })}
 
-    function find_search_icon() {
+    const find_search_icon = () => {
         const text_div = Array.from(document.querySelectorAll('#nav_container .real ul li a div.icon div'))
             .find(el => el.textContent === '🔍')
         if (!text_div) {
@@ -289,7 +289,7 @@ import { Core, Menu } from './ksof'
     //------------------------------
     // Handler that closes menus when clicking outside of menu.
     //------------------------------
-    function body_click() {
+    const body_click = () => {
         ui.menu.classList.remove('open')
         for (const submenu of document.querySelectorAll('.scripts-submenu.open')) {
             submenu.classList.remove('open')
@@ -300,7 +300,7 @@ import { Core, Menu } from './ksof'
     //------------------------------
     // Sort menu items
     //------------------------------
-    function sort_name(a:Element,b:Element) {
+    const sort_name = (a:Element,b:Element) => {
         const a1 = a.querySelector('a')
         if (!a1) return -1
         const b1 = b.querySelector('a')
@@ -312,6 +312,7 @@ import { Core, Menu } from './ksof'
     //------------------------------
     // Inserts script link into Kamesame menu.
     //------------------------------
+    // eslint-disable-next-line func-style
     function insert_script_link(config: Menu.Config) {
         // Abort if the script already exists
         const link_id = `${config.name}_script_link`

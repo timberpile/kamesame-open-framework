@@ -613,6 +613,22 @@ declare global {
                 return include_deferred.promise
             }
 
+            const check_done = () => {
+                if (++done_cnt < script_cnt) return
+                if (failed.length === 0) include_deferred.resolve({loaded, failed})
+                else include_deferred.reject({error:'Failure loading module', loaded, failed})
+            }
+
+            const push_loaded = (url:string) => {
+                loaded.push(url)
+                check_done()
+            }
+
+            const push_failed = (url:string) => {
+                failed.push({url})
+                check_done()
+            }
+
             let done_cnt = 0
             const loaded: string[] = []
             const failed: Core.FailedInclude[] = []
@@ -635,22 +651,6 @@ declare global {
             }
 
             return include_deferred.promise
-
-            function push_loaded(url:string) {
-                loaded.push(url)
-                check_done()
-            }
-
-            function push_failed(url:string) {
-                failed.push({url})
-                check_done()
-            }
-
-            function check_done() {
-                if (++done_cnt < script_cnt) return
-                if (failed.length === 0) include_deferred.resolve({loaded, failed})
-                else include_deferred.reject({error:'Failure loading module', loaded, failed})
-            }
         }
 
         //------------------------------
@@ -837,11 +837,8 @@ declare global {
             const request = store.get(name)
             this.dir[name].last_loaded = new Date().toISOString() as IsoDateString
             this.dir_save()
-            request.onsuccess = finish
-            request.onerror = error
-            return load_deferred.promise
 
-            function finish(event: Event){
+            request.onsuccess = (event: Event) => {
                 if(!(event.target instanceof IDBRequest)) {
                     return
                 }
@@ -853,9 +850,12 @@ declare global {
                 }
             }
 
-            function error(){
+            request.onerror = () => {
                 load_deferred.reject(name)
             }
+
+            return load_deferred.promise
+
         }
 
         //------------------------------
@@ -907,7 +907,7 @@ declare global {
     //########################################################################
 
     // eslint-disable-next-line no-irregular-whitespace
-    function split_list(str: string) {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0)})}
+    const split_list = (str: string) => {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0)})}
     
     class Deferred<T> {
         promise: Promise<T>
@@ -934,18 +934,11 @@ declare global {
     //------------------------------
     // Open the file_cache database (or return handle if open).
     //------------------------------
-    async function file_cache_open() {
+    const file_cache_open = async () => {
         if (file_cache_open_promise) return file_cache_open_promise
         const open_deferred = new Deferred<IDBDatabase | null>()
 
-        file_cache_open_promise = open_deferred.promise
-        const request = indexedDB.open('ksof.file_cache')
-        request.onupgradeneeded = upgrade_db
-        request.onsuccess = get_dir
-        request.onerror = error
-        return open_deferred.promise
-
-        function error() {
+        const error = () => {
             console.log('indexedDB could not open!')
             ksof.file_cache.dir = {}
             if (ignore_missing_indexeddb) {
@@ -955,7 +948,7 @@ declare global {
             }
         }
 
-        function upgrade_db(event:IDBVersionChangeEvent){
+        const upgrade_db = (event:IDBVersionChangeEvent) => {
             if(!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
@@ -964,7 +957,7 @@ declare global {
             db.createObjectStore('files', {keyPath:'name'})
         }
 
-        function get_dir(event:Event){
+        const get_dir = (event:Event) => {
             if(!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
@@ -977,7 +970,7 @@ declare global {
             open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000))
         }
 
-        function process_dir(event: Event){
+        const process_dir = (event: Event) => {
             if(!(event.target instanceof IDBRequest)) {
                 return
             }
@@ -989,12 +982,20 @@ declare global {
                 ksof.file_cache.dir = JSON.parse(result.content)
             }
         }
+
+        file_cache_open_promise = open_deferred.promise
+        const request = indexedDB.open('ksof.file_cache')
+        request.onupgradeneeded = upgrade_db
+        request.onsuccess = get_dir
+        request.onerror = error
+        return open_deferred.promise
+
     }
 
     //------------------------------
     // The current time, offset by the specified days
     //------------------------------
-    function current_time_offset(days_offset:number) {
+    const current_time_offset = (days_offset:number) => {
         const offset = (24*60*60*1000) * days_offset
         const date = new Date()
         date.setTime(date.getTime() + offset)
@@ -1004,7 +1005,7 @@ declare global {
     //------------------------------
     // Remove files that haven't been accessed in a while.
     //------------------------------
-    function file_cache_cleanup() {
+    const file_cache_cleanup = () => {
         const threshold = current_time_offset(-14)
         const old_files = []
         for (const fname in ksof.file_cache.dir) {
@@ -1020,7 +1021,7 @@ declare global {
         }
     }
 
-    function init_page_dom_observers() {
+    const init_page_dom_observers = () => {
         const page_queries = new Map([
             ['itemPage',       '#app.kamesame #item .facts .fact'],
             ['review',         '#app.kamesame #study .meaning'],
@@ -1045,7 +1046,7 @@ declare global {
     // Body Changes Observation
     //------------------------------
 
-    function on_body_mutated() {
+    const on_body_mutated = () => {
         for(const observer of ksof.dom_observers) {
             ksof.check_dom_observer(observer)
         }
@@ -1053,7 +1054,7 @@ declare global {
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    function init_dom_observer() {
+    const init_dom_observer = () => {
         const body_observer = new MutationObserver(on_body_mutated)
 
         body_observer.observe(document.body, {childList: true, subtree: true})
@@ -1076,7 +1077,7 @@ declare global {
         check_observer()
     }
 
-    function on_document_loaded() {
+    const on_document_loaded = () => {
         init_dom_observer()
 
         init_page_dom_observers()
@@ -1094,7 +1095,7 @@ declare global {
     //------------------------------
     // Bootloader Startup
     //------------------------------
-    function startup() {
+    const startup = () => {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
             on_document_loaded()

@@ -75,19 +75,19 @@ import { Core, Settings } from './ksof'
         static async load(context: Settings.Dialog | string, defaults?:Settings.SettingCollection) {
             const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
 
-            try {
-                const settings = await ksof.file_cache.load(`ksof.settings.${script_id}`) as Settings.SettingCollection
-                return finish(settings)
-            } catch (error) {
-                return finish.call(null, {})
-            }
-
-            function finish(settings:Settings.SettingCollection) {
+            const finish = (settings:Settings.SettingCollection) => {
                 if (defaults)
                     ksof.settings[script_id] = deep_merge(defaults, settings)
                 else
                     ksof.settings[script_id] = settings
                 return ksof.settings[script_id]
+            }
+
+            try {
+                const settings = await ksof.file_cache.load(`ksof.settings.${script_id}`) as Settings.SettingCollection
+                return finish(settings)
+            } catch (error) {
+                return finish.call(null, {})
             }
         }
 
@@ -387,7 +387,7 @@ import { Core, Settings } from './ksof'
         }
     }
 
-    function createSettings(): Settings.Settings {
+    const createSettings = (): Settings.Settings => {
         const settings_obj = (config: Settings.Config) => {
             return new KSOFSettings(config)
         }
@@ -406,9 +406,9 @@ import { Core, Settings } from './ksof'
     let ready = false
 
     //========================================================================
-    function deep_merge(...objects: {[key:string]: any}[]) {
+    const deep_merge = (...objects: {[key:string]: any}[]) => {
         const merged = {}
-        function recursive_merge(dest: {[key:string]: any}, src: {[key:string]: any}) {
+        const recursive_merge = (dest: {[key:string]: any}, src: {[key:string]: any}) => {
             for (const prop in src) {
                 if (typeof src[prop] === 'object' && src[prop] !== null ) {
                     const srcProp = src[prop]
@@ -436,29 +436,35 @@ import { Core, Settings } from './ksof'
     // Convert a config object to html dialog.
     //------------------------------
     /* eslint-disable no-case-declarations */
-    function config_to_html(context:KSOFSettings) {
+    const config_to_html = (context:KSOFSettings) => {
         context.config_list = {}
         if (!ksof.settings) {
             return ''
         }
-        let base = ksof.settings[context.cfg.script_id]
-        if (base === undefined) ksof.settings[context.cfg.script_id] = base = {}
 
-        let html = ''
-        const child_passback:ChildPassback = {}
-        const id = `${context.cfg.script_id}_dialog`
-        for (const name in context.cfg.content) {
-            html += parse_item(name, context.cfg.content[name], child_passback)
+        const assemble_pages = (id:string, tabs:string[], pages:string[]) => {return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>`}
+        const wrap_row = (html:string,full?:boolean,hover_tip?:string) => {return `<div class="row${full?' full':''}"${to_title(hover_tip)}>${html}</div>`}
+        const wrap_left = (html:string) => {return `<div class="left">${html}</div>`}
+        const wrap_right = (html:string) => {return `<div class="right">${html}</div>`}
+        const escape_text = (text:string) => {
+            return text.replace(/[<>]/g, (ch) => {
+                if (ch == '<') return '&lt'
+                if (ch == '>') return '&gt'
+                return ''
+            })
         }
-        if (child_passback.tabs && child_passback.pages)
-            html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html
-        return `<form>${html}</form>`
+        const escape_attr = (text:string) => {return text.replace(/"/g, '&quot')}
+        const to_title = (tip?:string) => {if (!tip) return ''; return ` title="${tip.replace(/"/g,'&quot')}"`}
 
-        //============
-        function parse_item(name:string, _item: Settings.UI.Component, passback:ChildPassback) {
+        const parse_item = (name:string, _item: Settings.UI.Component, passback:ChildPassback) => {
             if (typeof _item.type !== 'string') return ''
             const id = `${context.cfg.script_id}_${name}`
             let cname, html = '', child_passback:ChildPassback, non_page = ''
+
+            const make_label = (item: {label?:string}) => {
+                if (typeof item.label !== 'string') return ''
+                return wrap_left(`<label for="${id}">${item.label}</label>`)
+            }
 
             const _type = _item.type
 
@@ -644,31 +650,23 @@ import { Core, Settings } from './ksof'
             }
 
             return html
-
-            function make_label(item: {label?:string}) {
-                if (typeof item.label !== 'string') return ''
-                return wrap_left(`<label for="${id}">${item.label}</label>`)
-            }
         }
-        /* eslint-enable no-case-declarations */
 
-        //============
-        function assemble_pages(id:string, tabs:string[], pages:string[]) {return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>`}
-        function wrap_row(html:string,full?:boolean,hover_tip?:string) {return `<div class="row${full?' full':''}"${to_title(hover_tip)}>${html}</div>`}
-        function wrap_left(html:string) {return `<div class="left">${html}</div>`}
-        function wrap_right(html:string) {return `<div class="right">${html}</div>`}
-        function escape_text(text:string) {
-            return text.replace(/[<>]/g, (ch) => {
-                if (ch == '<') return '&lt'
-                if (ch == '>') return '&gt'
-                return ''
-            })
+        let base = ksof.settings[context.cfg.script_id]
+        if (base === undefined) ksof.settings[context.cfg.script_id] = base = {}
+
+        let html = ''
+        const child_passback:ChildPassback = {}
+        const id = `${context.cfg.script_id}_dialog`
+        for (const name in context.cfg.content) {
+            html += parse_item(name, context.cfg.content[name], child_passback)
         }
-        function escape_attr(text:string) {return text.replace(/"/g, '&quot')}
-        function to_title(tip?:string) {if (!tip) return ''; return ` title="${tip.replace(/"/g,'&quot')}"`}
+        if (child_passback.tabs && child_passback.pages)
+            html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html
+        return `<form>${html}</form>`
     }
 
-    function get_value(context:KSOFSettings, base: Settings.SettingCollection, name: string){
+    const get_value = (context:KSOFSettings, base: Settings.SettingCollection, name: string) => {
         const item = context.config_list[name] as {path?:string}
         const evaluate = (item.path !== undefined)
         const path = (item.path || name)
@@ -678,7 +676,7 @@ import { Core, Settings } from './ksof'
         } catch(e) {return}
     }
 
-    function set_value(context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) {
+    const set_value = (context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) => {
         const item = context.config_list[name] as {path?:string}
         const evaluate = (item.path !== undefined)
         const path = (item.path || name)
@@ -715,7 +713,7 @@ import { Core, Settings } from './ksof'
         } catch(e) {return}
     }
 
-    function install_anchor() {
+    const install_anchor = () => {
         let anchor = $('#ksof_ds')
         if (anchor.length === 0) {
             anchor = $('<div id="ksof_ds"></div></div>')
