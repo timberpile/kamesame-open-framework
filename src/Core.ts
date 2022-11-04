@@ -1034,10 +1034,12 @@ declare global {
             ['account',        '#app.kamesame #account .fun-stuff'],
         ])
 
+        const set_state_ready = () => { ksof.set_state('ksof.document', 'ready') }
+
         for (const query of page_queries) {
             const observer = {name: `page.${query[0]}`, query: query[1]}
             ksof.add_dom_observer(observer)
-            ksof.wait_state(ksof.dom_observer_state(observer.name), 'present', () => { ksof.set_state('ksof.document', 'ready') })
+            ksof.wait_state(ksof.dom_observer_state(observer.name), 'present', set_state_ready)
         }
     }
 

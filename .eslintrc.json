@@ -50,6 +50,7 @@
         "prefer-template": "error",
         "template-curly-spacing": "error",
         "wrap-iife": "error",
-        "func-style": "error"
+        "func-style": "error",
+        "no-loop-func": "error"
     }
 }
