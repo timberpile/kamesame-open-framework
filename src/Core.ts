@@ -730,6 +730,7 @@ declare global {
                 last_loaded: IsoDateString
             }
         }
+
         sync_timer: number | undefined
 
         constructor() {
