@@ -23,7 +23,7 @@ export declare namespace Core {
             }
         }
         sync_timer: number | undefined
-        
+
         ls: () => void
         clear: () => Promise<void | Event>
         delete: (pattern: string | RegExp) => Promise<void | string[]>
@@ -145,9 +145,9 @@ export declare namespace Settings {
             path?: string        // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
             refresh_on_change?: boolean
         }
-    
+
         export type Collection = {[key:string]: Component}
-    
+
         export interface Tabset {
             type: 'tabset'
             content: {[key:string]: Page}
@@ -156,7 +156,7 @@ export declare namespace Settings {
                 // page2: {...}
                 // ...
         }
-    
+
         export interface Page {
             type: 'page'
             label: string      // A string label that will appear in the tab.
@@ -168,16 +168,16 @@ export declare namespace Settings {
                 // text2: {...},
                 // ...
         }
-    
+
         export interface Section {
             type: 'section'
             label?: string // A string that will appear in the section.
         }
-    
+
         export interface Divider {
             type: 'divider'
         }
-    
+
         export interface Group {
             type: 'group'
             label?: string // A string label that will appear at the top-left of the group.
@@ -188,7 +188,7 @@ export declare namespace Settings {
                 // text2: {...},
                 // ...
         }
-    
+
         type ListMultiCheck = ({
             multi?: false    // (optional) A boolean that, if true, allows selection of multiple list items.
             default?: string // (optional) A string containing the key of the list item that will be selected by default.
@@ -196,7 +196,7 @@ export declare namespace Settings {
             multi?: true
             default: { [key: string]: boolean } // (optional) A string array containing the keys of the list items that will be selected by default.
         })
-    
+
         export type List = {
             type: 'list'
             size?: number        // (optional) An integer size indicating the height of the list in lines (default = 4).
@@ -206,7 +206,7 @@ export declare namespace Settings {
                 // key2: 'Value 2',
                 // [...]
         } & ListMultiCheck & UserInput
-    
+
         export interface Dropdown extends UserInput {
             type: 'dropdown'
             default?: string // (optional) A string containing the key of the dropdown item that will be selected by default.
@@ -216,19 +216,19 @@ export declare namespace Settings {
                 // key2: 'Value 2',
                 // [...]
         }
-    
+
         export interface Checkbox extends UserInput {
             type: 'checkbox'
             default?: boolean    // (optional) A boolean indicating whether the box should be ticked by default.
         }
-    
+
         export interface Input extends UserInput {
             type: 'input'
             subtype?: string     // (optional) A string containing the HTML type to assign to the <input> tag.  The default is 'text'.
             placeholder?: string // (optional) A string that will appear as a placeholder when the input is empty, e.g. "Full Name".
             default?: string     // (optional) A string containing the default value to appear in the input.
         }
-        
+
         export interface NumberInput extends UserInput {
             type: 'number'
             placeholder?: string // (optional) A string that will appear as a placeholder when the field is empty, e.g. "Age".
@@ -236,25 +236,25 @@ export declare namespace Settings {
             min?: number         // (optional) The minimum value accepted in the input.  Adds automatic validation.
             max?: number         // (optional) The maximum value accepted in the input.  Adds automatic validation.
         }
-        
+
         export interface TextInput extends UserInput {
             type: 'text'
             placeholder?: string // (optional) A string that will appear as a placeholder when the field is empty, e.g. "Full Name".
             default?: string     // (optional) A string containing the default value to appear in the input.
             match?: RegExp       // (optional) A regex object for validating the text.  Adds automatic validation.
         }
-        
+
         export interface ColorSelector extends UserInput {
             type: 'color'
             default?: string     // (optional) A string containing the default color.
         }
-    
+
         export interface Button extends UserInput {
             type: 'button'
             text?: string        // (optional) A string label that appears inside the button.  The default is "Click".
             on_click: (name:string, config:Button, on_change: () => void) => void // A callback function that will be called when the button is clicked.
         }
-    
+
         export interface Html {
             type: 'html'
             label?: string     // (optional) A string label that appears to the left of (or above) the inline html.
@@ -262,7 +262,7 @@ export declare namespace Settings {
             hover_tip?: string // (optional) A string that will appear as a tool-tip when you hover over the button.
             wrapper?: 'row'|'left'|'right'
         }
-    
+
         export type Component =
         | Tabset
         | Page
@@ -279,27 +279,27 @@ export declare namespace Settings {
         | Button
         | Html
     }
-    
+
     export type Config = {
         script_id: string
         title: string
         autosave?: boolean
         background?: boolean
-    
+
         pre_open?: (dialog: JQuery) => void
         on_save?: (settings: SettingCollection) => void
         on_cancel?: (settings: SettingCollection) => void
         on_close?: (settings: SettingCollection) => void
         on_change?: UI.OnChange
         on_refresh?: (settings: SettingCollection) => void
-    
+
         content: UI.Collection
     }
-    
+
     export type Setting = any
-    
+
     export type SettingCollection = {[key: string]: Setting}
-    
+
     export interface Dialog {
         cfg: Config
         config_list: UI.Collection
@@ -310,7 +310,7 @@ export declare namespace Settings {
             open: () => void
             close: () => void
         }
-    
+
         open: () => void
         save: () => Promise<string>
         load: (defaults?: SettingCollection) => Promise<SettingCollection>
@@ -318,7 +318,7 @@ export declare namespace Settings {
         close: (keep_settings: boolean) => void
         cancel: () => void
     }
-    
+
     // workaround to get similar functionality as in the original JS implementation,
     // where ksof.Settings was set to a function with additional parameters
     export type Settings = {
@@ -330,7 +330,7 @@ export declare namespace Settings {
             close: () => void
         }
     }
-    
+
     export interface Module {
         Settings: Settings
         settings: { [key: string]: SettingCollection }

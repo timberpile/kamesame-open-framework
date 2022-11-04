@@ -39,7 +39,7 @@ declare global {
         window.dispatchEvent(new Event('locationchange'))
         return ret
     }
-    
+
     const oldReplaceState = history.replaceState
     history.replaceState = function replaceState() {
         //eslint-disable-next-line prefer-rest-params
@@ -59,7 +59,7 @@ declare global {
 
     const version = '0.1'
     const ignore_missing_indexeddb = false
- 
+
     //########################################################################
     //------------------------------
     // Supported Modules
@@ -67,10 +67,10 @@ declare global {
     const supported_modules: { [key:string]: {url: string}} = {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
-        Jquery:   { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410'},
-        Menu:     { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1111229'},
+        Jquery: { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410' },
+        Menu: { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1111229' },
         // Progress: { url: ''},
-        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409'},
+        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409' },
     }
 
     //########################################################################
@@ -125,16 +125,16 @@ declare global {
                 tag: Core.Page
                 matcher: RegExp
             }[] = [
-                {tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/},
-                {tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/},
-                {tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/},
-                {tag: 'lessonsSummary', matcher: /kamesame\.com\/app\/lessons\/summary/},
-                {tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/},
-                {tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/},
-                {tag: 'search', matcher: /kamesame\.com\/app\/search$/},
-                {tag: 'searchResult', matcher: /kamesame\.com\/app\/search\//},
-                {tag: 'account', matcher: /kamesame\.com\/app\/account/},
-                {tag: 'home', matcher: /kamesame\.com\/app$/},
+                { tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/ },
+                { tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/ },
+                { tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/ },
+                { tag: 'lessonsSummary', matcher: /kamesame\.com\/app\/lessons\/summary/ },
+                { tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/ },
+                { tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/ },
+                { tag: 'search', matcher: /kamesame\.com\/app\/search$/ },
+                { tag: 'searchResult', matcher: /kamesame\.com\/app\/search\// },
+                { tag: 'account', matcher: /kamesame\.com\/app\/account/ },
+                { tag: 'home', matcher: /kamesame\.com\/app$/ },
             ]
 
             for (const match of matches) {
@@ -233,13 +233,12 @@ declare global {
         }
 
         get characters() {
-
             if (ksof.pageInfo.on == 'review') {
                 const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
                 if (!outcome_text) {
                     return null
                 }
-    
+
                 const regexes = [
                     // characters with reading explanation
                     RegExp(`([${JAPANESE_CHARS}]+)\\(read as`),
@@ -251,7 +250,7 @@ declare global {
                     // characters without reading explanation, different answer expected
                     RegExp(`we were actually looking for ([${JAPANESE_CHARS}]+)[\\s⏯]*`),
                 ]
-                
+
                 // try out the different possible regexes until one hits
                 for (const regex of regexes) {
                     const match = regex.exec(outcome_text)
@@ -271,18 +270,17 @@ declare global {
         }
 
         get meanings() {
-
             if (ksof.pageInfo.on == 'review') {
                 const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
                 if (!outcome_text) {
                     return null
                 }
-    
+
                 const regexes = [
                     /does(?: not)? mean[\s\n]*((?:".*?"[, or]*)+)/g,
                     /We'd have accepted[\s\n]*((?:".*?"[, or]*)+)/g,
                 ]
-    
+
                 // try out all possible regexes
                 const meanings:string[] = []
                 for (const regex of regexes) {
@@ -291,7 +289,7 @@ declare global {
                         const match1 = match[1]
                         const match2 = match1.replaceAll(' or ', ',')
                         const match3 = match2.split(',')
-    
+
                         for (const item of match3) {
                             meanings.push(item.replaceAll('"', '').trim())
                         }
@@ -315,12 +313,12 @@ declare global {
                     return null
                 }
                 const readings:string[] = []
-                
+
                 const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`)
                 let match = rawReadingsRegex.exec(outcome_text)
                 if (match) {
                     const readings_raw = match[1]
-                    
+
                     const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g')
                     match = readingsRegex.exec(readings_raw)
                     while (match != null) {
@@ -328,7 +326,7 @@ declare global {
                         match = readingsRegex.exec(readings_raw)
                     }
                 }
-    
+
                 if (readings.length == 0) {
                     const characters = this.characters || ''
                     if (RegExp(`[${KANA_CHARS}]`).test(characters)) {
@@ -447,7 +445,7 @@ declare global {
                     // file not in cache
                 }
             }
-            
+
             // Retrieve file from server
             const request = new XMLHttpRequest()
             request.onreadystatechange = async (event) => {
@@ -514,14 +512,14 @@ declare global {
 
             // if no callback defined, set resolve as callback
             // if callback defined, set callback and resolve as callback
-            const promise_callback = callback ? ((new_value:Core.StateValue, prev_value:Core.StateValue) => {callback(new_value, prev_value); promise.resolve(new_value) }) : promise.resolve
+            const promise_callback = callback ? ((new_value:Core.StateValue, prev_value:Core.StateValue) => { callback(new_value, prev_value); promise.resolve(new_value) }) : promise.resolve
 
             if (this.state_listeners[state_var] === undefined) {
                 this.state_listeners[state_var] = []
             }
             const current_value = this.state_values[state_var]
             if (persistent || value !== current_value) {
-                this.state_listeners[state_var].push({callback:promise_callback, persistent, value})
+                this.state_listeners[state_var].push({ callback: promise_callback, persistent, value })
             }
 
             // If it's already at the desired state, call the callback immediately.
@@ -542,7 +540,7 @@ declare global {
             const listeners = this.event_listeners[event]
             if (listeners === undefined) return this
             const args:unknown[] = []
-            Array.prototype.push.apply(args,args_)
+            Array.prototype.push.apply(args, args_)
             args.shift()
             for (const idx in listeners) try {
                 listeners[idx].apply(null, args)
@@ -563,11 +561,11 @@ declare global {
         // Load and install a specific file type into the DOM.
         //------------------------------
         async #load_and_append(url:string, tag_name:string, location:string, use_cache?:boolean) {
-            url = url.replace(/"/g,'\'')
+            url = url.replace(/"/g, '\'')
             if (document.querySelector(`${tag_name}[uid="${url}"]`) !== null) {
                 return Promise.resolve(url)
             }
- 
+
             let content:string
             try {
                 content = await this.load_file(url, use_cache)
@@ -609,14 +607,14 @@ declare global {
             const module_names = split_list(module_list)
             const script_cnt = module_names.length
             if (script_cnt === 0) {
-                include_deferred.resolve({loaded:[], failed:[]})
+                include_deferred.resolve({ loaded: [], failed: [] })
                 return include_deferred.promise
             }
 
             const check_done = () => {
                 if (++done_cnt < script_cnt) return
-                if (failed.length === 0) include_deferred.resolve({loaded, failed})
-                else include_deferred.reject({error:'Failure loading module', loaded, failed})
+                if (failed.length === 0) include_deferred.resolve({ loaded, failed })
+                else include_deferred.reject({ error: 'Failure loading module', loaded, failed })
             }
 
             const push_loaded = (url:string) => {
@@ -625,7 +623,7 @@ declare global {
             }
 
             const push_failed = (url:string) => {
-                failed.push({url})
+                failed.push({ url })
                 check_done()
             }
 
@@ -637,7 +635,7 @@ declare global {
                 const module_name = module_names[idx]
                 const module = supported_modules[module_name]
                 if (!module) {
-                    failed.push({name:module_name})
+                    failed.push({ name: module_name })
                     check_done()
                     continue
                 }
@@ -658,13 +656,13 @@ declare global {
         //------------------------------
         ready(module_list:string): Promise<'ready' | 'ready'[]> {
             const module_names = split_list(module_list)
-            
+
             const ready_promises: Promise<'ready'>[] = []
             for (const idx in module_names) {
                 const module_name = module_names[idx]
                 ready_promises.push(this.wait_state(`ksof.${module_name}`, 'ready') as Promise<'ready'>)
             }
-            
+
             if (ready_promises.length === 0) {
                 return Promise.resolve('ready')
             } else if (ready_promises.length === 1) {
@@ -741,7 +739,8 @@ declare global {
         // Lists the content of the file_cache.
         //------------------------------
         ls() {
-            console.log(Object.keys(ksof.file_cache.dir).sort().join('\n'))
+            console.log(Object.keys(ksof.file_cache.dir).sort()
+                .join('\n'))
         }
 
         //------------------------------
@@ -807,7 +806,7 @@ declare global {
                         this.sync_timer = undefined
                         const transaction = db.transaction('files', 'readwrite')
                         const store = transaction.objectStore('files')
-                        store.put({name:'[dir]',content:JSON.stringify(ksof.file_cache.dir)})
+                        store.put({ name: '[dir]', content: JSON.stringify(ksof.file_cache.dir) })
                     })
             }, delay)
         }
@@ -827,7 +826,7 @@ declare global {
             if (!db) {
                 return Promise.reject()
             }
-             
+
             if (ksof.file_cache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
@@ -855,7 +854,6 @@ declare global {
             }
 
             return load_deferred.promise
-
         }
 
         //------------------------------
@@ -869,9 +867,9 @@ declare global {
             const save_deferred = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
-            store.put({name, content})
+            store.put({ name, content })
             const now = new Date().toISOString() as IsoDateString
-            ksof.file_cache.dir[name] = Object.assign({added:now, last_loaded:now}, extra_attribs)
+            ksof.file_cache.dir[name] = Object.assign({ added: now, last_loaded: now }, extra_attribs)
             ksof.file_cache.dir_save(true /* immediately */)
             transaction.oncomplete = save_deferred.resolve.bind(null, name)
             return save_deferred.promise
@@ -906,17 +904,23 @@ declare global {
 
     //########################################################################
 
-    // eslint-disable-next-line no-irregular-whitespace
-    const split_list = (str: string) => {return str.replace(/、/g,',').replace(/[\s　]+/g,' ').trim().replace(/ *, */g, ',').split(',').filter(function(name) {return (name.length > 0)})}
-    
+    const split_list = (str: string) => {
+        // eslint-disable-next-line no-irregular-whitespace
+        return str.replace(/、/g, ',').replace(/[\s　]+/g, ' ')
+            .trim()
+            .replace(/ *, */g, ',')
+            .split(',')
+            .filter(function(name) { return (name.length > 0) })
+    }
+
     class Deferred<T> {
         promise: Promise<T>
         resolve: (value: T | PromiseLike<T>) => void
         reject: (value?: any) => void
 
         constructor() {
-            this.resolve = () => {/*placeholder*/}
-            this.reject = () => {/*placeholder*/}
+            this.resolve = () => { /*placeholder*/ }
+            this.reject = () => { /*placeholder*/ }
             this.promise = new Promise<T>((resolve, reject)=> {
                 this.reject = reject
                 this.resolve = resolve
@@ -954,7 +958,7 @@ declare global {
             }
 
             const db = event.target.result
-            db.createObjectStore('files', {keyPath:'name'})
+            db.createObjectStore('files', { keyPath: 'name' })
         }
 
         const get_dir = (event:Event) => {
@@ -989,14 +993,13 @@ declare global {
         request.onsuccess = get_dir
         request.onerror = error
         return open_deferred.promise
-
     }
 
     //------------------------------
     // The current time, offset by the specified days
     //------------------------------
     const current_time_offset = (days_offset:number) => {
-        const offset = (24*60*60*1000) * days_offset
+        const offset = (24 * 60 * 60 * 1000) * days_offset
         const date = new Date()
         date.setTime(date.getTime() + offset)
         return date
@@ -1037,7 +1040,7 @@ declare global {
         const set_state_ready = () => { ksof.set_state('ksof.document', 'ready') }
 
         for (const query of page_queries) {
-            const observer = {name: `page.${query[0]}`, query: query[1]}
+            const observer = { name: `page.${query[0]}`, query: query[1] }
             ksof.add_dom_observer(observer)
             ksof.wait_state(ksof.dom_observer_state(observer.name), 'present', set_state_ready)
         }
@@ -1059,10 +1062,10 @@ declare global {
     const init_dom_observer = () => {
         const body_observer = new MutationObserver(on_body_mutated)
 
-        body_observer.observe(document.body, {childList: true, subtree: true})
+        body_observer.observe(document.body, { childList: true, subtree: true })
 
         // Add default Observers
-        ksof.add_dom_observer({name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item'})
+        ksof.add_dom_observer({ name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item' })
 
         // TODO
         // HACK THAT SHOULD BE REMOVED ONCE ISSUE FIXED:

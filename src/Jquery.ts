@@ -10,7 +10,6 @@
 import { Core, JQuery } from './ksof';
 
 (async (global) => {
-
     const ksof = global.ksof as Core.Module & JQuery.Module
 
     await ksof.ready('document')
@@ -26,5 +25,4 @@ import { Core, JQuery } from './ksof';
     // Notify listeners that we are ready.
     // Delay guarantees include() callbacks are called before ready() callbacks.
     setTimeout(() => { ksof.set_state('ksof.Jquery', 'ready') }, 0)
-
 })(window)

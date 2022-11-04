@@ -10,7 +10,6 @@
 import { Core, Settings } from './ksof'
 
 ((async function(global: Window) {
-
     const ksof = global.ksof as Core.Module & Settings.Module
 
     const background_funcs = () => { return {
@@ -31,7 +30,7 @@ import { Core, Settings } from './ksof'
             if (refcnt <= 0) return
             bkgd.attr('refcnt', refcnt - 1)
         }
-    }}
+    } }
 
     //########################################################################
     //------------------------------
@@ -102,7 +101,8 @@ import { Core, Settings } from './ksof'
             const script_id = this.cfg.script_id
             const settings = ksof.settings[script_id]
             if (settings) {
-                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray().map((tab) => {return `#${tab.attributes.getNamedItem('id')?.value || ''}`})
+                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray()
+                    .map((tab) => { return `#${tab.attributes.getNamedItem('id')?.value || ''}` })
                 if (active_tabs.length > 0) settings.ksofs_active_tabs = active_tabs
             }
             if (this.cfg.autosave === undefined || this.cfg.autosave === true) {
@@ -161,8 +161,8 @@ import { Core, Settings } from './ksof'
             this.#open_dialog.dialog({
                 title: this.cfg.title,
                 buttons: [
-                    {text:'Save',click:this.save_btn.bind(this)},
-                    {text:'Cancel',click:this.cancel.bind(this)}
+                    { text: 'Save', click: this.save_btn.bind(this) },
+                    { text: 'Cancel', click: this.cancel.bind(this) }
                 ],
                 width,
                 maxHeight: document.body.clientHeight,
@@ -172,16 +172,16 @@ import { Core, Settings } from './ksof'
                 resize: resize.bind(this),
                 close: () => { this.close(false) }
             })
-            $(this.#open_dialog.dialog('widget')).css('position','fixed')
+            $(this.#open_dialog.dialog('widget')).css('position', 'fixed')
             this.#open_dialog.parent().addClass('ksof_settings_dialog')
 
-            $('.ksof_stabs').tabs({activate:tab_activated.bind(null)})
+            $('.ksof_stabs').tabs({ activate: tab_activated.bind(null) })
             const settings = ksof.settings[this.cfg.script_id]
             if (settings && settings.ksofs_active_tabs instanceof Array) {
                 const active_tabs = settings.ksofs_active_tabs
                 for (let tab_idx = 0; tab_idx < active_tabs.length; tab_idx++) {
                     const tab = $(active_tabs[tab_idx])
-                    tab.closest('.ui-tabs').tabs({active:tab.index()})
+                    tab.closest('.ui-tabs').tabs({ active: tab.index() })
                 }
             }
 
@@ -193,7 +193,7 @@ import { Core, Settings } from './ksof'
                 setTimeout(function() {
                     e.currentTarget.scrollTop = scroll
                     multi.focus() // TODO what should this do? it's deprecated
-                },0)
+                }, 0)
                 return this.#setting_changed(e)
             }
 
@@ -209,7 +209,7 @@ import { Core, Settings } from './ksof'
             this.#open_dialog.dialog('open')
             this.#open_dialog.find('.setting[multiple]').on('mousedown', toggle_multi.bind(this))
             this.#open_dialog.find('.setting').on('change', this.#setting_changed.bind(this))
-            this.#open_dialog.find('form').on('submit', function() {return false})
+            this.#open_dialog.find('form').on('submit', function() { return false })
             this.#open_dialog.find('button.setting').on('click', setting_button_clicked.bind(this))
 
             if (typeof this.cfg.pre_open === 'function') this.cfg.pre_open(this.#open_dialog)
@@ -237,7 +237,7 @@ import { Core, Settings } from './ksof'
 
                 if (item.multi === true) {
                     value = {}
-                    elem.find('option').each(function(i,e) {
+                    elem.find('option').each(function(i, e) {
                         const opt_name = e.getAttribute('name') || `#${e.index}`
                         value[opt_name] = e.selected
                     })
@@ -248,7 +248,7 @@ import { Core, Settings } from './ksof'
             else if (_item.type == 'input') {
                 const item = _item as Settings.UI.Input
 
-                if (item.subtype==='number') {
+                if (item.subtype === 'number') {
                     value = Number(elem.val())
                 }
             }
@@ -263,15 +263,15 @@ import { Core, Settings } from './ksof'
             }
 
             // Validation
-            let valid = {valid:true, msg:''}
+            let valid = { valid: true, msg: '' }
             {
                 const item = _item as Settings.UI.UserInput
                 if (item.validate) {
                     const _valid = item.validate.call(event.target, value, item)
                     if (typeof _valid === 'boolean')
-                        valid = {valid:_valid, msg:''}
+                        valid = { valid: _valid, msg: '' }
                     else if (typeof _valid === 'string')
-                        valid = {valid:false, msg:_valid}
+                        valid = { valid: false, msg: _valid }
                 }
             }
 
@@ -312,7 +312,7 @@ import { Core, Settings } from './ksof'
             const parent = elem.closest('.right')
             parent.find('.note').remove()
             if (typeof valid.msg === 'string' && valid.msg.length > 0)
-                parent.append(`<div class="note${valid.valid?'':' error'}">${valid.msg}</div>`)
+                parent.append(`<div class="note${valid.valid ? '' : ' error'}">${valid.msg}</div>`)
             if (!valid.valid) {
                 elem.addClass('invalid')
             } else {
@@ -368,7 +368,7 @@ import { Core, Settings } from './ksof'
                 else if (_config.type == 'list') {
                     const config = _config as Settings.UI.List
                     if (config.multi === true) {
-                        elem.find('option').each(function(i,e) {
+                        elem.find('option').each(function(i, e) {
                             const opt_name = e.getAttribute('name') || `#${e.index}`
                             e.selected = value[opt_name]
                         })
@@ -391,8 +391,8 @@ import { Core, Settings } from './ksof'
         const settings_obj = (config: Settings.Config) => {
             return new KSOFSettings(config)
         }
-        settings_obj.save = (context: Settings.Dialog | string) => { return KSOFSettings.save(context)}
-        settings_obj.load = (context: Settings.Dialog | string, defaults?:Settings.UI.Collection) => { return KSOFSettings.load(context, defaults)}
+        settings_obj.save = (context: Settings.Dialog | string) => { return KSOFSettings.save(context) }
+        settings_obj.load = (context: Settings.Dialog | string, defaults?:Settings.UI.Collection) => { return KSOFSettings.load(context, defaults) }
         settings_obj.background = background_funcs()
         return settings_obj
     }
@@ -410,7 +410,7 @@ import { Core, Settings } from './ksof'
         const merged = {}
         const recursive_merge = (dest: {[key:string]: any}, src: {[key:string]: any}) => {
             for (const prop in src) {
-                if (typeof src[prop] === 'object' && src[prop] !== null ) {
+                if (typeof src[prop] === 'object' && src[prop] !== null) {
                     const srcProp = src[prop]
                     if (Array.isArray(srcProp)) {
                         dest[prop] = srcProp.slice()
@@ -442,10 +442,10 @@ import { Core, Settings } from './ksof'
             return ''
         }
 
-        const assemble_pages = (id:string, tabs:string[], pages:string[]) => {return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>`}
-        const wrap_row = (html:string,full?:boolean,hover_tip?:string) => {return `<div class="row${full?' full':''}"${to_title(hover_tip)}>${html}</div>`}
-        const wrap_left = (html:string) => {return `<div class="left">${html}</div>`}
-        const wrap_right = (html:string) => {return `<div class="right">${html}</div>`}
+        const assemble_pages = (id:string, tabs:string[], pages:string[]) => { return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>` }
+        const wrap_row = (html:string, full?:boolean, hover_tip?:string) => { return `<div class="row${full ? ' full' : ''}"${to_title(hover_tip)}>${html}</div>` }
+        const wrap_left = (html:string) => { return `<div class="left">${html}</div>` }
+        const wrap_right = (html:string) => { return `<div class="right">${html}</div>` }
         const escape_text = (text:string) => {
             return text.replace(/[<>]/g, (ch) => {
                 if (ch == '<') return '&lt'
@@ -453,8 +453,8 @@ import { Core, Settings } from './ksof'
                 return ''
             })
         }
-        const escape_attr = (text:string) => {return text.replace(/"/g, '&quot')}
-        const to_title = (tip?:string) => {if (!tip) return ''; return ` title="${tip.replace(/"/g,'&quot')}"`}
+        const escape_attr = (text:string) => { return text.replace(/"/g, '&quot') }
+        const to_title = (tip?:string) => { if (!tip) return ''; return ` title="${tip.replace(/"/g, '&quot')}"` }
 
         const parse_item = (name:string, _item: Settings.UI.Component, passback:ChildPassback) => {
             if (typeof _item.type !== 'string') return ''
@@ -489,7 +489,7 @@ import { Core, Settings } from './ksof'
                 }
                 passback.tabs.push(`<li id="${id}_tab"${to_title(item.hover_tip)}><a href="#${id}">${item.label}</a></li>`)
                 child_passback = {}
-                for (cname in item.content) 
+                for (cname in item.content)
                     non_page += parse_item(cname, item.content[cname], child_passback)
                 if (child_passback.tabs && child_passback.pages)
                     html = assemble_pages(id, child_passback.tabs, child_passback.pages)
@@ -501,7 +501,7 @@ import { Core, Settings } from './ksof'
                 const item = _item as Settings.UI.Group
                 if (typeof item.content !== 'object') item.content = {}
                 child_passback = {}
-                for (cname in item.content) 
+                for (cname in item.content)
                     non_page += parse_item(cname, item.content[cname], child_passback)
                 if (child_passback.tabs && child_passback.pages)
                     html = assemble_pages(id, child_passback.tabs, child_passback.pages)
@@ -577,11 +577,11 @@ import { Core, Settings } from './ksof'
                 html += make_label(item)
                 let value = get_value(context, base, name)
                 if (value === undefined) {
-                    const is_number = (item.subtype==='number')
+                    const is_number = (item.subtype === 'number')
                     value = (item.default || (is_number ? 0 : ''))
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escape_attr(item.placeholder)}"` : '')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'number') {
@@ -591,11 +591,11 @@ import { Core, Settings } from './ksof'
                 html += make_label(item)
                 let value = get_value(context, base, name)
                 if (value === undefined) {
-                    const is_number = (item.type==='number')
+                    const is_number = (item.type === 'number')
                     value = (item.default || (is_number ? 0 : ''))
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escape_attr(item.placeholder)}"` : '')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'text') {
@@ -608,7 +608,7 @@ import { Core, Settings } from './ksof'
                     value = (item.default || '')
                     set_value(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?` placeholder="${escape_attr(item.placeholder)}"`:'')}>`)
+                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escape_attr(item.placeholder)}"` : '')}>`)
                 html = wrap_row(html, item.full_width, item.hover_tip)
             }
             else if (_type == 'color') {
@@ -672,8 +672,8 @@ import { Core, Settings } from './ksof'
         const path = (item.path || name)
         try {
             if (!evaluate) return base[path]
-            return eval(path.replace(/@/g,'base.'))
-        } catch (e) {return}
+            return eval(path.replace(/@/g, 'base.'))
+        } catch (e) { return }
     }
 
     const set_value = (context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) => {
@@ -682,8 +682,8 @@ import { Core, Settings } from './ksof'
         const path = (item.path || name)
         try {
             if (!evaluate) return base[path] = value
-            let depth=0
-            let new_path=''
+            let depth = 0
+            let new_path = ''
             let param = ''
             let c:string
             for (let idx = 0; idx < path.length; idx++) {
@@ -710,7 +710,7 @@ import { Core, Settings } from './ksof'
                 }
             }
             eval(`${new_path}=value`)
-        } catch (e) {return}
+        } catch (e) { return }
     }
 
     const install_anchor = () => {
@@ -750,6 +750,5 @@ import { Core, Settings } from './ksof'
 
     // Notify listeners that we are ready.
     // Delay guarantees include() callbacks are called before ready() callbacks.
-    setTimeout(function() {ksof.set_state('ksof.Settings', 'ready')},0)
-
+    setTimeout(function() { ksof.set_state('ksof.Settings', 'ready') }, 0)
 })(window))

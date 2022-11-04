@@ -10,7 +10,6 @@
 import { Core, Menu } from './ksof'
 
 (async (global: Window) => {
-
     const ksof = global.ksof as Core.Module & Menu.Module
 
     await ksof.ready('document')
@@ -32,7 +31,7 @@ import { Core, Menu } from './ksof'
                     this.style.remove()
                 }
                 this.style = this.#install_style()
-    
+
                 if (this.menu) {
                     this.menu.remove()
                 }
@@ -43,7 +42,7 @@ import { Core, Menu } from './ksof'
                 }
             }
 
-            ksof.add_dom_observer({name: 'menu', query: '#scripts-menu'})
+            ksof.add_dom_observer({ name: 'menu', query: '#scripts-menu' })
             ksof.wait_state(ksof.dom_observer_state('menu'), 'absent', () => {
                 reinstall_menu()
                 const old_configs = this.configs
@@ -116,16 +115,16 @@ import { Core, Menu } from './ksof'
             }
 
             const page = ksof.pageInfo.on
-            
+
             // Abort if on unsupported page
             // if (!page) throw new Error('Unsupported page')
-            
-            
+
+
             // Install html.
             if (page == 'review') {
                 const exit_button = document.querySelector('.header a.exit')
                 if (!exit_button) throw new Error('Exit button not found')
-                
+
                 exit_button.insertAdjacentHTML('afterend', `
                 <div id="scripts-menu" class="scripts-menu-icon">
                     <a class="scripts-icon state" href="#"><i title="Script Menu">⚙️</i></a>
@@ -253,18 +252,18 @@ import { Core, Menu } from './ksof'
             return submenu
         }
     }
-    
+
     ksof.Menu = {
         insert_script_link,
         ui: new MenuUi()
     }
-    
+
     const ui = ksof.Menu.ui as MenuUi
-    
+
     ui.menu.setAttribute('display', 'none')
 
-    const escape_attr = (attr: string) => {return attr.replace(/"/g,'\'')}
-    const escape_text = (text: string) => {return text.replace(/[<&>]/g, (ch) => {
+    const escape_attr = (attr: string) => { return attr.replace(/"/g, '\'') }
+    const escape_text = (text: string) => { return text.replace(/[<&>]/g, (ch) => {
         switch (ch) {
         case '<':
             return '&lt'
@@ -275,7 +274,7 @@ import { Core, Menu } from './ksof'
         default:
             return ch
         }
-    })}
+    }) }
 
     const find_search_icon = () => {
         const text_div = Array.from(document.querySelectorAll('#nav_container .real ul li a div.icon div'))
@@ -300,7 +299,7 @@ import { Core, Menu } from './ksof'
     //------------------------------
     // Sort menu items
     //------------------------------
-    const sort_name = (a:Element,b:Element) => {
+    const sort_name = (a:Element, b:Element) => {
         const a1 = a.querySelector('a')
         if (!a1) return -1
         const b1 = b.querySelector('a')
@@ -389,5 +388,4 @@ import { Core, Menu } from './ksof'
 
     // Delay guarantees include() callbacks are called before ready() callbacks.
     setTimeout(() => { ksof.set_state('ksof.Menu', 'ready') }, 0)
-
 })(window)

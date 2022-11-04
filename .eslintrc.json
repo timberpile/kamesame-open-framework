@@ -23,10 +23,6 @@
     ],
     "rules": {
         "no-unexpected-multiline": "error",
-        "indent": [
-            "error",
-            4
-        ],
         "quotes": [
             "error",
             "single"
@@ -34,11 +30,6 @@
         "semi": [
             "error",
             "never"
-        ],
-        "lines-between-class-members": [
-            "error",
-            "always",
-            { "exceptAfterSingleLine": true }
         ],
         "no-new-object": "error",
         "object-shorthand": "error",
@@ -52,7 +43,34 @@
         "wrap-iife": "error",
         "func-style": "error",
         "no-loop-func": "error",
+        
+        // whitespace related rules
+        "indent": [
+            "error",
+            4
+        ],
+        "lines-between-class-members": [
+            "error",
+            "always",
+            { "exceptAfterSingleLine": true }
+        ],
         "space-before-blocks": "error",
-        "keyword-spacing": "error"
+        "keyword-spacing": "error",
+        "space-infix-ops": "error",
+        "eol-last": "error",
+        "newline-per-chained-call": "error",
+        "no-whitespace-before-property": "error",
+        "padded-blocks": ["error", "never"],
+        "no-multiple-empty-lines": "error",
+        "space-in-parens": "error",
+        "array-bracket-spacing": "error",
+        "object-curly-spacing": ["error", "always"],
+        "block-spacing": "error",
+        "computed-property-spacing": "error",
+        "func-call-spacing": "error",
+        "key-spacing": "error",
+        "no-trailing-spaces": "error",
+
+        "comma-style": "error"
     }
 }
