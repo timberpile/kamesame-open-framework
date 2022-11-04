@@ -17,7 +17,7 @@ import { Core, JQuery } from './ksof';
 
     try {
         $.fn.jquery
-    } catch(e) {
+    } catch (e) {
         await ksof.load_script(ksof.support_files['jquery.js'], true /* cache */)
     }
 

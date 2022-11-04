@@ -52,6 +52,7 @@
         "wrap-iife": "error",
         "func-style": "error",
         "no-loop-func": "error",
-        "space-before-blocks": "error"
+        "space-before-blocks": "error",
+        "keyword-spacing": "error"
     }
 }

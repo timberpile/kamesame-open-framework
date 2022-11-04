@@ -122,7 +122,7 @@ import { Core, Menu } from './ksof'
             
             
             // Install html.
-            if(page == 'review') {
+            if (page == 'review') {
                 const exit_button = document.querySelector('.header a.exit')
                 if (!exit_button) throw new Error('Exit button not found')
                 
@@ -322,7 +322,7 @@ import { Core, Menu } from './ksof'
         if (ui.configs.indexOf(config) >= 0) return
         ui.configs.push(config)
 
-        if(ui.menu.hasAttribute('display')) {
+        if (ui.menu.hasAttribute('display')) {
             ui.menu.removeAttribute('display')
         }
 

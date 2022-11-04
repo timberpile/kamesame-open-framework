@@ -673,7 +673,7 @@ import { Core, Settings } from './ksof'
         try {
             if (!evaluate) return base[path]
             return eval(path.replace(/@/g,'base.'))
-        } catch(e) {return}
+        } catch (e) {return}
     }
 
     const set_value = (context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) => {
@@ -710,7 +710,7 @@ import { Core, Settings } from './ksof'
                 }
             }
             eval(`${new_path}=value`)
-        } catch(e) {return}
+        } catch (e) {return}
     }
 
     const install_anchor = () => {
@@ -744,7 +744,7 @@ import { Core, Settings } from './ksof'
     try {
         const temp = $.fn as unknown as {autocomplete:unknown}
         delete temp.autocomplete
-    } catch(e) {
+    } catch (e) {
         // do nothing
     }
 

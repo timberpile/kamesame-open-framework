@@ -354,7 +354,7 @@ declare global {
 
                 if (key == 'Tags') {
                     const tags: string[] = []
-                    for(const tag of fact.querySelectorAll('.value .item-tag')) {
+                    for (const tag of fact.querySelectorAll('.value .item-tag')) {
                         if (tag.textContent) {
                             tags.push(tag.textContent)
                         }
@@ -375,10 +375,10 @@ declare global {
                 //
             }
             else if (ksof.pageInfo.on == 'itemPage') {
-                if(document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
+                if (document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
                     return 'vocabulary'
                 }
-                else if(document.querySelector('#item h2')?.textContent == 'Kanji summary') {
+                else if (document.querySelector('#item h2')?.textContent == 'Kanji summary') {
                     return 'kanji'
                 }
             }
@@ -443,7 +443,7 @@ declare global {
             if (use_cache === true) {
                 try {
                     return await this.file_cache.load(url)
-                } catch(error) {
+                } catch (error) {
                     // file not in cache
                 }
             }
@@ -801,7 +801,7 @@ declare global {
             this.sync_timer = setTimeout(() => {
                 file_cache_open()
                     .then((db) => {
-                        if(!db) {
+                        if (!db) {
                             return
                         }
                         this.sync_timer = undefined
@@ -839,7 +839,7 @@ declare global {
             this.dir_save()
 
             request.onsuccess = (event: Event) => {
-                if(!(event.target instanceof IDBRequest)) {
+                if (!(event.target instanceof IDBRequest)) {
                     return
                 }
 
@@ -949,7 +949,7 @@ declare global {
         }
 
         const upgrade_db = (event:IDBVersionChangeEvent) => {
-            if(!(event.target instanceof IDBOpenDBRequest)) {
+            if (!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
 
@@ -958,7 +958,7 @@ declare global {
         }
 
         const get_dir = (event:Event) => {
-            if(!(event.target instanceof IDBOpenDBRequest)) {
+            if (!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
             const db = event.target.result
@@ -971,7 +971,7 @@ declare global {
         }
 
         const process_dir = (event: Event) => {
-            if(!(event.target instanceof IDBRequest)) {
+            if (!(event.target instanceof IDBRequest)) {
                 return
             }
             const result = event.target.result
@@ -1049,7 +1049,7 @@ declare global {
     //------------------------------
 
     const on_body_mutated = () => {
-        for(const observer of ksof.dom_observers) {
+        for (const observer of ksof.dom_observers) {
             ksof.check_dom_observer(observer)
         }
     }
