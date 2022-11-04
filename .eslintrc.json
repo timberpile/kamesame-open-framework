@@ -48,6 +48,7 @@
         ],
         "no-prototype-builtins": "error",
         "prefer-template": "error",
-        "template-curly-spacing": "error"
+        "template-curly-spacing": "error",
+        "wrap-iife": "error"
     }
 }

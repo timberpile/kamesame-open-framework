@@ -54,7 +54,7 @@ declare global {
     })
 })();
 
-(function(global: Window) {
+((function(global: Window) {
     'use strict'
 
     const version = '0.1'
@@ -1112,4 +1112,4 @@ declare global {
     global.ksof = ksof
 
     startup()
-})(window)
+})(window))

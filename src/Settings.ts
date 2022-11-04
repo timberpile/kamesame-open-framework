@@ -9,7 +9,7 @@
 
 import { Core, Settings } from './ksof'
 
-(async function(global: Window) {
+((async function(global: Window) {
 
     const ksof = global.ksof as Core.Module & Settings.Module
 
@@ -754,4 +754,4 @@ import { Core, Settings } from './ksof'
     // Delay guarantees include() callbacks are called before ready() callbacks.
     setTimeout(function(){ksof.set_state('ksof.Settings', 'ready')},0)
 
-})(window)
+})(window))
