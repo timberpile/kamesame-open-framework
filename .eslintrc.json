@@ -6,26 +6,64 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [
+        {
+            "files": ["*.ts"]
+        }
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": "latest"
+        "ecmaVersion": 2021
     },
     "plugins": [
         "@typescript-eslint"
     ],
     "rules": {
-        "no-unexpected-multiline": 2,
-        "indent": [
+        "no-unexpected-multiline": "error",
+        "quotes": ["error", "single"],
+        "semi": ["error", "never"],
+        "no-new-object": "error",
+        "object-shorthand": "error",
+        "quote-props": ["error", "as-needed"],
+        "no-prototype-builtins": "error",
+        "prefer-template": "error",
+        "template-curly-spacing": "error",
+        "wrap-iife": "error",
+        "func-style": "error",
+        "no-loop-func": "error",
+        
+        // whitespace related rules
+        "indent": ["error", 4],
+        "lines-between-class-members": [
             "error",
-            4
+            "always",
+            { "exceptAfterSingleLine": true }
         ],
-        "quotes": [
-            "error",
-            "single"
-        ]
+        "space-before-blocks": "error",
+        "keyword-spacing": "error",
+        "space-infix-ops": "error",
+        "eol-last": "error",
+        "newline-per-chained-call": "error",
+        "no-whitespace-before-property": "error",
+        "padded-blocks": ["error", "never"],
+        "no-multiple-empty-lines": "error",
+        "space-in-parens": "error",
+        "array-bracket-spacing": "error",
+        "object-curly-spacing": ["error", "always"],
+        "block-spacing": "error",
+        "computed-property-spacing": "error",
+        "func-call-spacing": "error",
+        "key-spacing": "error",
+        "no-trailing-spaces": "error",
+
+        "comma-style": "error",
+        "comma-dangle": ["error", "always-multiline"],
+        "radix": "error",
+        "no-new-wrappers": "error",
+        "new-cap": "error",
+        "camelcase": "error"
     }
 }

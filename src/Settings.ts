@@ -2,36 +2,35 @@
 // @name        KameSame Open Framework - Settings module
 // @namespace   timberpile
 // @description Settings module for KameSame Open Framework
-// @version     0.2
+// @version     0.3
 // @copyright   2022+, Robin Findley, Timberpile
-// @license     MIT; http://opensource.org/licenses/MIT
+// @license     MIT http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-import { Core, Settings } from './ksof';
+import { Core, Settings } from './ksof'
 
-(async function(global: Window) {
-
+((async (global: Window) => {
     const ksof = global.ksof as Core.Module & Settings.Module
 
-    const background_funcs = () => { return {
+    const backgroundFuncs = () => { return {
         open: () => {
-            const anchor = install_anchor();
-            let bkgd = anchor.find('> #ksofs_bkgd');
+            const anchor = installAnchor()
+            let bkgd = anchor.find('> #ksofs_bkgd')
             if (bkgd.length === 0) {
-                bkgd = $('<div id="ksofs_bkgd" refcnt="0"></div>');
-                anchor.prepend(bkgd);
+                bkgd = $('<div id="ksofs_bkgd" refcnt="0"></div>')
+                anchor.prepend(bkgd)
             }
-            const refcnt = Number(bkgd.attr('refcnt'));
-            bkgd.attr('refcnt', refcnt + 1);
+            const refcnt = Number(bkgd.attr('refcnt'))
+            bkgd.attr('refcnt', refcnt + 1)
         },
         close: () => {
-            const bkgd = $('#ksof_ds > #ksofs_bkgd');
-            if (bkgd.length === 0) return;
-            const refcnt = Number(bkgd.attr('refcnt'));
-            if (refcnt <= 0) return;
-            bkgd.attr('refcnt', refcnt - 1);
-        }
-    }}
+            const bkgd = $('#ksof_ds > #ksofs_bkgd')
+            if (bkgd.length === 0) return
+            const refcnt = Number(bkgd.attr('refcnt'))
+            if (refcnt <= 0) return
+            bkgd.attr('refcnt', refcnt - 1)
+        },
+    } }
 
     //########################################################################
     //------------------------------
@@ -39,10 +38,10 @@ import { Core, Settings } from './ksof';
     //------------------------------
     class KSOFSettings implements Settings.Dialog {
         cfg: Settings.Config
-        config_list: Settings.UI.Collection
-        keep_settings?: boolean
+        configList: Settings.UI.Collection
+        keepSettings?: boolean
         reversions?: Settings.UI.Collection
-        #open_dialog: JQuery<HTMLDivElement>
+        #openDialog: JQuery<HTMLDivElement>
         background: {
             open: () => void
             close: () => void
@@ -50,19 +49,19 @@ import { Core, Settings } from './ksof';
 
         constructor(config: Settings.Config) {
             this.cfg = config
-            this.config_list = {}
-            this.#open_dialog = $()
-            this.background = background_funcs()
+            this.configList = {}
+            this.#openDialog = $()
+            this.background = backgroundFuncs()
         }
 
         //------------------------------
         // Open the settings dialog.
         //------------------------------
         static save(context: Settings.Dialog | string) {
-            const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
-            const settings = ksof.settings[script_id];
-            if (!settings) return Promise.resolve('');
-            return ksof.file_cache.save('ksof.settings.'+script_id, settings);
+            const scriptId = ((typeof context === 'string') ? context : context.cfg.scriptId)
+            const settings = ksof.settings[scriptId]
+            if (!settings) return Promise.resolve('')
+            return ksof.fileCache.save(`ksof.settings.${scriptId}`, settings)
         }
 
         save(): Promise<string> {
@@ -73,21 +72,21 @@ import { Core, Settings } from './ksof';
         // Open the settings dialog.
         //------------------------------
         static async load(context: Settings.Dialog | string, defaults?:Settings.SettingCollection) {
-            const script_id = ((typeof context === 'string') ? context : context.cfg.script_id)
+            const scriptId = ((typeof context === 'string') ? context : context.cfg.scriptId)
 
-            try {
-                const settings = await ksof.file_cache.load('ksof.settings.'+script_id) as Settings.SettingCollection
-                return finish(settings);
-            } catch (error) {
-                return finish.call(null, {})
+            const finish = (settings:Settings.SettingCollection) => {
+                if (defaults)
+                    ksof.settings[scriptId] = deepMerge(defaults, settings)
+                else
+                    ksof.settings[scriptId] = settings
+                return ksof.settings[scriptId]
             }
 
-            function finish(settings:Settings.SettingCollection) {
-                if (defaults)
-                    ksof.settings[script_id] = deep_merge(defaults, settings);
-                else
-                    ksof.settings[script_id] = settings;
-                return ksof.settings[script_id];
+            try {
+                const settings = await ksof.fileCache.load(`ksof.settings.${scriptId}`) as Settings.SettingCollection
+                return finish(settings)
+            } catch (error) {
+                return finish.call(null, {})
             }
         }
 
@@ -98,157 +97,166 @@ import { Core, Settings } from './ksof';
         //------------------------------
         // Save button handler.
         //------------------------------
-        save_btn() {
-            const script_id = this.cfg.script_id;
-            const settings = ksof.settings[script_id];
+        saveBtn() {
+            const scriptId = this.cfg.scriptId
+            const settings = ksof.settings[scriptId]
             if (settings) {
-                const active_tabs = this.#open_dialog.find('.ui-tabs-active').toArray().map(function(tab){return '#'+tab.attributes.getNamedItem('id')?.value || ''});
-                if (active_tabs.length > 0) settings.ksofs_active_tabs = active_tabs;
+                const activeTabs = this.#openDialog.find('.ui-tabs-active').toArray()
+                    .map((tab) => { return `#${tab.attributes.getNamedItem('id')?.value || ''}` })
+                if (activeTabs.length > 0) settings.ksofActiveTabs = activeTabs
             }
             if (this.cfg.autosave === undefined || this.cfg.autosave === true) {
-                this.save();
+                this.save()
             }
-            if (this.cfg.on_save) {
-                this.cfg.on_save(ksof.settings[this.cfg.script_id]);
+            if (this.cfg.onSave) {
+                this.cfg.onSave(ksof.settings[this.cfg.scriptId])
             }
             ksof.trigger('ksof.settings.save')
-            this.keep_settings = true;
-            this.#open_dialog.dialog('close');
+            this.keepSettings = true
+            this.#openDialog.dialog('close')
         }
 
         //------------------------------
         // Cancel button handler.
         //------------------------------
         cancel() {
-            this.#open_dialog.dialog('close');
-            if (typeof this.cfg.on_cancel === 'function') this.cfg.on_cancel(ksof.settings[this.cfg.script_id]);
+            this.#openDialog.dialog('close')
+            if (typeof this.cfg.onCancel === 'function') this.cfg.onCancel(ksof.settings[this.cfg.scriptId])
         }
 
         //------------------------------
         // Open the settings dialog.
         //------------------------------
         open() {
-            if (!ready) return;
-            if (this.#open_dialog.length > 0) return;
-            install_anchor();
-            if (this.cfg.background !== false) this.background.open();
-            this.#open_dialog = $('<div id="ksofs_'+this.cfg.script_id+'" class="ksof_settings" style="display:none;"></div>')
-            this.#open_dialog.html(config_to_html(this));
+            if (!ready) return
+            if (this.#openDialog.length > 0) return
+            installAnchor()
+            if (this.cfg.background !== false) this.background.open()
+            this.#openDialog = $(`<div id="ksofs_${this.cfg.scriptId}" class="ksof_settings" style="display:none"></div>`)
+            this.#openDialog.html(configToHTML(this))
 
             const resize = (event:unknown, ui:any) => {
-                const is_narrow = this.#open_dialog.hasClass('narrow');
+                const isNarrow = this.#openDialog.hasClass('narrow')
                 ui
-                if (is_narrow && ui.size.width >= 510) {
-                    this.#open_dialog.removeClass('narrow');
+                if (isNarrow && ui.size.width >= 510) {
+                    this.#openDialog.removeClass('narrow')
                 }
-                else if (!is_narrow && ui.size.width < 490) {
-                    this.#open_dialog.addClass('narrow');
+                else if (!isNarrow && ui.size.width < 490) {
+                    this.#openDialog.addClass('narrow')
                 }
             }
 
-            const tab_activated = () => {
-                const wrapper = $(this.#open_dialog.dialog('widget'));
+            const tabActivated = () => {
+                const wrapper = $(this.#openDialog.dialog('widget'))
                 if ((wrapper.outerHeight() || 0) + wrapper.position().top > document.body.clientHeight) {
-                    this.#open_dialog.dialog('option', 'maxHeight', document.body.clientHeight);
+                    this.#openDialog.dialog('option', 'maxHeight', document.body.clientHeight)
                 }
             }
 
-            let width = 500;
+            let width = 500
             if (window.innerWidth < 510) {
-                width = 280;
-                this.#open_dialog.addClass('narrow');
+                width = 280
+                this.#openDialog.addClass('narrow')
             }
-            this.#open_dialog.dialog({
+            this.#openDialog.dialog({
                 title: this.cfg.title,
                 buttons: [
-                    {text:'Save',click:this.save_btn.bind(this)},
-                    {text:'Cancel',click:this.cancel.bind(this)}
+                    {
+                        text: 'Save',
+                        click: this.saveBtn.bind(this),
+                    },
+                    {
+                        text: 'Cancel',
+                        click: this.cancel.bind(this),
+                    },
                 ],
-                width: width,
+                width,
                 maxHeight: document.body.clientHeight,
                 modal: false,
                 autoOpen: false,
                 appendTo: '#ksof_ds',
                 resize: resize.bind(this),
-                close: () => { this.close(false) }
-            });
-            $(this.#open_dialog.dialog('widget')).css('position','fixed');
-            this.#open_dialog.parent().addClass('ksof_settings_dialog');
+                close: () => {
+                    this.close(false)
+                },
+            })
+            $(this.#openDialog.dialog('widget')).css('position', 'fixed')
+            this.#openDialog.parent().addClass('ksof_settings_dialog')
 
-            $('.ksof_stabs').tabs({activate:tab_activated.bind(null)});
-            const settings = ksof.settings[this.cfg.script_id];
-            if (settings && settings.ksofs_active_tabs instanceof Array) {
-                const active_tabs = settings.ksofs_active_tabs;
-                for (let tab_idx = 0; tab_idx < active_tabs.length; tab_idx++) {
-                    const tab = $(active_tabs[tab_idx]);
-                    tab.closest('.ui-tabs').tabs({active:tab.index()});
+            $('.ksof_stabs').tabs({ activate: tabActivated.bind(null) })
+            const settings = ksof.settings[this.cfg.scriptId]
+            if (settings && settings.ksofActiveTabs instanceof Array) {
+                const activeTabs = settings.ksofActiveTabs
+                for (let tabIndex = 0; tabIndex < activeTabs.length; tabIndex++) {
+                    const tab = $(activeTabs[tabIndex])
+                    tab.closest('.ui-tabs').tabs({ active: tab.index() })
                 }
             }
 
-            const toggle_multi = (e:JQuery.MouseDownEvent) => {
-                if (e.button != 0) return true;
-                const multi = $(e.currentTarget);
-                const scroll = e.currentTarget.scrollTop;
-                e.target.selected = !e.target.selected;
-                setTimeout(function(){
-                    e.currentTarget.scrollTop = scroll;
-                    multi.focus(); // TODO what should this do? it's deprecated
-                },0);
-                return this.#setting_changed(e);
+            const toggleMulti = (e:JQuery.MouseDownEvent) => {
+                if (e.button != 0) return true
+                const multi = $(e.currentTarget)
+                const scroll = e.currentTarget.scrollTop
+                e.target.selected = !e.target.selected
+                setTimeout(() => {
+                    e.currentTarget.scrollTop = scroll
+                    multi.focus() // TODO what should this do? it's deprecated
+                }, 0)
+                return this.#settingChanged(e)
             }
 
-            const setting_button_clicked = (e:JQuery.TriggeredEvent) => {
-                const name = e.target.attributes.name.value;
-                const _item = this.config_list[name]
+            const settingButtonClicked = (e:JQuery.TriggeredEvent) => {
+                const name = e.target.attributes.name.value
+                const _item = this.configList[name]
                 if (_item.type == 'button') {
                     const item = _item as Settings.UI.Button
-                    item.on_click.call(e, name, item, this.#setting_changed.bind(this, e));
+                    item.onClick.call(e, name, item, this.#settingChanged.bind(this, e))
                 }
             }
 
-            this.#open_dialog.dialog('open');
-            this.#open_dialog.find('.setting[multiple]').on('mousedown', toggle_multi.bind(this));
-            this.#open_dialog.find('.setting').on('change', this.#setting_changed.bind(this));
-            this.#open_dialog.find('form').on('submit', function(){return false;});
-            this.#open_dialog.find('button.setting').on('click', setting_button_clicked.bind(this));
+            this.#openDialog.dialog('open')
+            this.#openDialog.find('.setting[multiple]').on('mousedown', toggleMulti.bind(this))
+            this.#openDialog.find('.setting').on('change', this.#settingChanged.bind(this))
+            this.#openDialog.find('form').on('submit', () => { return false })
+            this.#openDialog.find('button.setting').on('click', settingButtonClicked.bind(this))
 
-            if (typeof this.cfg.pre_open === 'function') this.cfg.pre_open(this.#open_dialog);
-            this.reversions = deep_merge({}, ksof.settings[this.cfg.script_id]);
-            this.refresh();
+            if (typeof this.cfg.preOpen === 'function') this.cfg.preOpen(this.#openDialog)
+            this.reversions = deepMerge({}, ksof.settings[this.cfg.scriptId])
+            this.refresh()
         }
 
         //------------------------------
         // Handler for live settings changes.  Handles built-in validation and user callbacks.
         //------------------------------
-        #setting_changed(event:JQuery.TriggeredEvent) {
-            const elem = $(event.currentTarget);
-            const name = elem.attr('name');
+        #settingChanged(event:JQuery.TriggeredEvent) {
+            const elem = $(event.currentTarget)
+            const name = elem.attr('name')
             if (!name) return false
-            const _item = this.config_list[name];
+            const _item = this.configList[name]
 
             // Extract the value
             let value: any
 
             if (_item.type == 'dropdown') {
-                value = elem.find(':checked').attr('name');
+                value = elem.find(':checked').attr('name')
             }
             else if (_item.type == 'list') {
                 const item = _item as Settings.UI.List
 
                 if (item.multi === true) {
-                    value = {};
-                    elem.find('option').each(function(i,e){
-                        const opt_name = e.getAttribute('name') || '#'+e.index;
-                        value[opt_name] = e.selected;
-                    });
+                    value = {}
+                    elem.find('option').each((i, e) => {
+                        const optionName = e.getAttribute('name') || `#${e.index}`
+                        value[optionName] = e.selected
+                    })
                 } else {
-                    value = elem.find(':checked').attr('name');
+                    value = elem.find(':checked').attr('name')
                 }
             }
             else if (_item.type == 'input') {
                 const item = _item as Settings.UI.Input
 
-                if (item.subtype==='number') {
+                if (item.subtype === 'number') {
                     value = Number(elem.val())
                 }
             }
@@ -263,15 +271,15 @@ import { Core, Settings } from './ksof';
             }
 
             // Validation
-            let valid = {valid:true, msg:''};
+            let valid = { valid: true, msg: '' }
             {
                 const item = _item as Settings.UI.UserInput
                 if (item.validate) {
-                    const _valid = item.validate.call(event.target, value, item);
+                    const _valid = item.validate.call(event.target, value, item)
                     if (typeof _valid === 'boolean')
-                        valid = {valid:_valid, msg:''};
+                        valid = { valid: _valid, msg: '' }
                     else if (typeof _valid === 'string')
-                        valid = {valid:false, msg:_valid};
+                        valid = { valid: false, msg: _valid }
                 }
             }
 
@@ -279,20 +287,20 @@ import { Core, Settings } from './ksof';
                 const item = _item as Settings.UI.NumberInput
 
                 if (item.min && Number(value) < item.min) {
-                    valid.valid = false;
+                    valid.valid = false
                     if (valid.msg.length === 0) {
                         if (typeof item.max === 'number')
-                            valid.msg = 'Must be between '+item.min+' and '+item.max;
+                            valid.msg = `Must be between ${item.min} and ${item.max}`
                         else
-                            valid.msg = 'Must be '+item.min+' or higher';
+                            valid.msg = `Must be ${item.min} or higher`
                     }
                 } else if (item.max && Number(value) > item.max) {
-                    valid.valid = false;
+                    valid.valid = false
                     if (valid.msg.length === 0) {
                         if (typeof item.min === 'number')
-                            valid.msg = 'Must be between '+item.min+' and '+item.max;
+                            valid.msg = `Must be between ${item.min} and ${item.max}`
                         else
-                            valid.msg = 'Must be '+item.max+' or lower';
+                            valid.msg = `Must be ${item.max} or lower`
                     }
                 }
             }
@@ -300,80 +308,80 @@ import { Core, Settings } from './ksof';
                 const item = _item as Settings.UI.TextInput
 
                 if (item.match !== undefined && value.match(item.match) === null) {
-                    valid.valid = false;
+                    valid.valid = false
                     if (valid.msg.length === 0)
-                        // valid.msg = item.error_msg || 'Invalid value'; // TODO no item has a error_msg?
-                        valid.msg = 'Invalid value';
+                        // valid.msg = item.error_msg || 'Invalid value' // TODO no item has a error_msg?
+                        valid.msg = 'Invalid value'
                 }
             }
 
 
             // Style for valid/invalid
-            const parent = elem.closest('.right');
-            parent.find('.note').remove();
+            const parent = elem.closest('.right')
+            parent.find('.note').remove()
             if (typeof valid.msg === 'string' && valid.msg.length > 0)
-                parent.append('<div class="note'+(valid.valid?'':' error')+'">'+valid.msg+'</div>');
+                parent.append(`<div class="note${valid.valid ? '' : ' error'}">${valid.msg}</div>`)
             if (!valid.valid) {
-                elem.addClass('invalid');
+                elem.addClass('invalid')
             } else {
-                elem.removeClass('invalid');
+                elem.removeClass('invalid')
             }
 
-            const script_id = this.cfg.script_id;
-            const settings = ksof.settings[script_id]
+            const scriptId = this.cfg.scriptId
+            const settings = ksof.settings[scriptId]
             if (valid.valid) {
                 const item = _item as Settings.UI.UserInput
 
-                // if (item.no_save !== true) set_value(this, settings, name, value); // TODO what is no_save supposed to do?
-                set_value(this, settings, name, value);
+                // if (item.no_save !== true) set_value(this, settings, name, value) // TODO what is no_save supposed to do?
+                setValue(this, settings, name, value)
 
-                if (item.on_change) item.on_change.call(event.target, name, value, item);
-                if (this.cfg.on_change) this.cfg.on_change.call(event.target, name, value, item);
-                if (item.refresh_on_change === true) this.refresh();
+                if (item.onChange) item.onChange.call(event.target, name, value, item)
+                if (this.cfg.onChange) this.cfg.onChange.call(event.target, name, value, item)
+                if (item.refreshOnChange === true) this.refresh()
             }
 
-            return false;
+            return false
         }
 
         //------------------------------
         // Close and destroy the dialog.
         //------------------------------
-        close(keep_settings:boolean) {
-            if (!this.keep_settings && keep_settings !== true) {
+        close(keepSettings:boolean) {
+            if (!this.keepSettings && keepSettings !== true) {
                 // Revert settings
-                ksof.settings[this.cfg.script_id] = deep_merge({}, this.reversions || {});
-                delete this.reversions;
+                ksof.settings[this.cfg.scriptId] = deepMerge({}, this.reversions || {})
+                delete this.reversions
             }
-            delete this.keep_settings;
-            this.#open_dialog.dialog('destroy');
-            this.#open_dialog = $()
-            if (this.cfg.background !== false) this.background.close();
-            if (typeof this.cfg.on_close === 'function') this.cfg.on_close(ksof.settings[this.cfg.script_id]);
+            delete this.keepSettings
+            this.#openDialog.dialog('destroy')
+            this.#openDialog = $()
+            if (this.cfg.background !== false) this.background.close()
+            if (typeof this.cfg.onClose === 'function') this.cfg.onClose(ksof.settings[this.cfg.scriptId])
         }
 
         //------------------------------
         // Update the dialog to reflect changed settings.
         //------------------------------
         refresh() {
-            const script_id = this.cfg.script_id;
-            const settings = ksof.settings[script_id]
-            for (const name in this.config_list) {
-                const elem = this.#open_dialog.find('#'+script_id+'_'+name);
-                const _config = this.config_list[name];
-                const value = get_value(this, settings, name);
+            const scriptId = this.cfg.scriptId
+            const settings = ksof.settings[scriptId]
+            for (const name in this.configList) {
+                const elem = this.#openDialog.find(`#${scriptId}_${name}`)
+                const _config = this.configList[name]
+                const value = getValue(this, settings, name)
 
                 if (_config.type == 'dropdown') {
-                    elem.find('option[name="'+value+'"]').prop('selected', true);
+                    elem.find(`option[name="${value}"]`).prop('selected', true)
                 }
                 else if (_config.type == 'list') {
                     const config = _config as Settings.UI.List
                     if (config.multi === true) {
-                        elem.find('option').each(function(i,e){
-                            const opt_name = e.getAttribute('name') || '#'+e.index;
-                            e.selected = value[opt_name];
-                        });
+                        elem.find('option').each((i, e) => {
+                            const optionName = e.getAttribute('name') || `#${e.index}`
+                            e.selected = value[optionName]
+                        })
                     } else {
-                        elem.find('option[name="'+value+'"]').prop('selected', true);
+                        elem.find(`option[name="${value}"]`).prop('selected', true)
                     }
                 }
                 else if (_config.type == 'checkbox') {
@@ -383,18 +391,18 @@ import { Core, Settings } from './ksof';
                     elem.val(value)
                 }
             }
-            if (typeof this.cfg.on_refresh === 'function') this.cfg.on_refresh(ksof.settings[this.cfg.script_id]);
+            if (typeof this.cfg.onRefresh === 'function') this.cfg.onRefresh(ksof.settings[this.cfg.scriptId])
         }
     }
 
-    function createSettings(): Settings.Settings {
-        const settings_obj = (config: Settings.Config) => {
+    const createSettings = (): Settings.Settings => {
+        const settingsObj = (config: Settings.Config) => {
             return new KSOFSettings(config)
         }
-        settings_obj.save = (context: Settings.Dialog | string) => { return KSOFSettings.save(context)}
-        settings_obj.load = (context: Settings.Dialog | string, defaults?:Settings.UI.Collection) => { return KSOFSettings.load(context, defaults)}
-        settings_obj.background = background_funcs()
-        return settings_obj
+        settingsObj.save = (context: Settings.Dialog | string) => { return KSOFSettings.save(context) }
+        settingsObj.load = (context: Settings.Dialog | string, defaults?:Settings.UI.Collection) => { return KSOFSettings.load(context, defaults) }
+        settingsObj.background = backgroundFuncs()
+        return settingsObj
     }
 
     ksof.Settings = createSettings()
@@ -403,355 +411,352 @@ import { Core, Settings } from './ksof';
 
     //########################################################################
 
-    let ready = false;
+    let ready = false
 
     //========================================================================
-    function deep_merge(...objects: {[key:string]: any}[]) {
-        const merged = {};
-        function recursive_merge(dest: {[key:string]: any}, src: {[key:string]: any}) {
+    const deepMerge = (...objects: {[key:string]: any}[]) => {
+        const merged = {}
+        const recursiveMerge = (dest: {[key:string]: any}, src: {[key:string]: any}) => {
             for (const prop in src) {
-                if (typeof src[prop] === 'object' && src[prop] !== null ) {
+                if (typeof src[prop] === 'object' && src[prop] !== null) {
                     const srcProp = src[prop]
                     if (Array.isArray(srcProp)) {
-                        dest[prop] = srcProp.slice();
+                        dest[prop] = srcProp.slice()
                     } else {
-                        dest[prop] = dest[prop] || {};
-                        recursive_merge(dest[prop], srcProp);
+                        dest[prop] = dest[prop] || {}
+                        recursiveMerge(dest[prop], srcProp)
                     }
                 } else {
-                    dest[prop] = src[prop];
+                    dest[prop] = src[prop]
                 }
             }
-            return dest;
+            return dest
         }
         for (const obj in objects) {
-            recursive_merge(merged, objects[obj]);
+            recursiveMerge(merged, objects[obj])
         }
-        return merged;
+        return merged
     }
 
-    type ChildPassback = {tabs?: string[], pages?: string[], is_page?: boolean}
+    type ChildPassback = {tabs?: string[], pages?: string[], isPage?: boolean}
 
     //------------------------------
     // Convert a config object to html dialog.
     //------------------------------
     /* eslint-disable no-case-declarations */
-    function config_to_html(context:KSOFSettings) {
-        context.config_list = {};
+    const configToHTML = (context:KSOFSettings) => {
+        context.configList = {}
         if (!ksof.settings) {
             return ''
         }
-        let base = ksof.settings[context.cfg.script_id]
-        if (base === undefined) ksof.settings[context.cfg.script_id] = base = {};
 
-        let html = ''
-        const child_passback:ChildPassback = {}
-        const id = context.cfg.script_id+'_dialog';
-        for (const name in context.cfg.content) {
-            html += parse_item(name, context.cfg.content[name], child_passback);
+        const assemblePages = (id:string, tabs:string[], pages:string[]) => { return `<div id="${id}" class="ksof_stabs"><ul>${tabs.join('')}</ul>${pages.join('')}</div>` }
+        const wrapRow = (html:string, full?:boolean, hoverTip?:string) => { return `<div class="row${full ? ' full' : ''}"${toTitle(hoverTip)}>${html}</div>` }
+        const wrapLeft = (html:string) => { return `<div class="left">${html}</div>` }
+        const wrapRight = (html:string) => { return `<div class="right">${html}</div>` }
+        const escapeText = (text:string) => {
+            return text.replace(/[<>]/g, (ch) => {
+                if (ch == '<') return '&lt'
+                if (ch == '>') return '&gt'
+                return ''
+            })
         }
-        if (child_passback.tabs && child_passback.pages)
-            html = assemble_pages(id, child_passback.tabs, child_passback.pages) + html;
-        return '<form>'+html+'</form>';
+        const escapeAttr = (text:string) => { return text.replace(/"/g, '&quot') }
+        const toTitle = (tip?:string) => { if (!tip) return ''; return ` title="${tip.replace(/"/g, '&quot')}"` }
 
-        //============
-        function parse_item(name:string, _item: Settings.UI.Component, passback:ChildPassback) {
-            if (typeof _item.type !== 'string') return '';
-            const id = context.cfg.script_id+'_'+name;
-            let cname, html = '', child_passback:ChildPassback, non_page = '';
+        const parseItem = (name:string, _item: Settings.UI.Component, passback:ChildPassback) => {
+            if (typeof _item.type !== 'string') return ''
+            const id = `${context.cfg.scriptId}_${name}`
+            let cname, html = '', childPassback:ChildPassback, nonPage = ''
+
+            const makeLabel = (item: {label?:string}) => {
+                if (typeof item.label !== 'string') return ''
+                return wrapLeft(`<label for="${id}">${item.label}</label>`)
+            }
 
             const _type = _item.type
 
             if (_type == 'tabset') {
                 const item = _item as Settings.UI.Tabset
-                child_passback = {};
+                childPassback = {}
                 for (cname in item.content) {
-                    non_page += parse_item(cname, item.content[cname], child_passback);
+                    nonPage += parseItem(cname, item.content[cname], childPassback)
                 }
-                if (child_passback.tabs && child_passback.pages) {
-                    html = assemble_pages(id, child_passback.tabs, child_passback.pages);
+                if (childPassback.tabs && childPassback.pages) {
+                    html = assemblePages(id, childPassback.tabs, childPassback.pages)
                 }
             }
             else if (_type == 'page') {
                 const item = _item as Settings.UI.Page
-                if (typeof item.content !== 'object') item.content = {};
+                if (typeof item.content !== 'object') item.content = {}
                 if (!passback.tabs) {
-                    passback.tabs = [];
+                    passback.tabs = []
                 }
                 if (!passback.pages) {
-                    passback.pages = [];
+                    passback.pages = []
                 }
-                passback.tabs.push('<li id="'+id+'_tab"'+to_title(item.hover_tip)+'><a href="#'+id+'">'+item.label+'</a></li>');
-                child_passback = {};
-                for (cname in item.content) 
-                    non_page += parse_item(cname, item.content[cname], child_passback);
-                if (child_passback.tabs && child_passback.pages)
-                    html = assemble_pages(id, child_passback.tabs, child_passback.pages);
-                passback.pages.push('<div id="'+id+'">'+html+non_page+'</div>');
-                passback.is_page = true;
-                html = '';
+                passback.tabs.push(`<li id="${id}_tab"${toTitle(item.hoverTip)}><a href="#${id}">${item.label}</a></li>`)
+                childPassback = {}
+                for (cname in item.content)
+                    nonPage += parseItem(cname, item.content[cname], childPassback)
+                if (childPassback.tabs && childPassback.pages)
+                    html = assemblePages(id, childPassback.tabs, childPassback.pages)
+                passback.pages.push(`<div id="${id}">${html}${nonPage}</div>`)
+                passback.isPage = true
+                html = ''
             }
             else if (_type == 'group') {
                 const item = _item as Settings.UI.Group
-                if (typeof item.content !== 'object') item.content = {};
-                child_passback = {};
-                for (cname in item.content) 
-                    non_page += parse_item(cname, item.content[cname], child_passback);
-                if (child_passback.tabs && child_passback.pages)
-                    html = assemble_pages(id, child_passback.tabs, child_passback.pages);
-                html = '<fieldset id="'+id+'" class="ksof_group"><legend>'+item.label+'</legend>'+html+non_page+'</fieldset>';
+                if (typeof item.content !== 'object') item.content = {}
+                childPassback = {}
+                for (cname in item.content)
+                    nonPage += parseItem(cname, item.content[cname], childPassback)
+                if (childPassback.tabs && childPassback.pages)
+                    html = assemblePages(id, childPassback.tabs, childPassback.pages)
+                html = `<fieldset id="${id}" class="ksof_group"><legend>${item.label}</legend>${html}${nonPage}</fieldset>`
             }
             else if (_type == 'dropdown') {
                 const item = _item as Settings.UI.Dropdown
-                context.config_list[name] = item;
-                let value = get_value(context, base, name);
+                context.configList[name] = item
+                let value = getValue(context, base, name)
                 if (value === undefined) {
                     if (item.default !== undefined) {
-                        value = item.default;
+                        value = item.default
                     } else {
-                        value = Object.keys(item.content)[0];
+                        value = Object.keys(item.content)[0]
                     }
-                    set_value(context, base, name, value);
+                    setValue(context, base, name, value)
                 }
 
-                html = `<select id="${id}" name="${name}" class="setting"${to_title(item.hover_tip)}>`
+                html = `<select id="${id}" name="${name}" class="setting"${toTitle(item.hoverTip)}>`
                 for (cname in item.content)
-                    html += '<option name="'+cname+'">'+escape_text(item.content[cname])+'</option>';
-                html += '</select>';
-                html = make_label(item) + wrap_right(html);
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                    html += `<option name="${cname}">${escapeText(item.content[cname])}</option>`
+                html += '</select>'
+                html = makeLabel(item) + wrapRight(html)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'list') {
                 const item = _item as Settings.UI.List
 
-                context.config_list[name] = item;
-                let value = get_value(context, base, name);
+                context.configList[name] = item
+                let value = getValue(context, base, name)
                 if (value === undefined) {
                     if (item.default !== undefined) {
-                        value = item.default;
+                        value = item.default
                     } else {
                         if (item.multi === true) {
-                            value = {};
-                            Object.keys(item.content).forEach(function(key){
-                                value[key] = false;
-                            });
+                            value = {}
+                            Object.keys(item.content).forEach((key) => {
+                                value[key] = false
+                            })
                         } else {
-                            value = Object.keys(item.content)[0];
+                            value = Object.keys(item.content)[0]
                         }
                     }
-                    set_value(context, base, name, value);
+                    setValue(context, base, name, value)
                 }
 
-                let attribs = ' size="'+(item.size || Object.keys(item.content).length || 4)+'"';
-                if (item.multi === true) attribs += ' multiple';
+                let attribs = ` size="${item.size || Object.keys(item.content).length || 4}"`
+                if (item.multi === true) attribs += ' multiple'
 
-                html = `<select id="${id}" name="${name}" class="setting list"${attribs}${to_title(item.hover_tip)}>`;
+                html = `<select id="${id}" name="${name}" class="setting list"${attribs}${toTitle(item.hoverTip)}>`
                 for (cname in item.content)
-                    html += '<option name="'+cname+'">'+escape_text(item.content[cname])+'</option>';
-                html += '</select>';
-                html = make_label(item) + wrap_right(html);
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                    html += `<option name="${cname}">${escapeText(item.content[cname])}</option>`
+                html += '</select>'
+                html = makeLabel(item) + wrapRight(html)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'checkbox') {
                 const item = _item as Settings.UI.Checkbox
-                context.config_list[name] = item;
-                html = make_label(item);
-                let value = get_value(context, base, name);
+                context.configList[name] = item
+                html = makeLabel(item)
+                let value = getValue(context, base, name)
                 if (value === undefined) {
-                    value = (item.default || false);
-                    set_value(context, base, name, value);
+                    value = (item.default || false)
+                    setValue(context, base, name, value)
                 }
-                html += wrap_right('<input id="'+id+'" class="setting" type="checkbox" name="'+name+'">');
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                html += wrapRight(`<input id="${id}" class="setting" type="checkbox" name="${name}">`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'input') {
                 const item = _item as Settings.UI.Input
                 const itype = item.subtype || 'text'
-                context.config_list[name] = item;
-                html += make_label(item);
-                let value = get_value(context, base, name);
+                context.configList[name] = item
+                html += makeLabel(item)
+                let value = getValue(context, base, name)
                 if (value === undefined) {
-                    const is_number = (item.subtype==='number');
-                    value = (item.default || (is_number ? 0 : ''));
-                    set_value(context, base, name, value);
+                    const isNumber = (item.subtype === 'number')
+                    value = (item.default || (isNumber ? 0 : ''))
+                    setValue(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                html += wrapRight(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escapeAttr(item.placeholder)}"` : '')}>`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'number') {
                 const item = _item as Settings.UI.NumberInput
-                const itype = item.type;
-                context.config_list[name] = item;
-                html += make_label(item);
-                let value = get_value(context, base, name);
+                const itype = item.type
+                context.configList[name] = item
+                html += makeLabel(item)
+                let value = getValue(context, base, name)
                 if (value === undefined) {
-                    const is_number = (item.type==='number');
-                    value = (item.default || (is_number ? 0 : ''));
-                    set_value(context, base, name, value);
+                    const isNumber = (item.type === 'number')
+                    value = (item.default || (isNumber ? 0 : ''))
+                    setValue(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                html += wrapRight(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escapeAttr(item.placeholder)}"` : '')}>`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'text') {
                 const item = _item as Settings.UI.TextInput
-                const itype = item.type;
-                context.config_list[name] = item;
-                html += make_label(item);
-                let value = get_value(context, base, name);
+                const itype = item.type
+                context.configList[name] = item
+                html += makeLabel(item)
+                let value = getValue(context, base, name)
                 if (value === undefined) {
-                    value = (item.default || '');
-                    set_value(context, base, name, value);
+                    value = (item.default || '')
+                    setValue(context, base, name, value)
                 }
-                html += wrap_right(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder?' placeholder="'+escape_attr(item.placeholder)+'"':'')}>`)
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                html += wrapRight(`<input id="${id}" class="setting" type="${itype}" name="${name}"${(item.placeholder ? ` placeholder="${escapeAttr(item.placeholder)}"` : '')}>`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'color') {
                 const item = _item as Settings.UI.ColorSelector
-                context.config_list[name] = item;
-                html += make_label(item);
-                let value = get_value(context, base, name);
+                context.configList[name] = item
+                html += makeLabel(item)
+                let value = getValue(context, base, name)
                 if (value === undefined) {
-                    value = (item.default || '#000000');
-                    set_value(context, base, name, value);
+                    value = (item.default || '#000000')
+                    setValue(context, base, name, value)
                 }
-                html += wrap_right('<input id="'+id+'" class="setting" type="color" name="'+name+'">');
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                html += wrapRight(`<input id="${id}" class="setting" type="color" name="${name}">`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'button') {
                 const item = _item as Settings.UI.Button
-                context.config_list[name] = item;
-                html += make_label(item);
-                const text = escape_text(item.text || 'Click');
-                html += wrap_right('<button type="button" class="setting" name="'+name+'">'+text+'</button>');
-                html = wrap_row(html, item.full_width, item.hover_tip);
+                context.configList[name] = item
+                html += makeLabel(item)
+                const text = escapeText(item.text || 'Click')
+                html += wrapRight(`<button type="button" class="setting" name="${name}">${text}</button>`)
+                html = wrapRow(html, item.fullWidth, item.hoverTip)
             }
             else if (_type == 'divider') {
-                html += '<hr>';
+                html += '<hr>'
             }
             else if (_type == 'section') {
                 const item = _item as Settings.UI.Section
-                html += '<section>'+(item.label || '')+'</section>';
+                html += `<section>${item.label || ''}</section>`
             }
             else if (_type == 'html') {
                 const item = _item as Settings.UI.Html
-                html += make_label(item);
-                html += item.html;
+                html += makeLabel(item)
+                html += item.html
                 switch (item.wrapper) {
-                case 'row': html = wrap_row(html, undefined, item.hover_tip); break;
-                case 'left': html = wrap_left(html); break;
-                case 'right': html = wrap_right(html); break;
+                case 'row': html = wrapRow(html, undefined, item.hoverTip); break
+                case 'left': html = wrapLeft(html); break
+                case 'right': html = wrapRight(html); break
                 }
             }
 
-            return html;
-
-            function make_label(item: {label?:string}) {
-                if (typeof item.label !== 'string') return '';
-                return wrap_left('<label for="'+id+'">'+item.label+'</label>');
-            }
+            return html
         }
-        /* eslint-enable no-case-declarations */
 
-        //============
-        function assemble_pages(id:string, tabs:string[], pages:string[]) {return '<div id="'+id+'" class="ksof_stabs"><ul>'+tabs.join('')+'</ul>'+pages.join('')+'</div>';}
-        function wrap_row(html:string,full?:boolean,hover_tip?:string) {return '<div class="row'+(full?' full':'')+'"'+to_title(hover_tip)+'>'+html+'</div>';}
-        function wrap_left(html:string) {return '<div class="left">'+html+'</div>';}
-        function wrap_right(html:string) {return '<div class="right">'+html+'</div>';}
-        function escape_text(text:string) {
-            return text.replace(/[<>]/g, (ch) => {
-                if (ch == '<') return '&lt'
-                if (ch == '>') return '&gt'
-                return '';
-            });
+        let base = ksof.settings[context.cfg.scriptId]
+        if (base === undefined) ksof.settings[context.cfg.scriptId] = base = {}
+
+        let html = ''
+        const childPassback:ChildPassback = {}
+        const id = `${context.cfg.scriptId}_dialog`
+        for (const name in context.cfg.content) {
+            html += parseItem(name, context.cfg.content[name], childPassback)
         }
-        function escape_attr(text:string) {return text.replace(/"/g, '&quot;');}
-        function to_title(tip?:string) {if (!tip) return ''; return ' title="'+tip.replace(/"/g,'&quot;')+'"';}
+        if (childPassback.tabs && childPassback.pages)
+            html = assemblePages(id, childPassback.tabs, childPassback.pages) + html
+        return `<form>${html}</form>`
     }
 
-    function get_value(context:KSOFSettings, base: Settings.SettingCollection, name: string){
-        const item = context.config_list[name] as {path?:string}
-        const evaluate = (item.path !== undefined);
-        const path = (item.path || name);
+    const getValue = (context:KSOFSettings, base: Settings.SettingCollection, name: string) => {
+        const item = context.configList[name] as {path?:string}
+        const evaluate = (item.path !== undefined)
+        const path = (item.path || name)
         try {
-            if (!evaluate) return base[path];
-            return eval(path.replace(/@/g,'base.'));
-        } catch(e) {return;}
+            if (!evaluate) return base[path]
+            return eval(path.replace(/@/g, 'base.'))
+        } catch (e) { return }
     }
 
-    function set_value(context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) {
-        const item = context.config_list[name] as {path?:string}
-        const evaluate = (item.path !== undefined);
-        const path = (item.path || name);
+    const setValue = (context:KSOFSettings, base: Settings.SettingCollection, name:string, value: Settings.Setting) => {
+        const item = context.configList[name] as {path?:string}
+        const evaluate = (item.path !== undefined)
+        const path = (item.path || name)
         try {
-            if (!evaluate) return base[path] = value;
-            let depth=0
-            let new_path=''
+            if (!evaluate) return base[path] = value
+            let depth = 0
+            let newPath = ''
             let param = ''
             let c:string
             for (let idx = 0; idx < path.length; idx++) {
-                c = path[idx];
+                c = path[idx]
                 if (c === '[') {
                     if (depth++ === 0) {
-                        new_path += '[';
-                        param = '';
+                        newPath += '['
+                        param = ''
                     } else {
-                        param += '[';
+                        param += '['
                     }
                 } else if (c === ']') {
                     if (--depth === 0) {
-                        new_path += JSON.stringify(eval(param)) + ']';
+                        newPath += `${JSON.stringify(eval(param))}]`
                     } else {
-                        param += ']';
+                        param += ']'
                     }
                 } else {
-                    if (c === '@') c = 'base.';
+                    if (c === '@') c = 'base.'
                     if (depth === 0)
-                        new_path += c;
+                        newPath += c
                     else
-                        param += c;
+                        param += c
                 }
             }
-            eval(new_path + '=value');
-        } catch(e) {return;}
+            eval(`${newPath}=value`)
+        } catch (e) { return }
     }
 
-    function install_anchor() {
-        let anchor = $('#ksof_ds');
+    const installAnchor = () => {
+        let anchor = $('#ksof_ds')
         if (anchor.length === 0) {
-            anchor = $('<div id="ksof_ds"></div></div>');
-            $('body').prepend(anchor);
-            $('#ksof_ds').on('keydown keyup keypress', '.ksof_settings_dialog', function(e) {
+            anchor = $('<div id="ksof_ds"></div></div>')
+            $('body').prepend(anchor)
+            $('#ksof_ds').on('keydown keyup keypress', '.ksof_settings_dialog', (e) => {
                 // Stop keys from bubbling beyond the background overlay.
-                e.stopPropagation();
-            });
+                e.stopPropagation()
+            })
         }
-        return anchor;
+        return anchor
     }
 
     //------------------------------
     // Load jquery UI and the appropriate CSS based on location.
     //------------------------------
-    const css_url = ksof.support_files['jqui_ksmain.css'];
+    const cssUrl = ksof.supportFiles['jqui_ksmain.css']
 
-    ksof.include('Jquery');
+    ksof.include('Jquery')
     await ksof.ready('document, Jquery')
     await Promise.all([
-        ksof.load_script(ksof.support_files['jquery_ui.js'], true /* cache */),
-        ksof.load_css(css_url, true /* cache */)
-    ]);
+        ksof.loadScript(ksof.supportFiles['jquery_ui.js'], true /* cache */),
+        ksof.loadCSS(cssUrl, true /* cache */),
+    ])
 
-    ready = true;
+    ready = true
 
     // Workaround...  https://community.wanikani.com/t/19984/55
     try {
         const temp = $.fn as unknown as {autocomplete:unknown}
-        delete temp.autocomplete;
-    } catch(e) {
+        delete temp.autocomplete
+    } catch (e) {
         // do nothing
     }
 
     // Notify listeners that we are ready.
     // Delay guarantees include() callbacks are called before ready() callbacks.
-    setTimeout(function(){ksof.set_state('ksof.Settings', 'ready');},0);
-
-})(window);
+    setTimeout(() => { ksof.setState('ksof.Settings', 'ready') }, 0)
+})(window))
