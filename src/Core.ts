@@ -21,8 +21,6 @@ import { Core, IsoDateString } from './ksof'
 
 declare global {
     interface Window {
-        //eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         ksof: Core.Module
         $: JQueryStatic
     }
