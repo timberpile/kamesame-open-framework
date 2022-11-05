@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
-// @version     0.2.2
+// @version     0.3
 // @match       http*://*.kamesame.com/*
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT http://opensource.org/licenses/MIT
@@ -54,23 +54,23 @@ declare global {
     })
 })();
 
-((function(global: Window) {
+(((global: Window) => {
     'use strict'
 
     const version = '0.1'
-    const ignore_missing_indexeddb = false
+    const ignoreMissingIndexeddb = false
 
     //########################################################################
     //------------------------------
     // Supported Modules
     //------------------------------
-    const supported_modules: { [key:string]: {url: string}} = {
+    const supportedModules: { [key:string]: {url: string}} = {
         // Apiv2:    { url: ''},
         // ItemData: { url: ''},
-        Jquery: { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1102410' },
-        Menu: { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1111229' },
+        Jquery: { url: 'https://greasyfork.org/scripts/451523-kamesame-open-framework-jquery-module/code/KameSame%20Open%20Framework%20-%20Jquery%20module.js?version=1113601' },
+        Menu: { url: 'https://greasyfork.org/scripts/451522-kamesame-open-framework-menu-module/code/KameSame%20Open%20Framework%20-%20Menu%20module.js?version=1113603' },
         // Progress: { url: ''},
-        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1102409' },
+        Settings: { url: 'https://greasyfork.org/scripts/451521-kamesame-open-framework-settings-module/code/KameSame%20Open%20Framework%20-%20Settings%20module.js?version=1113605' },
     }
 
     //########################################################################
@@ -83,7 +83,7 @@ declare global {
     const JAPANESE_CHARS = `${KANA_CHARS}${KANJI_CHARS}`
 
     class ReviewInfo implements Core.ReviewInfo {
-        get answer_correct() {
+        get answerCorrect() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
             if (!input) {
                 return null
@@ -103,7 +103,7 @@ declare global {
             return null
         }
 
-        get review_type() {
+        get reviewType() {
             const input = document.querySelector('#app.kamesame #study .input-area input')
             if (!input) {
                 return null
@@ -127,12 +127,12 @@ declare global {
             }[] = [
                 { tag: 'review', matcher: /kamesame\.com\/app\/reviews\/study\/[a-z0-9]+/ },
                 { tag: 'review', matcher: /kamesame\.com\/app\/lessons\/study\/[a-z0-9]+/ },
-                { tag: 'reviewSummary', matcher: /kamesame\.com\/app\/reviews\/summary/ },
-                { tag: 'lessonsSummary', matcher: /kamesame\.com\/app\/lessons\/summary/ },
-                { tag: 'itemPage', matcher: /kamesame\.com\/app\/items\/\d+/ },
+                { tag: 'review_summary', matcher: /kamesame\.com\/app\/reviews\/summary/ },
+                { tag: 'lessons_summary', matcher: /kamesame\.com\/app\/lessons\/summary/ },
+                { tag: 'item_page', matcher: /kamesame\.com\/app\/items\/\d+/ },
                 { tag: 'lessons', matcher: /kamesame\.com\/app\/lessons$/ },
                 { tag: 'search', matcher: /kamesame\.com\/app\/search$/ },
-                { tag: 'searchResult', matcher: /kamesame\.com\/app\/search\// },
+                { tag: 'search_result', matcher: /kamesame\.com\/app\/search\// },
                 { tag: 'account', matcher: /kamesame\.com\/app\/account/ },
                 { tag: 'home', matcher: /kamesame\.com\/app$/ },
             ]
@@ -155,7 +155,7 @@ declare global {
 
         get variations() {
             switch (ksof.pageInfo.on) {
-            case 'itemPage':
+            case 'item_page':
                 switch (this.type) {
                 case 'vocabulary':
                     return this.facts['Variations'].split('、')
@@ -167,9 +167,9 @@ declare global {
             return null
         }
 
-        get parts_of_speech() {
+        get partsOfSpeech() {
             switch (ksof.pageInfo.on) {
-            case 'itemPage':
+            case 'item_page':
                 switch (this.type) {
                 case 'vocabulary':
                     return this.facts['Parts of Speech'].split(', ')
@@ -181,9 +181,9 @@ declare global {
             return null
         }
 
-        get wanikani_level() {
+        get wanikaniLevel() {
             switch (ksof.pageInfo.on) {
-            case 'itemPage':
+            case 'item_page':
                 switch (this.type) {
                 case 'vocabulary':
                     return parseInt(this.facts['WaniKani Level'], 10)
@@ -197,7 +197,7 @@ declare global {
 
         get tags() {
             switch (ksof.pageInfo.on) {
-            case 'itemPage':
+            case 'item_page':
                 switch (this.type) {
                 case 'vocabulary':
                     return this.facts['Tags'].split(', ')
@@ -212,13 +212,13 @@ declare global {
         get id() {
             let url = ''
             if (ksof.pageInfo.on == 'review') {
-                const item_link = document.querySelector('#app.kamesame #study .outcome p a.item') as HTMLLinkElement | null
-                if (!item_link) {
+                const itemLink = document.querySelector('#app.kamesame #study .outcome p a.item') as HTMLLinkElement | null
+                if (!itemLink) {
                     return null
                 }
-                url = item_link.href
+                url = itemLink.href
             }
-            else if (ksof.pageInfo.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'item_page') {
                 url = document.URL
             }
 
@@ -234,8 +234,8 @@ declare global {
 
         get characters() {
             if (ksof.pageInfo.on == 'review') {
-                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
-                if (!outcome_text) {
+                const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcomeText) {
                     return null
                 }
 
@@ -253,14 +253,14 @@ declare global {
 
                 // try out the different possible regexes until one hits
                 for (const regex of regexes) {
-                    const match = regex.exec(outcome_text)
+                    const match = regex.exec(outcomeText)
                     if (match) {
                         return match[1]
                     }
                 }
                 return null
             }
-            else if (ksof.pageInfo.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'item_page') {
                 if (this.type == 'vocabulary') {
                     return document.querySelector('.name.vocabulary')?.textContent || null
                 }
@@ -271,8 +271,8 @@ declare global {
 
         get meanings() {
             if (ksof.pageInfo.on == 'review') {
-                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
-                if (!outcome_text) {
+                const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcomeText) {
                     return null
                 }
 
@@ -284,7 +284,7 @@ declare global {
                 // try out all possible regexes
                 const meanings:string[] = []
                 for (const regex of regexes) {
-                    const match = regex.exec(outcome_text)
+                    const match = regex.exec(outcomeText)
                     if (match) {
                         const match1 = match[1]
                         const match2 = match1.replaceAll(' or ', ',')
@@ -297,7 +297,7 @@ declare global {
                 }
                 return meanings
             }
-            else if (ksof.pageInfo.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'item_page') {
                 if (this.type == 'vocabulary') {
                     return this.facts['Meanings'].split(', ')
                 }
@@ -308,22 +308,22 @@ declare global {
 
         get readings() {
             if (ksof.pageInfo.on == 'review') {
-                const outcome_text = document.querySelector('#app.kamesame #study .outcome p')?.textContent
-                if (!outcome_text) {
+                const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
+                if (!outcomeText) {
                     return null
                 }
                 const readings:string[] = []
 
                 const rawReadingsRegex = new RegExp(`\\(read as ([${KANA_CHARS},a-z\\s⏯]+)\\)`)
-                let match = rawReadingsRegex.exec(outcome_text)
+                let match = rawReadingsRegex.exec(outcomeText)
                 if (match) {
-                    const readings_raw = match[1]
+                    const readingsRaw = match[1]
 
                     const readingsRegex = new RegExp(`[${KANA_CHARS}]+`, 'g')
-                    match = readingsRegex.exec(readings_raw)
+                    match = readingsRegex.exec(readingsRaw)
                     while (match != null) {
                         readings.push(match[0]) // captured readings
-                        match = readingsRegex.exec(readings_raw)
+                        match = readingsRegex.exec(readingsRaw)
                     }
                 }
 
@@ -335,7 +335,7 @@ declare global {
                 }
                 return readings
             }
-            else if (ksof.pageInfo.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'item_page') {
                 if (this.type == 'vocabulary') {
                     return this.facts['Readings'].replaceAll(' ⏯', '').split('、')
                 }
@@ -372,7 +372,7 @@ declare global {
             if (ksof.pageInfo.on == 'review') {
                 //
             }
-            else if (ksof.pageInfo.on == 'itemPage') {
+            else if (ksof.pageInfo.on == 'item_page') {
                 if (document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
                     return 'vocabulary'
                 }
@@ -389,8 +389,8 @@ declare global {
                 meanings: this.meanings,
                 readings: this.readings,
                 variations: this.variations,
-                parts_of_speech: this.parts_of_speech,
-                wanikani_level: this.wanikani_level,
+                partsOfSpeech: this.partsOfSpeech,
+                wanikaniLevel: this.wanikaniLevel,
                 tags: this.tags,
                 on: ksof.pageInfo.on,
                 type: this.type,
@@ -399,30 +399,30 @@ declare global {
     }
 
     class KSOF implements Core.Module {
-        file_cache: FileCache
-        support_files: { [key: string]: string }
+        fileCache: FileCache
+        supportFiles: { [key: string]: string }
         version: Version
-        state_listeners: {[key:string]: Core.StateListener[]}
-        state_values: {[key:string]: string}
-        event_listeners: {[key:string]: Core.UnknownCallback[]}
-        dom_observers: Core.DomObserver[] // TODO write documentation about DOM observers
-        include_promises: {[key:string]: Promise<string>} // Promise<url>
+        stateListeners: {[key:string]: Core.StateListener[]}
+        stateValues: {[key:string]: string}
+        eventListeners: {[key:string]: Core.UnknownCallback[]}
+        domObservers: Core.DomObserver[] // TODO write documentation about DOM observers
+        includePromises: {[key:string]: Promise<string>} // Promise<url>
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
         pageInfo: PageInfo
 
         constructor() {
-            this.file_cache = new FileCache()
+            this.fileCache = new FileCache()
             this.version = new Version(version)
-            this.state_listeners = {}
-            this.state_values = {}
-            this.event_listeners = {}
-            this.dom_observers = []
-            this.include_promises = {}
+            this.stateListeners = {}
+            this.stateValues = {}
+            this.eventListeners = {}
+            this.domObservers = []
+            this.includePromises = {}
             this.itemInfo = new ItemInfo()
             this.reviewInfo = new ReviewInfo()
             this.pageInfo = new PageInfo()
-            this.support_files = {
+            this.supportFiles = {
                 'jquery.js': 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js',
                 'jquery_ui.js': 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js',
                 'jqui_ksmain.css': 'https://raw.githubusercontent.com/timberpile/kamesame-open-framework/master/src/jqui-ksmain.css',
@@ -432,15 +432,15 @@ declare global {
         //------------------------------
         // Load a file asynchronously, and pass the file as resolved Promise data.
         //------------------------------
-        async load_file(url: string, use_cache?: boolean) {
-            const fetch_deferred = new Deferred<any>()
-            const no_cache = split_list(localStorage.getItem('ksof.load_file.nocache') || '')
-            if (no_cache.indexOf(url) >= 0 || no_cache.indexOf('*') >= 0) {
-                use_cache = false
+        async loadFile(url: string, useCache?: boolean) {
+            const fetchDeferred = new Deferred<any>()
+            const noCache = splitList(localStorage.getItem('ksof.load_file.nocache') || '')
+            if (noCache.indexOf(url) >= 0 || noCache.indexOf('*') >= 0) {
+                useCache = false
             }
-            if (use_cache === true) {
+            if (useCache === true) {
                 try {
-                    return await this.file_cache.load(url)
+                    return await this.fileCache.load(url)
                 } catch (error) {
                     // file not in cache
                 }
@@ -454,36 +454,36 @@ declare global {
                 }
                 if (request.readyState !== 4) return
                 if (request.status >= 400 || request.status === 0) return Promise.reject(request.status)
-                if (use_cache) {
-                    await ksof.file_cache.save(url, request.response)
-                    fetch_deferred.resolve.bind(null, request.response)
+                if (useCache) {
+                    await ksof.fileCache.save(url, request.response)
+                    fetchDeferred.resolve.bind(null, request.response)
                 } else {
-                    fetch_deferred.resolve(request.response)
+                    fetchDeferred.resolve(request.response)
                 }
             }
             request.open('GET', url, true)
             request.send()
-            return fetch_deferred.promise
+            return fetchDeferred.promise
         }
 
         //------------------------------
         // Get the value of a state variable, and notify listeners.
         //------------------------------
-        get_state(state_var:string) {
-            return this.state_values[state_var]
+        getState(stateVar:string) {
+            return this.stateValues[stateVar]
         }
 
         //------------------------------
         // Set the value of a state variable, and notify listeners.
         //------------------------------
-        set_state(state_var:string, value:string) {
-            const old_value = this.state_values[state_var]
-            if (old_value === value) return
-            this.state_values[state_var] = value
+        setState(stateVar:string, value:string) {
+            const oldValue = this.stateValues[stateVar]
+            if (oldValue === value) return
+            this.stateValues[stateVar] = value
 
             // Do listener callbacks, and remove non-persistent listeners
-            const listeners = this.state_listeners[state_var]
-            const persistent_listeners:Core.StateListener[] = []
+            const listeners = this.stateListeners[stateVar]
+            const persistentListeners:Core.StateListener[] = []
             for (const idx in listeners) {
                 const listener = listeners[idx]
                 let keep = true
@@ -491,41 +491,41 @@ declare global {
                     keep = listener.persistent
                     try {
                         if (listener.callback) {
-                            listener.callback(value, old_value)
+                            listener.callback(value, oldValue)
                         }
                     } catch (e) {
                         //do nothing
                     }
                 }
-                if (keep) persistent_listeners.push(listener)
+                if (keep) persistentListeners.push(listener)
             }
-            this.state_listeners[state_var] = persistent_listeners
+            this.stateListeners[stateVar] = persistentListeners
         }
 
         //------------------------------
-        // When state of state_var changes to value, call callback.
+        // When state of stateVar changes to value, call callback.
         // If persistent === true, continue listening for additional state changes
         // If value is '*', callback will be called for all state changes.
         //------------------------------
-        wait_state(state_var:string, value:Core.StateValue, callback?: Core.StateCallback, persistent = false) {
+        waitState(stateVar:string, value:Core.StateValue, callback?: Core.StateCallback, persistent = false) {
             const promise = new Deferred<string>()
 
             // if no callback defined, set resolve as callback
             // if callback defined, set callback and resolve as callback
-            const promise_callback = callback ? ((new_value:Core.StateValue, prev_value:Core.StateValue) => { callback(new_value, prev_value); promise.resolve(new_value) }) : promise.resolve
+            const promiseCallback = callback ? ((newValue:Core.StateValue, prevValue:Core.StateValue) => { callback(newValue, prevValue); promise.resolve(newValue) }) : promise.resolve
 
-            if (this.state_listeners[state_var] === undefined) {
-                this.state_listeners[state_var] = []
+            if (this.stateListeners[stateVar] === undefined) {
+                this.stateListeners[stateVar] = []
             }
-            const current_value = this.state_values[state_var]
-            if (persistent || value !== current_value) {
-                this.state_listeners[state_var].push({ callback: promise_callback, persistent, value })
+            const currentValue = this.stateValues[stateVar]
+            if (persistent || value !== currentValue) {
+                this.stateListeners[stateVar].push({ callback: promiseCallback, persistent, value })
             }
 
             // If it's already at the desired state, call the callback immediately.
-            if (value === current_value) {
+            if (value === currentValue) {
                 try {
-                    promise_callback(value, current_value)
+                    promiseCallback(value, currentValue)
                 } catch (err) {
                     //do nothing
                 }
@@ -537,7 +537,7 @@ declare global {
         // Fire an event, which then calls callbacks for any listeners.
         //------------------------------
         trigger(event: string, ...args_: unknown[]) {
-            const listeners = this.event_listeners[event]
+            const listeners = this.eventListeners[event]
             if (listeners === undefined) return this
             const args:unknown[] = []
             Array.prototype.push.apply(args, args_)
@@ -553,27 +553,27 @@ declare global {
         // Add a listener for an event.
         //------------------------------
         on(event:string, callback: Core.UnknownCallback) {
-            if (this.event_listeners[event] === undefined) this.event_listeners[event] = []
-            this.event_listeners[event].push(callback)
+            if (this.eventListeners[event] === undefined) this.eventListeners[event] = []
+            this.eventListeners[event].push(callback)
         }
 
         //------------------------------
         // Load and install a specific file type into the DOM.
         //------------------------------
-        async #load_and_append(url:string, tag_name:string, location:string, use_cache?:boolean) {
+        async #loadAndAppend(url:string, tagname:string, location:string, useCache?:boolean) {
             url = url.replace(/"/g, '\'')
-            if (document.querySelector(`${tag_name}[uid="${url}"]`) !== null) {
+            if (document.querySelector(`${tagname}[uid="${url}"]`) !== null) {
                 return Promise.resolve(url)
             }
 
             let content:string
             try {
-                content = await this.load_file(url, use_cache)
+                content = await this.loadFile(url, useCache)
             } catch (error) {
                 return Promise.reject(url)
             }
 
-            const tag = document.createElement(tag_name)
+            const tag = document.createElement(tagname)
             tag.innerHTML = content
             tag.setAttribute('uid', url)
             const locationElem = document.querySelector(location)
@@ -586,95 +586,95 @@ declare global {
         //------------------------------
         // Load and install Javascript.
         //------------------------------
-        async load_script(url:string, use_cache?: boolean) {
-            return this.#load_and_append(url, 'script', 'body', use_cache)
+        async loadScript(url:string, useCache?: boolean) {
+            return this.#loadAndAppend(url, 'script', 'body', useCache)
         }
 
         //------------------------------
         // Load and install a CSS file.
         //------------------------------
-        async load_css(url:string, use_cache?:boolean) {
-            return this.#load_and_append(url, 'style', 'head', use_cache)
+        async loadCSS(url:string, useCache?:boolean) {
+            return this.#loadAndAppend(url, 'style', 'head', useCache)
         }
 
         //------------------------------
         // Include a list of modules.
         //------------------------------
-        async include(module_list:string): Promise<{loaded:string[]; failed:Core.FailedInclude[]}> {
+        async include(moduleList:string): Promise<{loaded:string[]; failed:Core.FailedInclude[]}> {
             await this.ready('ksof')
 
-            const include_deferred = new Deferred<{loaded:string[]; failed:Core.FailedInclude[]}>()
-            const module_names = split_list(module_list)
-            const script_cnt = module_names.length
-            if (script_cnt === 0) {
-                include_deferred.resolve({ loaded: [], failed: [] })
-                return include_deferred.promise
+            const includeDeferred = new Deferred<{loaded:string[]; failed:Core.FailedInclude[]}>()
+            const moduleNames = splitList(moduleList)
+            const scriptCount = moduleNames.length
+            if (scriptCount === 0) {
+                includeDeferred.resolve({ loaded: [], failed: [] })
+                return includeDeferred.promise
             }
 
-            const check_done = () => {
-                if (++done_cnt < script_cnt) return
-                if (failed.length === 0) include_deferred.resolve({ loaded, failed })
-                else include_deferred.reject({ error: 'Failure loading module', loaded, failed })
+            const checkDone = () => {
+                if (++doneCount < scriptCount) return
+                if (failed.length === 0) includeDeferred.resolve({ loaded, failed })
+                else includeDeferred.reject({ error: 'Failure loading module', loaded, failed })
             }
 
-            const push_loaded = (url:string) => {
+            const pushLoaded = (url:string) => {
                 loaded.push(url)
-                check_done()
+                checkDone()
             }
 
-            const push_failed = (url:string) => {
+            const pushFailed = (url:string) => {
                 failed.push({ url })
-                check_done()
+                checkDone()
             }
 
-            let done_cnt = 0
+            let doneCount = 0
             const loaded: string[] = []
             const failed: Core.FailedInclude[] = []
-            const no_cache = split_list(localStorage.getItem('ksof.include.nocache') || '')
-            for (let idx = 0; idx < module_names.length; idx++) {
-                const module_name = module_names[idx]
-                const module = supported_modules[module_name]
+            const noCache = splitList(localStorage.getItem('ksof.include.nocache') || '')
+            for (let idx = 0; idx < moduleNames.length; idx++) {
+                const moduleName = moduleNames[idx]
+                const module = supportedModules[moduleName]
                 if (!module) {
-                    failed.push({ name: module_name })
-                    check_done()
+                    failed.push({ name: moduleName })
+                    checkDone()
                     continue
                 }
-                let await_load = this.include_promises[module_name]
-                const use_cache = (no_cache.indexOf(module_name) < 0) && (no_cache.indexOf('*') < 0)
-                if (!use_cache) ksof.file_cache.delete(module.url)
-                if (await_load === undefined) {
-                    this.include_promises[module_name] = await_load = this.load_script(module.url, use_cache)
+                let awaitLoad = this.includePromises[moduleName]
+                const useCache = (noCache.indexOf(moduleName) < 0) && (noCache.indexOf('*') < 0)
+                if (!useCache) ksof.fileCache.delete(module.url)
+                if (awaitLoad === undefined) {
+                    this.includePromises[moduleName] = awaitLoad = this.loadScript(module.url, useCache)
                 }
-                await_load.then(push_loaded, push_failed)
+                awaitLoad.then(pushLoaded, pushFailed)
             }
 
-            return include_deferred.promise
+            return includeDeferred.promise
         }
 
         //------------------------------
         // Wait for all modules to report that they are ready
         //------------------------------
-        ready(module_list:string): Promise<'ready' | 'ready'[]> {
-            const module_names = split_list(module_list)
+        ready(moduleList:string): Promise<'ready' | 'ready'[]> {
+            const moduleNames = splitList(moduleList)
 
-            const ready_promises: Promise<'ready'>[] = []
-            for (const idx in module_names) {
-                const module_name = module_names[idx]
-                ready_promises.push(this.wait_state(`ksof.${module_name}`, 'ready') as Promise<'ready'>)
+            const readyPromises: Promise<'ready'>[] = []
+            for (const idx in moduleNames) {
+                const moduleName = moduleNames[idx]
+                readyPromises.push(this.waitState(`ksof.${moduleName}`, 'ready') as Promise<'ready'>)
             }
 
-            if (ready_promises.length === 0) {
+            if (readyPromises.length === 0) {
                 return Promise.resolve('ready')
-            } else if (ready_promises.length === 1) {
-                return ready_promises[0]
+            } else if (readyPromises.length === 1) {
+                return readyPromises[0]
             } else {
-                return Promise.all(ready_promises)
+                return Promise.all(readyPromises)
             }
         }
 
         // Throws Error if observer with the given name or query already exists
-        add_dom_observer(observer:Core.DomObserver) {
-            for (const _observer of this.dom_observers) {
+        addDomObserver(observer:Core.DomObserver) {
+            for (const _observer of this.domObservers) {
                 if (_observer.name == observer.name) {
                     throw new Error(`Observer with the name ${observer.name} already exists`)
                 }
@@ -683,17 +683,17 @@ declare global {
                 }
             }
 
-            this.dom_observers.push(observer)
-            this.check_dom_observer(observer)
+            this.domObservers.push(observer)
+            this.checkDomObserver(observer)
         }
 
-        dom_observer_state(name: string) {
+        domObserverState(name: string) {
             return `ksof.dom_observer.${name}`
         }
 
-        check_dom_observer(observer:Core.DomObserver) {
+        checkDomObserver(observer:Core.DomObserver) {
             const visible = (document.querySelector(observer.query) != null)
-            this.set_state(this.dom_observer_state(observer.name), visible ? 'present' : 'absent')
+            this.setState(this.domObserverState(observer.name), visible ? 'present' : 'absent')
         }
     }
 
@@ -707,13 +707,13 @@ declare global {
         //------------------------------
         // Compare the framework version against a specific version.
         //------------------------------
-        compare_to(client_version:string) {
-            const client_ver = client_version.split('.').map(d => Number(d))
-            const ksof_ver = version.split('.').map(d => Number(d))
-            const len = Math.max(client_ver.length, ksof_ver.length)
+        compareTo(clientVersion:string) {
+            const clientVer = clientVersion.split('.').map(d => Number(d))
+            const ksofVer = version.split('.').map(d => Number(d))
+            const len = Math.max(clientVer.length, ksofVer.length)
             for (let idx = 0; idx < len; idx++) {
-                const a = client_ver[idx] || 0
-                const b = ksof_ver[idx] || 0
+                const a = clientVer[idx] || 0
+                const b = ksofVer[idx] || 0
                 if (a === b) continue
                 if (a < b) return 'newer'
                 return 'older'
@@ -725,117 +725,117 @@ declare global {
     class FileCache implements Core.FileCache {
         dir: { [key: string]: {
                 added: IsoDateString
-                last_loaded: IsoDateString
+                lastLoaded: IsoDateString
             }
         }
 
-        sync_timer: number | undefined
+        syncTimer: number | undefined
 
         constructor() {
             this.dir = {}
         }
 
         //------------------------------
-        // Lists the content of the file_cache.
+        // Lists the content of the fileCache.
         //------------------------------
         ls() {
-            console.log(Object.keys(ksof.file_cache.dir).sort()
+            console.log(Object.keys(ksof.fileCache.dir).sort()
                 .join('\n'))
         }
 
         //------------------------------
-        // Clear the file_cache database.
+        // Clear the fileCache database.
         //------------------------------
         async clear() {
-            const db = await file_cache_open()
+            const db = await fileCacheOpen()
 
-            const clear_deferred = new Deferred<void | Event>()
-            ksof.file_cache.dir = {}
+            const clearDeferred = new Deferred<void | Event>()
+            ksof.fileCache.dir = {}
             if (db === null) {
-                return clear_deferred.resolve()
+                return clearDeferred.resolve()
             }
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
             store.clear()
-            transaction.oncomplete = clear_deferred.resolve
-            return clear_deferred.promise
+            transaction.oncomplete = clearDeferred.resolve
+            return clearDeferred.promise
         }
 
         //------------------------------
-        // Delete a file from the file_cache database.
+        // Delete a file from the fileCache database.
         //------------------------------
         async delete(pattern: string | RegExp) {
-            const db = await file_cache_open()
+            const db = await fileCacheOpen()
 
-            const del_deferred = new Deferred<string[]>()
-            if (db === null) return del_deferred.resolve([])
+            const delDeferred = new Deferred<string[]>()
+            if (db === null) return delDeferred.resolve([])
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
-            const files = Object.keys(ksof.file_cache.dir).filter(function(file) {
+            const files = Object.keys(ksof.fileCache.dir).filter((file) => {
                 if (pattern instanceof RegExp) {
                     return file.match(pattern) !== null
                 } else {
                     return (file === pattern)
                 }
             })
-            files.forEach(function(file) {
+            files.forEach((file) => {
                 store.delete(file)
-                delete ksof.file_cache.dir[file]
+                delete ksof.fileCache.dir[file]
             })
-            this.dir_save()
-            transaction.oncomplete = del_deferred.resolve.bind(null, files)
-            return del_deferred.promise
+            this.dirSave()
+            transaction.oncomplete = delDeferred.resolve.bind(null, files)
+            return delDeferred.promise
         }
 
         //------------------------------
-        // Save a the file_cache directory contents.
+        // Save a the fileCache directory contents.
         //------------------------------
-        dir_save(immediately = false) {
+        dirSave(immediately = false) {
             const delay = (immediately ? 0 : 2000)
 
-            if (this.sync_timer) {
-                clearTimeout(this.sync_timer)
+            if (this.syncTimer) {
+                clearTimeout(this.syncTimer)
             }
 
-            this.sync_timer = setTimeout(() => {
-                file_cache_open()
+            this.syncTimer = setTimeout(() => {
+                fileCacheOpen()
                     .then((db) => {
                         if (!db) {
                             return
                         }
-                        this.sync_timer = undefined
+                        this.syncTimer = undefined
                         const transaction = db.transaction('files', 'readwrite')
                         const store = transaction.objectStore('files')
-                        store.put({ name: '[dir]', content: JSON.stringify(ksof.file_cache.dir) })
+                        store.put({ name: '[dir]', content: JSON.stringify(ksof.fileCache.dir) })
                     })
             }, delay)
         }
 
         //------------------------------
-        // Force immediate save of file_cache directory.
+        // Force immediate save of fileCache directory.
         //------------------------------
         flush() {
-            this.dir_save(true /* immediately */)
+            this.dirSave(true /* immediately */)
         }
 
         //------------------------------
-        // Load a file from the file_cache database.
+        // Load a file from the fileCache database.
         //------------------------------
         async load(name:string) {
-            const db = await file_cache_open()
+            const db = await fileCacheOpen()
             if (!db) {
                 return Promise.reject()
             }
 
-            if (ksof.file_cache.dir[name] === undefined) {
+            if (ksof.fileCache.dir[name] === undefined) {
                 return Promise.reject(name)
             }
-            const load_deferred = new Deferred<string | { [key: string]: any }>()
+            const loadDeferred = new Deferred<string | { [key: string]: any }>()
             const transaction = db.transaction('files', 'readonly')
             const store = transaction.objectStore('files')
             const request = store.get(name)
-            this.dir[name].last_loaded = new Date().toISOString() as IsoDateString
-            this.dir_save()
+            this.dir[name].lastLoaded = new Date().toISOString() as IsoDateString
+            this.dirSave()
 
             request.onsuccess = (event: Event) => {
                 if (!(event.target instanceof IDBRequest)) {
@@ -843,52 +843,52 @@ declare global {
                 }
 
                 if (event.target.result === undefined) {
-                    load_deferred.reject(name)
+                    loadDeferred.reject(name)
                 } else {
-                    load_deferred.resolve(event.target.result.content)
+                    loadDeferred.resolve(event.target.result.content)
                 }
             }
 
             request.onerror = () => {
-                load_deferred.reject(name)
+                loadDeferred.reject(name)
             }
 
-            return load_deferred.promise
+            return loadDeferred.promise
         }
 
         //------------------------------
-        // Save a file into the file_cache database.
+        // Save a file into the fileCache database.
         //------------------------------
-        async save(name:string, content:string | { [key: string]: any }, extra_attribs:object = {}) {
-            const db = await file_cache_open()
+        async save(name:string, content:string | { [key: string]: any }, extraAttribs:object = {}) {
+            const db = await fileCacheOpen()
 
             if (db === null) return Promise.resolve(name)
 
-            const save_deferred = new Deferred<string>()
+            const saveDeferred = new Deferred<string>()
             const transaction = db.transaction('files', 'readwrite')
             const store = transaction.objectStore('files')
             store.put({ name, content })
             const now = new Date().toISOString() as IsoDateString
-            ksof.file_cache.dir[name] = Object.assign({ added: now, last_loaded: now }, extra_attribs)
-            ksof.file_cache.dir_save(true /* immediately */)
-            transaction.oncomplete = save_deferred.resolve.bind(null, name)
-            return save_deferred.promise
+            ksof.fileCache.dir[name] = Object.assign({ added: now, lastLoaded: now }, extraAttribs)
+            ksof.fileCache.dirSave(true /* immediately */)
+            transaction.oncomplete = saveDeferred.resolve.bind(null, name)
+            return saveDeferred.promise
         }
 
         //------------------------------
         // Process no-cache requests.
         //------------------------------
-        file_nocache(list:string | string[] | undefined) {
+        fileNocache(list:string | string[] | undefined) {
             if (list === undefined) {
-                list = split_list(localStorage.getItem('ksof.include.nocache') || '')
-                list = list.concat(split_list(localStorage.getItem('ksof.load_file.nocache') || ''))
+                list = splitList(localStorage.getItem('ksof.include.nocache') || '')
+                list = list.concat(splitList(localStorage.getItem('ksof.load_file.nocache') || ''))
                 console.log(list.join(','))
             } else if (typeof list === 'string') {
-                const no_cache = split_list(list)
+                const noCache = splitList(list)
                 const modules = [], urls = []
-                for (let idx = 0; idx < no_cache.length; idx++) {
-                    const item = no_cache[idx]
-                    if (supported_modules[item] !== undefined) {
+                for (let idx = 0; idx < noCache.length; idx++) {
+                    const item = noCache[idx]
+                    if (supportedModules[item] !== undefined) {
                         modules.push(item)
                     } else {
                         urls.push(item)
@@ -904,13 +904,13 @@ declare global {
 
     //########################################################################
 
-    const split_list = (str: string) => {
+    const splitList = (str: string) => {
         // eslint-disable-next-line no-irregular-whitespace
         return str.replace(/、/g, ',').replace(/[\s　]+/g, ' ')
             .trim()
             .replace(/ *, */g, ',')
             .split(',')
-            .filter(function(name) { return (name.length > 0) })
+            .filter((name) => { return (name.length > 0) })
     }
 
     class Deferred<T> {
@@ -933,26 +933,26 @@ declare global {
 
     //########################################################################
 
-    let file_cache_open_promise: Promise<IDBDatabase | null> | undefined
+    let fileCacheOpenPromise: Promise<IDBDatabase | null> | undefined
 
     //------------------------------
-    // Open the file_cache database (or return handle if open).
+    // Open the fileCache database (or return handle if open).
     //------------------------------
-    const file_cache_open = async () => {
-        if (file_cache_open_promise) return file_cache_open_promise
-        const open_deferred = new Deferred<IDBDatabase | null>()
+    const fileCacheOpen = async () => {
+        if (fileCacheOpenPromise) return fileCacheOpenPromise
+        const openDeferred = new Deferred<IDBDatabase | null>()
 
         const error = () => {
             console.log('indexedDB could not open!')
-            ksof.file_cache.dir = {}
-            if (ignore_missing_indexeddb) {
-                open_deferred.resolve(null)
+            ksof.fileCache.dir = {}
+            if (ignoreMissingIndexeddb) {
+                openDeferred.resolve(null)
             } else {
-                open_deferred.reject()
+                openDeferred.reject()
             }
         }
 
-        const upgrade_db = (event:IDBVersionChangeEvent) => {
+        const upgradeDB = (event:IDBVersionChangeEvent) => {
             if (!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
@@ -961,7 +961,7 @@ declare global {
             db.createObjectStore('files', { keyPath: 'name' })
         }
 
-        const get_dir = (event:Event) => {
+        const getDir = (event:Event) => {
             if (!(event.target instanceof IDBOpenDBRequest)) {
                 return
             }
@@ -969,37 +969,37 @@ declare global {
             const transaction = db.transaction('files', 'readonly')
             const store = transaction.objectStore('files')
             const request = store.get('[dir]')
-            request.onsuccess = process_dir
-            transaction.oncomplete = open_deferred.resolve.bind(null, db)
-            open_deferred.promise.then(setTimeout.bind(null, file_cache_cleanup, 10000))
+            request.onsuccess = processDir
+            transaction.oncomplete = openDeferred.resolve.bind(null, db)
+            openDeferred.promise.then(setTimeout.bind(null, fileCacheCleanup, 10000))
         }
 
-        const process_dir = (event: Event) => {
+        const processDir = (event: Event) => {
             if (!(event.target instanceof IDBRequest)) {
                 return
             }
             const result = event.target.result
 
             if (result === undefined) {
-                ksof.file_cache.dir = {}
+                ksof.fileCache.dir = {}
             } else {
-                ksof.file_cache.dir = JSON.parse(result.content)
+                ksof.fileCache.dir = JSON.parse(result.content)
             }
         }
 
-        file_cache_open_promise = open_deferred.promise
-        const request = indexedDB.open('ksof.file_cache')
-        request.onupgradeneeded = upgrade_db
-        request.onsuccess = get_dir
+        fileCacheOpenPromise = openDeferred.promise
+        const request = indexedDB.open('ksof.fileCache')
+        request.onupgradeneeded = upgradeDB
+        request.onsuccess = getDir
         request.onerror = error
-        return open_deferred.promise
+        return openDeferred.promise
     }
 
     //------------------------------
     // The current time, offset by the specified days
     //------------------------------
-    const current_time_offset = (days_offset:number) => {
-        const offset = (24 * 60 * 60 * 1000) * days_offset
+    const currentTimeOffset = (daysOffset:number) => {
+        const offset = (24 * 60 * 60 * 1000) * daysOffset
         const date = new Date()
         date.setTime(date.getTime() + offset)
         return date
@@ -1008,41 +1008,41 @@ declare global {
     //------------------------------
     // Remove files that haven't been accessed in a while.
     //------------------------------
-    const file_cache_cleanup = () => {
-        const threshold = current_time_offset(-14)
-        const old_files = []
-        for (const fname in ksof.file_cache.dir) {
+    const fileCacheCleanup = () => {
+        const threshold = currentTimeOffset(-14)
+        const oldFiles = []
+        for (const fname in ksof.fileCache.dir) {
             if (fname.match(/^ksof\.settings\./)) continue // Don't flush settings files.
-            const fdate = new Date(ksof.file_cache.dir[fname].last_loaded)
-            if (fdate < threshold) old_files.push(fname)
+            const fdate = new Date(ksof.fileCache.dir[fname].lastLoaded)
+            if (fdate < threshold) oldFiles.push(fname)
         }
-        if (old_files.length === 0) return
-        console.log(`Cleaning out ${old_files.length} old file(s) from "ksof.file_cache":`)
-        for (const fnum in old_files) {
-            console.log(`  ${Number(fnum) + 1}: ${old_files[fnum]}}`)
-            ksof.file_cache.delete(old_files[fnum])
+        if (oldFiles.length === 0) return
+        console.log(`Cleaning out ${oldFiles.length} old file(s) from "ksof.fileCache":`)
+        for (const fnum in oldFiles) {
+            console.log(`  ${Number(fnum) + 1}: ${oldFiles[fnum]}}`)
+            ksof.fileCache.delete(oldFiles[fnum])
         }
     }
 
-    const init_page_dom_observers = () => {
-        const page_queries = new Map([
-            ['itemPage',       '#app.kamesame #item .facts .fact'],
+    const initPageDomObservers = () => {
+        const pageQueries = new Map([
+            ['item_page',       '#app.kamesame #item .facts .fact'],
             ['review',         '#app.kamesame #study .meaning'],
-            ['reviewSummary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
-            ['lessonsSummary', '#app.kamesame #summary .item-list li a.item'],
+            ['review_summary',  '#app.kamesame #reviews #reviewsSummary .level-bars'],
+            ['lessons_summary', '#app.kamesame #summary .item-list li a.item'],
             ['lessons',        '#app.kamesame #lessons #lessonsFromLists.section'],
             ['search',         '#app.kamesame #search form .search-bar #searchQuery'],
-            ['searchResult',   '#app.kamesame #search .fancy-item-list .actions'],
+            ['search_result',   '#app.kamesame #search .fancy-item-list .actions'],
             ['home',           '#app.kamesame #home .section .stats'],
             ['account',        '#app.kamesame #account .fun-stuff'],
         ])
 
-        const set_state_ready = () => { ksof.set_state('ksof.document', 'ready') }
+        const setStateReady = () => { ksof.setState('ksof.document', 'ready') }
 
-        for (const query of page_queries) {
+        for (const query of pageQueries) {
             const observer = { name: `page.${query[0]}`, query: query[1] }
-            ksof.add_dom_observer(observer)
-            ksof.wait_state(ksof.dom_observer_state(observer.name), 'present', set_state_ready)
+            ksof.addDomObserver(observer)
+            ksof.waitState(ksof.domObserverState(observer.name), 'present', setStateReady)
         }
     }
 
@@ -1051,46 +1051,46 @@ declare global {
     // Body Changes Observation
     //------------------------------
 
-    const on_body_mutated = () => {
-        for (const observer of ksof.dom_observers) {
-            ksof.check_dom_observer(observer)
+    const onBodyMutated = () => {
+        for (const observer of ksof.domObservers) {
+            ksof.checkDomObserver(observer)
         }
     }
 
     // Because KameSame loads its DOM data after the doc is already loaded, we need to make an additional check
     // to see if the DOM elements have been added to the body already before we can mark the doc as truly ready
-    const init_dom_observer = () => {
-        const body_observer = new MutationObserver(on_body_mutated)
+    const initDomObserver = () => {
+        const bodyObserver = new MutationObserver(onBodyMutated)
 
-        body_observer.observe(document.body, { childList: true, subtree: true })
+        bodyObserver.observe(document.body, { childList: true, subtree: true })
 
         // Add default Observers
-        ksof.add_dom_observer({ name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item' })
+        ksof.addDomObserver({ name: 'study_outcome', query: '#app.kamesame #study .outcome p a.item' })
 
         // TODO
         // HACK THAT SHOULD BE REMOVED ONCE ISSUE FIXED:
-        // On some of the KameSame pages (like during reviews) body_observer never automatically
+        // On some of the KameSame pages (like during reviews) bodyObserver never automatically
         // processes the mutations it records. I have no idea why. On the dicionary entry pages
         // this isn't a problem. So we also manually process these events instead once in a while
-        const check_observer = () => {
-            const mutations = body_observer.takeRecords()
+        const checkObserver = () => {
+            const mutations = bodyObserver.takeRecords()
             if (mutations.length > 0) {
-                on_body_mutated()
+                onBodyMutated()
             }
-            setTimeout(check_observer, 100)
+            setTimeout(checkObserver, 100)
         }
-        check_observer()
+        checkObserver()
     }
 
-    const on_document_loaded = () => {
-        init_dom_observer()
+    const onDocumentLoaded = () => {
+        initDomObserver()
 
-        init_page_dom_observers()
+        initPageDomObservers()
 
         window.addEventListener('locationchange', () => {
-            ksof.set_state('ksof.document', '') // Reset document state when navigating to different page
+            ksof.setState('ksof.document', '') // Reset document state when navigating to different page
 
-            setTimeout(() => { ksof.set_state('ksof.document', 'ready') }, 2000) // fallback if unknown page -> assume everything loaded after 2 seconds
+            setTimeout(() => { ksof.setState('ksof.document', 'ready') }, 2000) // fallback if unknown page -> assume everything loaded after 2 seconds
 
             ksof.trigger('ksof.page_changed')
         })
@@ -1103,14 +1103,14 @@ declare global {
     const startup = () => {
         // Start doc ready check once doc is loaded
         if (document.readyState === 'complete') {
-            on_document_loaded()
+            onDocumentLoaded()
         } else {
-            window.addEventListener('load', on_document_loaded, false)  // Notify listeners that we are ready.
+            window.addEventListener('load', onDocumentLoaded, false)  // Notify listeners that we are ready.
         }
 
-        // Open cache, so ksof.file_cache.dir is available to console immediately.
-        file_cache_open()
-        ksof.set_state('ksof.ksof', 'ready')
+        // Open cache, so ksof.fileCache.dir is available to console immediately.
+        fileCacheOpen()
+        ksof.setState('ksof.ksof', 'ready')
     }
 
     // eslint-disable-next-line no-var

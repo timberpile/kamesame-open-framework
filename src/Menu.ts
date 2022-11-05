@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Menu module
 // @namespace   timberpile
 // @description Menu module for KameSame Open Framework
-// @version     0.1.2
+// @version     0.2.0.1
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -26,38 +26,39 @@ import { Core, Menu } from './ksof'
             this.submenus = new Map()
             this.configs = []
 
-            const reinstall_menu = () => {
+            const reinstallMenu = () => {
                 if (this.style) {
                     this.style.remove()
                 }
-                this.style = this.#install_style()
+                this.style = this.#installStyle()
 
                 if (this.menu) {
                     this.menu.remove()
                 }
                 try {
-                    this.menu = this.#install_menu()
+                    this.menu = this.#installMenu()
+                    this.menu.setAttribute('display', 'none')
                 } catch (error) {
                     throw new Error(`Can't install ksof menu: ${error}`)
                 }
             }
 
-            ksof.add_dom_observer({ name: 'menu', query: '#scripts-menu' })
-            ksof.wait_state(ksof.dom_observer_state('menu'), 'absent', () => {
-                reinstall_menu()
-                const old_configs = this.configs
+            ksof.addDomObserver({ name: 'menu', query: '#scripts-menu' })
+            ksof.waitState(ksof.domObserverState('menu'), 'absent', () => {
+                reinstallMenu()
+                const oldConfigs = this.configs
                 this.configs = []
-                for (const config of old_configs) {
-                    insert_script_link(config)
+                for (const config of oldConfigs) {
+                    insertScriptLink(config)
                 }
             }, true)
         }
 
         get header () {
-            return this.dropdown_menu?.querySelector(':scope > li.scripts-header') as HTMLLIElement
+            return this.dropdownMenu?.querySelector(':scope > li.scripts-header') as HTMLLIElement
         }
 
-        get scripts_icon() {
+        get scriptsIcon() {
             if (ksof.pageInfo.on == 'review') {
                 return this.menu.querySelector(':scope > a.scripts-icon') as HTMLLinkElement
             }
@@ -67,11 +68,11 @@ import { Core, Menu } from './ksof'
             }
         }
 
-        get dropdown_menu() {
+        get dropdownMenu() {
             return this.menu.querySelector('ul.dropdown-menu') as HTMLUListElement
         }
 
-        #install_style() {
+        #installStyle() {
             const style = document.head.querySelector('style[name="scripts_submenu"]')
             if (style) {
                 return style as HTMLStyleElement
@@ -106,7 +107,7 @@ import { Core, Menu } from './ksof'
         //------------------------------
         // Install 'Scripts' header in menu, if not present.
         //------------------------------
-        #install_menu() {
+        #installMenu() {
             // Throws Error
 
             let menu = document.querySelector('#scripts-menu') as HTMLDivElement | null
@@ -122,10 +123,10 @@ import { Core, Menu } from './ksof'
 
             // Install html.
             if (page == 'review') {
-                const exit_button = document.querySelector('.header a.exit')
-                if (!exit_button) throw new Error('Exit button not found')
+                const exitButton = document.querySelector('.header a.exit')
+                if (!exitButton) throw new Error('Exit button not found')
 
-                exit_button.insertAdjacentHTML('afterend', `
+                exitButton.insertAdjacentHTML('afterend', `
                 <div id="scripts-menu" class="scripts-menu-icon">
                     <a class="scripts-icon state" href="#"><i title="Script Menu">⚙️</i></a>
                     <ul class="dropdown-menu">
@@ -134,10 +135,10 @@ import { Core, Menu } from './ksof'
                 </div>`)
             }
             else {
-                const search_icon = find_search_icon()
-                if (!search_icon) throw new Error('Search icon not found')
+                const searchIcon = findSearchIcon()
+                if (!searchIcon) throw new Error('Search icon not found')
 
-                search_icon.parentElement?.insertAdjacentHTML('afterend', `
+                searchIcon.parentElement?.insertAdjacentHTML('afterend', `
                 <li>
                     <div id="scripts-menu" class="scripts-menu-icon">
                         <a class="scripts-icon" href="#">
@@ -161,13 +162,13 @@ import { Core, Menu } from './ksof'
             }
             this.menu = menu
 
-            this.scripts_icon.addEventListener('click', (e) => {
+            this.scriptsIcon.addEventListener('click', (e) => {
                 this.menu.classList.toggle('open')
-                if (this.menu.classList.contains('open')) document.body.addEventListener('click', body_click)
+                if (this.menu.classList.contains('open')) document.body.addEventListener('click', bodyClick)
                 e.stopPropagation()
             })
 
-            const submenu_click = (e: Event) => {
+            const submenuClick = (e: Event) => {
                 const target = e.target as HTMLElement
                 if (!target.matches('.scripts-submenu>a')) return false
                 const link = target.parentElement
@@ -199,53 +200,53 @@ import { Core, Menu } from './ksof'
                 }
                 // If we opened the menu, listen for off-menu clicks.
                 if (link.classList.contains('open')) {
-                    document.body.addEventListener('click', body_click)
+                    document.body.addEventListener('click', bodyClick)
                 } else {
-                    document.body.removeEventListener('click', body_click)
+                    document.body.removeEventListener('click', bodyClick)
                 }
                 e.stopPropagation()
             }
 
             // Click to open/close sub-menu.
-            this.menu.addEventListener('click', submenu_click)
+            this.menu.addEventListener('click', submenuClick)
 
             return menu
         }
 
-        get_submenu(name: string) {
-            const safe_name = escape_attr(name)
-            return this.submenus.get(safe_name)
+        getSubmenu(name: string) {
+            const safeName = escapeAttr(name)
+            return this.submenus.get(safeName)
         }
 
         //------------------------------
         // Install Submenu, if not present.
         //------------------------------
-        install_scripts_submenu(name: string) {
+        installScriptsSubmenu(name: string) {
             // Abort if already installed.
-            const sub = this.get_submenu(name)
+            const sub = this.getSubmenu(name)
             if (sub) {
                 return sub
             }
 
-            const safe_name = escape_attr(name)
-            const safe_text = escape_text(name)
+            const safeName = escapeAttr(name)
+            const safeText = escapeText(name)
 
-            const link_element = document.createElement('a')
-            link_element.href = '#'
-            link_element.innerText = safe_text
-            const dropdown_menu = document.createElement('ul')
-            dropdown_menu.className = 'dropdown-menu'
+            const linkElement = document.createElement('a')
+            linkElement.href = '#'
+            linkElement.innerText = safeText
+            const dropdownMenu = document.createElement('ul')
+            dropdownMenu.className = 'dropdown-menu'
             const submenu = document.createElement('li')
-            submenu.setAttribute('name', safe_name)
-            submenu.appendChild(link_element)
-            submenu.appendChild(dropdown_menu)
-            this.dropdown_menu.appendChild(submenu)
+            submenu.setAttribute('name', safeName)
+            submenu.appendChild(linkElement)
+            submenu.appendChild(dropdownMenu)
+            this.dropdownMenu.appendChild(submenu)
 
-            this.submenus.set(safe_name, submenu)
+            this.submenus.set(safeName, submenu)
 
-            const menu_contents = this.dropdown_menu.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
-            if (!menu_contents) return undefined
-            for (const node of Array.from(menu_contents).sort(sort_name)) {
+            const menuContents = this.dropdownMenu.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
+            if (!menuContents) return undefined
+            for (const node of Array.from(menuContents).sort(sortName)) {
                 // TODO why append again without removing first?
                 node.parentNode?.append(node)
             }
@@ -254,16 +255,14 @@ import { Core, Menu } from './ksof'
     }
 
     ksof.Menu = {
-        insert_script_link,
+        insertScriptLink,
         ui: new MenuUi(),
     }
 
     const ui = ksof.Menu.ui as MenuUi
 
-    ui.menu.setAttribute('display', 'none')
-
-    const escape_attr = (attr: string) => { return attr.replace(/"/g, '\'') }
-    const escape_text = (text: string) => { return text.replace(/[<&>]/g, (ch) => {
+    const escapeAttr = (attr: string) => { return attr.replace(/"/g, '\'') }
+    const escapeText = (text: string) => { return text.replace(/[<&>]/g, (ch) => {
         switch (ch) {
         case '<':
             return '&lt'
@@ -276,30 +275,30 @@ import { Core, Menu } from './ksof'
         }
     }) }
 
-    const find_search_icon = () => {
-        const text_div = Array.from(document.querySelectorAll('#nav_container .real ul li a div.icon div'))
+    const findSearchIcon = () => {
+        const textDiv = Array.from(document.querySelectorAll('#nav_container .real ul li a div.icon div'))
             .find(el => el.textContent === '🔍')
-        if (!text_div) {
+        if (!textDiv) {
             return undefined
         }
-        return text_div.parentElement?.parentElement as HTMLLinkElement
+        return textDiv.parentElement?.parentElement as HTMLLinkElement
     }
 
     //------------------------------
     // Handler that closes menus when clicking outside of menu.
     //------------------------------
-    const body_click = () => {
+    const bodyClick = () => {
         ui.menu.classList.remove('open')
         for (const submenu of document.querySelectorAll('.scripts-submenu.open')) {
             submenu.classList.remove('open')
         }
-        document.body.removeEventListener('click', body_click)
+        document.body.removeEventListener('click', bodyClick)
     }
 
     //------------------------------
     // Sort menu items
     //------------------------------
-    const sort_name = (a:Element, b:Element) => {
+    const sortName = (a:Element, b:Element) => {
         const a1 = a.querySelector('a')
         if (!a1) return -1
         const b1 = b.querySelector('a')
@@ -312,11 +311,11 @@ import { Core, Menu } from './ksof'
     // Inserts script link into Kamesame menu.
     //------------------------------
     // eslint-disable-next-line func-style
-    function insert_script_link(config: Menu.Config) {
+    function insertScriptLink(config: Menu.Config) {
         // Abort if the script already exists
-        const link_id = `${config.name}_script_link`
-        const link_text = escape_text(config.title)
-        if (document.querySelector(`#${link_id}`)) return
+        const linkId = `${config.name}_script_link`
+        const linkText = escapeText(config.title)
+        if (document.querySelector(`#${linkId}`)) return
 
         if (ui.configs.indexOf(config) >= 0) return
         ui.configs.push(config)
@@ -326,14 +325,14 @@ import { Core, Menu } from './ksof'
         }
 
         let classes
-        const scripts_header = ui.header
-        if (!scripts_header) return
+        const scriptsHeader = ui.header
+        if (!scriptsHeader) return
         const link = document.createElement('li')
-        link.id = link_id
+        link.id = linkId
         link.setAttribute('name', config.name)
-        link.innerHTML = `<a href="#">${link_text}</a>`
+        link.innerHTML = `<a href="#">${linkText}</a>`
         if (config.submenu) {
-            const submenu = ui.install_scripts_submenu(config.submenu)
+            const submenu = ui.installScriptsSubmenu(config.submenu)
             if (!submenu) {
                 return
             }
@@ -345,31 +344,31 @@ import { Core, Menu } from './ksof'
             }
 
             classes = ['sitemap__page']
-            if (config.class) classes.push(config.class_html || '')
+            if (config.class) classes.push(config.classHTML || '')
             link.setAttribute('class', classes.join(' '))
-            link.innerHTML = `<a href="#">${link_text}</a>`
+            link.innerHTML = `<a href="#">${linkText}</a>`
             menu.append(link)
         } else {
             classes = ['sitemap__page', 'script-link']
-            if (config.class) classes.push(config.class_html || '')
+            if (config.class) classes.push(config.classHTML || '')
             link.setAttribute('class', classes.join(' '))
             if (ksof.pageInfo.on == 'review') {
-                scripts_header.after(link)
+                scriptsHeader.after(link)
             } else {
-                scripts_header.append(link)
+                scriptsHeader.append(link)
             }
         }
 
-        const menu_contents = scripts_header.parentElement?.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
-        if (menu_contents) {
-            for (const node of Array.from(menu_contents).sort(sort_name)) {
+        const menuContents = scriptsHeader.parentElement?.querySelectorAll(':scope > .scripts-submenu, :scope > .script-link')
+        if (menuContents) {
+            for (const node of Array.from(menuContents).sort(sortName)) {
                 node.parentNode?.append(node)
             }
         }
 
         // Add a callback for when the link is clicked.
-        document.querySelector(`#${link_id}`)?.addEventListener('click', function(e) {
-            document.body.removeEventListener('click', body_click)
+        document.querySelector(`#${linkId}`)?.addEventListener('click', function(e) {
+            document.body.removeEventListener('click', bodyClick)
             document.querySelector('#scripts-menu')?.classList.remove('open')
             for (const submenu of document.querySelectorAll('.scripts-submenu')) {
                 submenu.classList.remove('open')
@@ -378,14 +377,14 @@ import { Core, Menu } from './ksof'
             if (temp) {
                 const temp2 = temp.parentElement?.querySelector('[data-expandable-navigation-target],[data-navigation-section-toggle]') as HTMLElement
                 temp2.click()
-                const nav_toggle = document.querySelector('.navigation__toggle') as HTMLButtonElement
-                if (nav_toggle.offsetWidth > 0 || nav_toggle.offsetWidth > 0) nav_toggle.click()
+                const navToggle = document.querySelector('.navigation__toggle') as HTMLButtonElement
+                if (navToggle.offsetWidth > 0 || navToggle.offsetWidth > 0) navToggle.click()
             }
-            config.on_click(e)
+            config.onClick(e)
             return false
         })
     }
 
     // Delay guarantees include() callbacks are called before ready() callbacks.
-    setTimeout(() => { ksof.set_state('ksof.Menu', 'ready') }, 0)
+    setTimeout(() => { ksof.setState('ksof.Menu', 'ready') }, 0)
 })(window)

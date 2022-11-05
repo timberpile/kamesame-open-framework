@@ -63,6 +63,7 @@
         "comma-dangle": ["error", "always-multiline"],
         "radix": "error",
         "no-new-wrappers": "error",
-        "new-cap": "error"
+        "new-cap": "error",
+        "camelcase": "error"
     }
 }

@@ -19,24 +19,24 @@ export declare namespace Core {
         dir: {
             [key: string]: {
                 added: IsoDateString
-                last_loaded: IsoDateString
+                lastLoaded: IsoDateString
             }
         }
-        sync_timer: number | undefined
+        syncTimer: number | undefined
 
         ls: () => void
         clear: () => Promise<void | Event>
         delete: (pattern: string | RegExp) => Promise<void | string[]>
-        dir_save: (immediately:boolean) => void
+        dirSave: (immediately:boolean) => void
         flush: () => void
         load: (name:string) => Promise<string | { [key: string]: any }> // TODO raw string really right type?
-        save: (name:string, content: string | { [key: string]: any }, extra_attribs?:object) => Promise<string>
-        file_nocache: (list:string | string[] | undefined) => void
+        save: (name:string, content: string | { [key: string]: any }, extraAttribs?:object) => Promise<string>
+        fileNocache: (list:string | string[] | undefined) => void
     }
 
     export interface Version {
         value: string
-        compare_to: (needed_version:string) => 'older' | 'same' | 'newer'
+        compareTo: (neededVersion:string) => 'older' | 'same' | 'newer'
     }
 
     export type FailedInclude = {
@@ -44,7 +44,7 @@ export declare namespace Core {
         url?:string
     }
 
-    export type StateCallback = (new_value:StateValue, prev_value:StateValue) => void
+    export type StateCallback = (newValue:StateValue, prevValue:StateValue) => void
 
     export type StateListener = {
         callback?: StateCallback
@@ -57,8 +57,8 @@ export declare namespace Core {
     export type AnswerOutcome = 'exactly_correct' | 'reading_correct' | 'alternative_match_completion' | 'alternative_match' | 'incorrect'
 
     export interface ReviewInfo {
-        answer_correct: AnswerOutcome | null
-        review_type: 'production' | 'recognition' | null
+        answerCorrect: AnswerOutcome | null
+        reviewType: 'production' | 'recognition' | null
     }
 
     export interface ItemInfo {
@@ -66,8 +66,8 @@ export declare namespace Core {
         meanings: string[] | null
         readings: string[] | null
         variations: string[] | null
-        parts_of_speech: string[] | null
-        wanikani_level: number | null
+        partsOfSpeech: string[] | null
+        wanikaniLevel: number | null
         tags: string[] | null
         type: 'vocabulary' | 'kanji' | null
         summary: {[key: string]: string | string[] | number | null}
@@ -75,12 +75,12 @@ export declare namespace Core {
     }
 
     export type Page = 'review'
-    | 'reviewSummary'
+    | 'review_summary'
     | 'lessons'
-    | 'lessonsSummary'
-    | 'itemPage'
+    | 'lessons_summary'
+    | 'item_page'
     | 'search'
-    | 'searchResult'
+    | 'search_result'
     | 'account'
     | 'home'
     | null
@@ -98,34 +98,34 @@ export declare namespace Core {
 
     export interface Module {
         version: Version
-        file_cache: FileCache
-        support_files: { [key: string]: string }
-        state_listeners: {[key:string]: StateListener[]}
-        state_values: {[key:string]: StateValue}
-        event_listeners: {[key:string]: UnknownCallback[]}
-        include_promises: {[key:string]: Promise<string>}
-        dom_observers: DomObserver[]
+        fileCache: FileCache
+        supportFiles: { [key: string]: string }
+        stateListeners: {[key:string]: StateListener[]}
+        stateValues: {[key:string]: StateValue}
+        eventListeners: {[key:string]: UnknownCallback[]}
+        includePromises: {[key:string]: Promise<string>}
+        domObservers: DomObserver[]
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
         pageInfo: PageInfo
 
-        load_file: (url: string, use_cache?: boolean) => Promise<any>
-        get_state: (state_var:string) => StateValue
-        set_state: (state_var:string, value:StateValue) => void
-        wait_state: (
-            state_var: string,
+        loadFile: (url: string, useCache?: boolean) => Promise<any>
+        getState: (stateVar:string) => StateValue
+        setState: (stateVar:string, value:StateValue) => void
+        waitState: (
+            stateVar: string,
             value: StateValue,
             callback?: StateCallback,
             persistent: boolean
         ) => Promise<string>
         trigger: (event: string, ...args_: unknown[]) => void
         on: (event:string, callback: UnknownCallback) => void
-        load_script: (url:string, use_cache?: boolean) => Promise<string>
-        load_css: (url:string, use_cache?:boolean) => Promise<string>
-        include: (module_list:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
-        ready: (module_list:string) => Promise<'ready' | 'ready'[]>
-        add_dom_observer: (observer:Core.DomObserver) => void
-        dom_observer_state: (name: string) => string
+        loadScript: (url:string, useCache?: boolean) => Promise<string>
+        loadCSS: (url:string, useCache?:boolean) => Promise<string>
+        include: (moduleList:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
+        ready: (moduleList:string) => Promise<'ready' | 'ready'[]>
+        addDomObserver: (observer:Core.DomObserver) => void
+        domObserverState: (name: string) => string
     }
 }
 
@@ -138,12 +138,12 @@ export declare namespace Settings {
         export interface UserInput {
             type: string
             label?: string       // A string label that appears to the left of (or above) the list element.
-            hover_tip?: string   // (optional) A string that will appear as a tool-tip when you hover over the tab label.
-            full_width?: boolean // (optional) A boolean that, if true, causes the component to occupy a full line.
+            hoverTip?: string   // (optional) A string that will appear as a tool-tip when you hover over the tab label.
+            fullWidth?: boolean // (optional) A boolean that, if true, causes the component to occupy a full line.
             validate?: ValidateCallback // (optional) A callback for validating the value of the setting (see Validating Inputs).
-            on_change?: OnChange // (optional) A callback that will be called when the setting changes.
+            onChange?: OnChange // (optional) A callback that will be called when the setting changes.
             path?: string        // (optional) A string overriding the path where the setting will be saved (see Overriding Paths).
-            refresh_on_change?: boolean
+            refreshOnChange?: boolean
         }
 
         export type Collection = {[key:string]: Component}
@@ -160,7 +160,7 @@ export declare namespace Settings {
         export interface Page {
             type: 'page'
             label: string      // A string label that will appear in the tab.
-            hover_tip?: string // (optional) A string that will appear as a tool-tip when you hover over the tab label.
+            hoverTip?: string // (optional) A string that will appear as a tool-tip when you hover over the tab label.
             content: Collection
                 // A collection of settings components that will appear in the open tab.  For example:
                 // dropdown1: {...},
@@ -252,15 +252,15 @@ export declare namespace Settings {
         export interface Button extends UserInput {
             type: 'button'
             text?: string        // (optional) A string label that appears inside the button.  The default is "Click".
-            on_click: (name:string, config:Button, on_change: () => void) => void // A callback function that will be called when the button is clicked.
+            onClick: (name:string, config:Button, onChange: () => void) => void // A callback function that will be called when the button is clicked.
         }
 
         export interface Html {
             type: 'html'
             label?: string     // (optional) A string label that appears to the left of (or above) the inline html.
             html: string       // An html string to be inserted inline.
-            hover_tip?: string // (optional) A string that will appear as a tool-tip when you hover over the button.
-            wrapper?: 'row'|'left'|'right'
+            hoverTip?: string  // (optional) A string that will appear as a tool-tip when you hover over the button.
+            wrapper?: 'row' | 'left' | 'right'
         }
 
         export type Component =
@@ -281,17 +281,17 @@ export declare namespace Settings {
     }
 
     export type Config = {
-        script_id: string
+        scriptId: string
         title: string
         autosave?: boolean
         background?: boolean
 
-        pre_open?: (dialog: JQuery) => void
-        on_save?: (settings: SettingCollection) => void
-        on_cancel?: (settings: SettingCollection) => void
-        on_close?: (settings: SettingCollection) => void
-        on_change?: UI.OnChange
-        on_refresh?: (settings: SettingCollection) => void
+        preOpen?: (dialog: JQuery) => void
+        onSave?: (settings: SettingCollection) => void
+        onCancel?: (settings: SettingCollection) => void
+        onClose?: (settings: SettingCollection) => void
+        onChange?: UI.OnChange
+        onRefresh?: (settings: SettingCollection) => void
 
         content: UI.Collection
     }
@@ -302,10 +302,10 @@ export declare namespace Settings {
 
     export interface Dialog {
         cfg: Config
-        config_list: UI.Collection
-        keep_settings?: boolean
+        configList: UI.Collection
+        keepSettings?: boolean
         reversions?: UI.Collection
-        #open_dialog: JQuery<HTMLDivElement>
+        #openDialog: JQuery<HTMLDivElement>
         background: {
             open: () => void
             close: () => void
@@ -315,7 +315,7 @@ export declare namespace Settings {
         save: () => Promise<string>
         load: (defaults?: SettingCollection) => Promise<SettingCollection>
         refresh: () => void
-        close: (keep_settings: boolean) => void
+        close: (keepSettings: boolean) => void
         cancel: () => void
     }
 
@@ -344,15 +344,15 @@ export declare namespace Menu {
         submenu?: string
         title: string
         class?: string
-        class_html?: string // TODO what is this?
-        on_click: (event: any) => void
+        classHTML?: string // TODO what is this?
+        onClick: (event: any) => void
     }
 
     export interface Ui {
         style: HTMLStyleElement
         menu: HTMLDivElement
-        scripts_icon: HTMLLinkElement
-        dropdown_menu: HTMLUListElement
+        scriptsIcon: HTMLLinkElement
+        dropdownMenu: HTMLUListElement
         header: HTMLLIElement
         submenus: Map<string, HTMLLIElement>
         configs: Menu.Config[]
@@ -360,7 +360,7 @@ export declare namespace Menu {
 
     export interface Module {
         Menu: {
-            insert_script_link: (config: Config) => void
+            insertScriptLink: (config: Config) => void
             ui: Ui
         }
     }

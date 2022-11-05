@@ -2,7 +2,7 @@
 // @name        KameSame Open Framework - Jquery module
 // @namespace   timberpile
 // @description Jquery module for KameSame Open Framework
-// @version     0.2
+// @version     0.3
 // @copyright   2022+, Robin Findley, Timberpile
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
@@ -17,12 +17,12 @@ import { Core, JQuery } from './ksof';
     try {
         $.fn.jquery
     } catch (e) {
-        await ksof.load_script(ksof.support_files['jquery.js'], true /* cache */)
+        await ksof.loadScript(ksof.supportFiles['jquery.js'], true /* cache */)
     }
 
     ksof.Jquery = { version: $.fn.jquery }
 
     // Notify listeners that we are ready.
     // Delay guarantees include() callbacks are called before ready() callbacks.
-    setTimeout(() => { ksof.set_state('ksof.Jquery', 'ready') }, 0)
+    setTimeout(() => { ksof.setState('ksof.Jquery', 'ready') }, 0)
 })(window)
