@@ -1,4 +1,4 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
@@ -450,8 +450,13 @@ declare global {
                 if (event.target != request) {
                     return
                 }
-                if (request.readyState !== 4) return
-                if (request.status >= 400 || request.status === 0) return Promise.reject(request.status)
+                if (request.readyState !== 4) {
+                    return
+                }
+                if (request.status >= 400 || request.status === 0) {
+                    fetchDeferred.reject(request.status)
+                    return
+                }
                 if (useCache) {
                     await ksof.fileCache.save(url, request.response)
                     fetchDeferred.resolve.bind(null, request.response)
@@ -461,6 +466,13 @@ declare global {
             }
             request.open('GET', url, true)
             request.send()
+            request.onerror = (event) => {
+                if (event.target != request) {
+                    return
+                }
+
+                fetchDeferred.reject(request.status)
+            }
             return fetchDeferred.promise
         }
 
