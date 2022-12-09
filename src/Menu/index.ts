@@ -7,7 +7,8 @@
 // @license     MIT http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-import { Core, Menu } from './ksof'
+import { Core } from '../Core/types'
+import { Menu } from './types'
 
 (async (global: Window) => {
     const ksof = global.ksof as Core.Module & Menu.Module

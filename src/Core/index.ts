@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        KameSame Open Framework
 // @namespace   timberpile
 // @description Framework for writing scripts for KameSame
@@ -17,7 +17,8 @@
 // var module = {}
 // export = null
 
-import { Core, IsoDateString } from './ksof'
+import { Core } from './types'
+import { IsoDateString } from '../types'
 
 declare global {
     interface Window {
@@ -641,8 +642,7 @@ declare global {
             const loaded: string[] = []
             const failed: Core.FailedInclude[] = []
             const noCache = splitList(localStorage.getItem('ksof.include.nocache') || '')
-            for (let idx = 0; idx < moduleNames.length; idx++) {
-                const moduleName = moduleNames[idx]
+            for (const moduleName of moduleNames) {
                 const module = supportedModules[moduleName]
                 if (!module) {
                     failed.push({ name: moduleName })
@@ -739,7 +739,7 @@ declare global {
             }
         }
 
-        syncTimer: number | undefined
+        syncTimer: NodeJS.Timeout | undefined
 
         constructor() {
             this.dir = {}
@@ -869,7 +869,7 @@ declare global {
         //------------------------------
         // Save a file into the fileCache database.
         //------------------------------
-        async save(name:string, content:string | { [key: string]: any }, extraAttribs:object = {}) {
+        async save(name:string, content: unknown, extraAttribs:object = {}) {
             const db = await fileCacheOpen()
 
             if (db === null) return Promise.resolve(name)

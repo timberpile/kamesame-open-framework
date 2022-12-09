@@ -7,7 +7,8 @@
 // @license     MIT http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-import { Core, Settings } from './ksof'
+import { Core } from '../Core/types'
+import { Settings } from './types'
 
 ((async (global: Window) => {
     const ksof = global.ksof as Core.Module & Settings.Module
