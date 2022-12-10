@@ -7,7 +7,8 @@
 // @license     MIT; http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-import { Core, JQuery } from './ksof';
+import { Core } from '../Core/types'
+import { JQuery } from './types'
 
 (async (global) => {
     const ksof = global.ksof as Core.Module & JQuery.Module
