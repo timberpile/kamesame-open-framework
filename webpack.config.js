@@ -10,9 +10,10 @@ const customConfigs = (() => {
         match: 'http*://*.kamesame.com/*',
         copyright: '2022+, Robin Findley, Timberpile',
         author: 'Robin Findley, Timberpile',
-        namespace: 'http://kamesame.com',
+        namespace: 'timberpile@proton.me',
         'run-at': 'document-start',
         grant: 'none',
+        license: 'MIT',
     }
 
     const CoreUSConfig = { ...CommonUSConfig }
@@ -23,17 +24,17 @@ const customConfigs = (() => {
     const JqueryUSConfig = { ...CommonUSConfig }
     JqueryUSConfig.name = 'KameSame Open Framework - Jquery module'
     JqueryUSConfig.description = 'Jquery module for KameSame Open Framework'
-    JqueryUSConfig.version = '0.3'
+    JqueryUSConfig.version = '0.4'
 
     const MenuUSConfig = { ...CommonUSConfig }
     MenuUSConfig.name = 'KameSame Open Framework - Menu module'
     MenuUSConfig.description = 'Menu module for KameSame Open Framework'
-    MenuUSConfig.version = '0.2.0.1'
+    MenuUSConfig.version = '0.3'
 
     const SettingsUSConfig = { ...CommonUSConfig }
     SettingsUSConfig.name = 'KameSame Open Framework - Settings module'
     SettingsUSConfig.description = 'Settings module for KameSame Open Framework'
-    SettingsUSConfig.version = '0.3'
+    SettingsUSConfig.version = '0.4'
 
     const AllInOneUSConfig = { ...CommonUSConfig }
     AllInOneUSConfig.name = 'KameSame Open Framework - All in One (DEV)'

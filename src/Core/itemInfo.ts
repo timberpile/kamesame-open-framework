@@ -1,23 +1,14 @@
 import { Core } from './types'
 import { KANA_CHARS, JAPANESE_CHARS } from './regex'
 
-// declare global {
-//     interface Window {
-//         ksof: Core.Module
-//         $: JQueryStatic
-//     }
-// }
+const ksof = () => {
+    return window.ksof as Core.Module
+}
 
 // TODO better structure for Infos
 export class ItemInfo implements Core.ItemInfo {
-    ksof: Core.Module
-
-    constructor(ksof: Core.Module) {
-        this.ksof = ksof
-    }
-
     get variations() {
-        switch (this.ksof.pageInfo.on) {
+        switch (ksof().pageInfo.on) {
         case 'item_page':
             switch (this.type) {
             case 'vocabulary':
@@ -31,7 +22,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get partsOfSpeech() {
-        switch (this.ksof.pageInfo.on) {
+        switch (ksof().pageInfo.on) {
         case 'item_page':
             switch (this.type) {
             case 'vocabulary':
@@ -45,7 +36,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get wanikaniLevel() {
-        switch (this.ksof.pageInfo.on) {
+        switch (ksof().pageInfo.on) {
         case 'item_page':
             switch (this.type) {
             case 'vocabulary':
@@ -59,7 +50,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get tags() {
-        switch (this.ksof.pageInfo.on) {
+        switch (ksof().pageInfo.on) {
         case 'item_page':
             switch (this.type) {
             case 'vocabulary':
@@ -74,14 +65,14 @@ export class ItemInfo implements Core.ItemInfo {
 
     get id() {
         let url = ''
-        if (this.ksof.pageInfo.on == 'review') {
+        if (ksof().pageInfo.on == 'review') {
             const itemLink = document.querySelector('#app.kamesame #study .outcome p a.item') as HTMLLinkElement | null
             if (!itemLink) {
                 return null
             }
             url = itemLink.href
         }
-        else if (this.ksof.pageInfo.on == 'item_page') {
+        else if (ksof().pageInfo.on == 'item_page') {
             url = document.URL
         }
 
@@ -96,7 +87,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get characters() {
-        if (this.ksof.pageInfo.on == 'review') {
+        if (ksof().pageInfo.on == 'review') {
             const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
             if (!outcomeText) {
                 return null
@@ -123,7 +114,7 @@ export class ItemInfo implements Core.ItemInfo {
             }
             return null
         }
-        else if (this.ksof.pageInfo.on == 'item_page') {
+        else if (ksof().pageInfo.on == 'item_page') {
             if (this.type == 'vocabulary') {
                 return document.querySelector('.name.vocabulary')?.textContent || null
             }
@@ -133,7 +124,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get meanings() {
-        if (this.ksof.pageInfo.on == 'review') {
+        if (ksof().pageInfo.on == 'review') {
             const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
             if (!outcomeText) {
                 return null
@@ -160,7 +151,7 @@ export class ItemInfo implements Core.ItemInfo {
             }
             return meanings
         }
-        else if (this.ksof.pageInfo.on == 'item_page') {
+        else if (ksof().pageInfo.on == 'item_page') {
             if (this.type == 'vocabulary') {
                 return this.facts['Meanings'].split(', ')
             }
@@ -170,7 +161,7 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get readings() {
-        if (this.ksof.pageInfo.on == 'review') {
+        if (ksof().pageInfo.on == 'review') {
             const outcomeText = document.querySelector('#app.kamesame #study .outcome p')?.textContent
             if (!outcomeText) {
                 return null
@@ -198,7 +189,7 @@ export class ItemInfo implements Core.ItemInfo {
             }
             return readings
         }
-        else if (this.ksof.pageInfo.on == 'item_page') {
+        else if (ksof().pageInfo.on == 'item_page') {
             if (this.type == 'vocabulary') {
                 return this.facts['Readings'].replaceAll(' ⏯', '').split('、')
             }
@@ -232,10 +223,10 @@ export class ItemInfo implements Core.ItemInfo {
     }
 
     get type() {
-        if (this.ksof.pageInfo.on == 'review') {
+        if (ksof().pageInfo.on == 'review') {
             //
         }
-        else if (this.ksof.pageInfo.on == 'item_page') {
+        else if (ksof().pageInfo.on == 'item_page') {
             if (document.querySelector('#item h2')?.textContent == 'Vocabulary summary') {
                 return 'vocabulary'
             }
@@ -255,7 +246,7 @@ export class ItemInfo implements Core.ItemInfo {
             partsOfSpeech: this.partsOfSpeech,
             wanikaniLevel: this.wanikaniLevel,
             tags: this.tags,
-            on: this.ksof.pageInfo.on,
+            on: ksof().pageInfo.on,
             type: this.type,
         }
     }

@@ -1,12 +1,14 @@
 import { Core } from './types'
 
+const ksof = () => {
+    return window.ksof as Core.Module
+}
+
 export class DomObserver implements Core.DomObserver {
-    ksof: Core.Module
     observers: Core.DomObserverEntry[]
     mutationObserver: MutationObserver
 
-    constructor(ksof: Core.Module) {
-        this.ksof = ksof
+    constructor() {
         this.observers = []
         this.mutationObserver = new MutationObserver(this.onBodyMutated)
     }
@@ -49,12 +51,12 @@ export class DomObserver implements Core.DomObserver {
             ['account',        '#app.kamesame #account .fun-stuff'],
         ])
 
-        const setStateReady = () => { this.ksof.setState('ksof.document', 'ready') }
+        const setStateReady = () => { ksof().setState('ksof.document', 'ready') }
 
         for (const query of pageQueries) {
             const observer = { name: `page.${query[0]}`, query: query[1] }
             this.add(observer)
-            this.ksof.waitState(this.stateName(observer), 'present', setStateReady)
+            ksof().waitState(this.stateName(observer), 'present', setStateReady)
         }
     }
 
@@ -87,6 +89,6 @@ export class DomObserver implements Core.DomObserver {
 
     update(observer:Core.DomObserverEntry) {
         const visible = (document.querySelector(observer.query) != null)
-        this.ksof.setState(this.stateName(observer), visible ? 'present' : 'absent')
+        ksof().setState(this.stateName(observer), visible ? 'present' : 'absent')
     }
 }

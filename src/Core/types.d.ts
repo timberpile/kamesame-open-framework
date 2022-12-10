@@ -2,7 +2,6 @@ import { IsoDateString } from '../types'
 
 export declare namespace Core {
     export interface FileCache {
-        ksof: Core.Module
         dir: {
             [key: string]: {
                 added: IsoDateString
@@ -51,7 +50,6 @@ export declare namespace Core {
     }
 
     export interface ItemInfo {
-        ksof: Module
         characters: string | null
         meanings: string[] | null
         readings: string[] | null
@@ -87,7 +85,6 @@ export declare namespace Core {
     }
 
     export interface DomObserver {
-        ksof: Module
         observers: DomObserverEntry[]
 
         init: () => void

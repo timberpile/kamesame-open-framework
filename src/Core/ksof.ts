@@ -28,14 +28,14 @@ export class KSOF implements Core.Module {
     pageInfo: PageInfo
 
     constructor() {
-        this.fileCache = new FileCache(this)
+        this.fileCache = new FileCache()
         this.version = new Version(version)
         this.stateListeners = {}
         this.stateValues = {}
         this.eventListeners = {}
-        this.domObserver = new DomObserver(this)
+        this.domObserver = new DomObserver()
         this.includePromises = {}
-        this.itemInfo = new ItemInfo(this)
+        this.itemInfo = new ItemInfo()
         this.reviewInfo = new ReviewInfo()
         this.pageInfo = new PageInfo()
         this.supportFiles = {

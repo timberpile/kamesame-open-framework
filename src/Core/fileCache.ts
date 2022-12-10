@@ -17,7 +17,6 @@ const currentTimeOffset = (daysOffset:number) => {
 }
 
 export class FileCache implements Core.FileCache {
-    ksof: Core.Module
     openPromise: Promise<IDBDatabase | null> | undefined
     dir: { [key: string]: {
             added: IsoDateString
@@ -27,8 +26,7 @@ export class FileCache implements Core.FileCache {
 
     syncTimer: NodeJS.Timeout | undefined
 
-    constructor(ksof: Core.Module) {
-        this.ksof = ksof
+    constructor() {
         this.dir = {}
     }
 
@@ -41,7 +39,7 @@ export class FileCache implements Core.FileCache {
 
         const error = () => {
             console.log('indexedDB could not open!')
-            this.ksof.fileCache.dir = {}
+            this.dir = {}
             if (ignoreMissingIndexeddb) {
                 openDeferred.resolve(null)
             } else {
@@ -78,9 +76,9 @@ export class FileCache implements Core.FileCache {
             const result = event.target.result
 
             if (result === undefined) {
-                this.ksof.fileCache.dir = {}
+                this.dir = {}
             } else {
-                this.ksof.fileCache.dir = JSON.parse(result.content)
+                this.dir = JSON.parse(result.content)
             }
         }
 
@@ -98,16 +96,16 @@ export class FileCache implements Core.FileCache {
     cleanup() {
         const threshold = currentTimeOffset(-14)
         const oldFiles = []
-        for (const fname in this.ksof.fileCache.dir) {
+        for (const fname in this.dir) {
             if (fname.match(/^ksof\.settings\./)) continue // Don't flush settings files.
-            const fdate = new Date(this.ksof.fileCache.dir[fname].lastLoaded)
+            const fdate = new Date(this.dir[fname].lastLoaded)
             if (fdate < threshold) oldFiles.push(fname)
         }
         if (oldFiles.length === 0) return
         console.log(`Cleaning out ${oldFiles.length} old file(s) from "ksof.fileCache":`)
         for (const fnum in oldFiles) {
             console.log(`  ${Number(fnum) + 1}: ${oldFiles[fnum]}}`)
-            this.ksof.fileCache.delete(oldFiles[fnum])
+            this.delete(oldFiles[fnum])
         }
     }
 
@@ -115,7 +113,7 @@ export class FileCache implements Core.FileCache {
     // Lists the content of the fileCache.
     //------------------------------
     ls() {
-        console.log(Object.keys(this.ksof.fileCache.dir).sort()
+        console.log(Object.keys(this.dir).sort()
             .join('\n'))
     }
 
@@ -126,7 +124,7 @@ export class FileCache implements Core.FileCache {
         const db = await this.open()
 
         const clearDeferred = new Deferred<void | Event>()
-        this.ksof.fileCache.dir = {}
+        this.dir = {}
         if (db === null) {
             return clearDeferred.resolve()
         }
@@ -147,7 +145,7 @@ export class FileCache implements Core.FileCache {
         if (db === null) return delDeferred.resolve([])
         const transaction = db.transaction('files', 'readwrite')
         const store = transaction.objectStore('files')
-        const files = Object.keys(this.ksof.fileCache.dir).filter((file) => {
+        const files = Object.keys(this.dir).filter((file) => {
             if (pattern instanceof RegExp) {
                 return file.match(pattern) !== null
             } else {
@@ -156,7 +154,7 @@ export class FileCache implements Core.FileCache {
         })
         files.forEach((file) => {
             store.delete(file)
-            delete this.ksof.fileCache.dir[file]
+            delete this.dir[file]
         })
         this.dirSave()
         transaction.oncomplete = delDeferred.resolve.bind(null, files)
@@ -182,7 +180,7 @@ export class FileCache implements Core.FileCache {
                     this.syncTimer = undefined
                     const transaction = db.transaction('files', 'readwrite')
                     const store = transaction.objectStore('files')
-                    store.put({ name: '[dir]', content: JSON.stringify(this.ksof.fileCache.dir) })
+                    store.put({ name: '[dir]', content: JSON.stringify(this.dir) })
                 })
         }, delay)
     }
@@ -203,7 +201,7 @@ export class FileCache implements Core.FileCache {
             return Promise.reject()
         }
 
-        if (this.ksof.fileCache.dir[name] === undefined) {
+        if (this.dir[name] === undefined) {
             return Promise.reject(name)
         }
         const loadDeferred = new Deferred<string | { [key: string]: any }>()
@@ -245,8 +243,8 @@ export class FileCache implements Core.FileCache {
         const store = transaction.objectStore('files')
         store.put({ name, content })
         const now = new Date().toISOString() as IsoDateString
-        this.ksof.fileCache.dir[name] = Object.assign({ added: now, lastLoaded: now }, extraAttribs)
-        this.ksof.fileCache.dirSave(true /* immediately */)
+        this.dir[name] = Object.assign({ added: now, lastLoaded: now }, extraAttribs)
+        this.dirSave(true /* immediately */)
         transaction.oncomplete = saveDeferred.resolve.bind(null, name)
         return saveDeferred.promise
     }
@@ -256,8 +254,8 @@ export class FileCache implements Core.FileCache {
     //------------------------------
     fileNocache(list:string | string[] | undefined) {
         if (list === undefined) {
-            list = splitList(localStorage.getItem('this.ksof.include.nocache') || '')
-            list = list.concat(splitList(localStorage.getItem('this.ksof.load_file.nocache') || ''))
+            list = splitList(localStorage.getItem('ksof.include.nocache') || '')
+            list = list.concat(splitList(localStorage.getItem('ksof.load_file.nocache') || ''))
             console.log(list.join(','))
         } else if (typeof list === 'string') {
             const noCache = splitList(list)
@@ -272,8 +270,8 @@ export class FileCache implements Core.FileCache {
             }
             console.log(`Modules: ${modules.join(',')}`)
             console.log(`   URLs: ${urls.join(',')}`)
-            localStorage.setItem('this.ksof.include.nocache', modules.join(','))
-            localStorage.setItem('this.ksof.load_file.nocache', urls.join(','))
+            localStorage.setItem('ksof.include.nocache', modules.join(','))
+            localStorage.setItem('ksof.load_file.nocache', urls.join(','))
         }
     }
 }
