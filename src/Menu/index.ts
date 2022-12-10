@@ -44,8 +44,9 @@ import { Menu } from './types'
                 }
             }
 
-            ksof.addDomObserver({ name: 'menu', query: '#scripts-menu' })
-            ksof.waitState(ksof.domObserverState('menu'), 'absent', () => {
+            const observer = { name: 'menu', query: '#scripts-menu' }
+            ksof.domObserver.add(observer)
+            ksof.waitState(ksof.domObserver.stateName(observer), 'absent', () => {
                 reinstallMenu()
                 const oldConfigs = this.configs
                 this.configs = []

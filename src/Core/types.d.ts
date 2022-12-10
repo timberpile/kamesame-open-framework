@@ -2,6 +2,7 @@ import { IsoDateString } from '../types'
 
 export declare namespace Core {
     export interface FileCache {
+        ksof: Core.Module
         dir: {
             [key: string]: {
                 added: IsoDateString
@@ -10,6 +11,8 @@ export declare namespace Core {
         }
         syncTimer: NodeJS.Timeout | undefined
 
+        open: () => Promise<IDBDatabase | null>
+        cleanup: () => void
         ls: () => void
         clear: () => Promise<void | Event>
         delete: (pattern: string | RegExp) => Promise<void | string[]>
@@ -48,6 +51,7 @@ export declare namespace Core {
     }
 
     export interface ItemInfo {
+        ksof: Module
         characters: string | null
         meanings: string[] | null
         readings: string[] | null
@@ -77,9 +81,18 @@ export declare namespace Core {
 
     export type StateValue = any
 
-    export interface DomObserver {
+    export interface DomObserverEntry {
         name: string
         query: string
+    }
+
+    export interface DomObserver {
+        ksof: Module
+        observers: DomObserverEntry[]
+
+        init: () => void
+        add: (observer:Core.DomObserverEntry) => void
+        stateName: (observer: Core.DomObserverEntry) => string
     }
 
     export interface Module {
@@ -90,7 +103,7 @@ export declare namespace Core {
         stateValues: {[key:string]: StateValue}
         eventListeners: {[key:string]: UnknownCallback[]}
         includePromises: {[key:string]: Promise<string>}
-        domObservers: DomObserver[]
+        domObserver: DomObserver
         itemInfo: ItemInfo
         reviewInfo: ReviewInfo
         pageInfo: PageInfo
@@ -102,7 +115,7 @@ export declare namespace Core {
             stateVar: string,
             value: StateValue,
             callback?: StateCallback,
-            persistent: boolean
+            persistent?: boolean
         ) => Promise<string>
         trigger: (event: string, ...args_: unknown[]) => void
         on: (event:string, callback: UnknownCallback) => void
@@ -110,7 +123,5 @@ export declare namespace Core {
         loadCSS: (url:string, useCache?:boolean) => Promise<string>
         include: (moduleList:string) => Promise<{ loaded: string[]; failed: FailedInclude[] }>
         ready: (moduleList:string) => Promise<'ready' | 'ready'[]>
-        addDomObserver: (observer:Core.DomObserver) => void
-        domObserverState: (name: string) => string
     }
 }
